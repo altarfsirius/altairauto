@@ -456,7 +456,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 13 (31 Okt 2026)" aria-label="Versi 1.0, revisi 13"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 13</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 15 (31 Okt 2026)" aria-label="Versi 1.0, revisi 15"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 15</span></div>
   </div>
 </div>
 
@@ -704,6 +704,15 @@
       <p class="page-desc">Panduan interval generik (Monthly sampai Long-Term), strategi perawatan, dan hierarki perencanaan. Semua isi di sini adalah <em>Generic Reference</em>; jadwal pabrikan per kendaraan ada di Usage &amp; Interval.</p>
     </header>
     <div id="mguideRoot"></div>
+  </div>
+
+  <div id="panel-svcpkg" hidden>
+    <div class="crumb">Service <span class="sep">/</span> <span class="current">Service Packages</span></div>
+    <header style="margin-bottom:18px;">
+      <h1 class="page-title">Service Packages</h1>
+      <p class="page-desc">Paket service berkala dan template perawatan dipetakan per <em>tipe kendaraan</em> (kategori &times; powertrain &times; transmisi). Template, part, dan paket motor tidak bercampur dengan mobil, matic dengan manual, atau listrik dengan mesin pembakaran.</p>
+    </header>
+    <div id="svcpkgRoot"></div>
   </div>
 
   <div id="panel-usage" hidden>
@@ -3382,6 +3391,762 @@ notify pgrst, 'reload schema';
             <button class="copy-btn" onclick="copySqlAkunAdmin()">Copy SQL</button>
             <div class="hint" style="margin-top:8px;">Aman dijalankan berulang; tidak mengubah atau menghapus data yang ada. Aktifkan &ldquo;Confirm email&rdquo; di Supabase Authentication lebih dulu, lalu segera daftar akun admin (<code>ifauzi@outlook.com</code>) lewat Create New Account. Rollback: <code>akun-admin/sql/rollback_akun_admin.sql</code>. Tanpa langkah ini semua akun yang login diperlakukan sebagai admin (perilaku lama).</div>
           </li>
+          <li>Pemetaan Paket Service Berkala per tipe kendaraan: tabel task_template_scope, service_package, service_package_item, fungsi pemeriksa svc_*, trigger penegak tipe pada work_order, job_card, part_order_plan, installed_component, dan view audit v_svc_pelanggaran_data_lama.
+            <pre class="sql" id="sqlBlockSvcPkg">-- =====================================================================
+-- Altair Auto · Pemetaan Paket Service Berkala per tipe kendaraan  (langkah 42)
+-- Rev 15 · 31 Okt 2026 · data: 123 template, 21 paket, 348 item paket
+--
+-- ADITIF dan IDEMPOTEN. Hanya membuat objek baru: 3 tabel referensi, fungsi bantu, 4 trigger penjaga,
+-- 1 view audit. TIDAK mengubah atau menghapus data yang sudah ada. Dijalankan OLEH PEMILIK di SQL Editor.
+--
+-- SEBELUM menjalankan: unduh backup (Settings &gt; Backup).
+-- SESUDAH menjalankan: jalankan  select * from v_svc_pelanggaran_data_lama;  untuk melihat baris lama yang
+-- tidak cocok dengan tipe kendaraannya. Baris lama TIDAK diubah dan tidak diblokir (trigger hanya memeriksa
+-- baris baru atau baris yang kolom template/kendaraannya diubah).
+-- Rollback: rollback_paket_service_tipe.sql (hanya menghapus objek langkah ini).
+--
+-- Kelas tipe = kategori (motor | mobil | niaga) x powertrain (bensin_diesel | hybrid | listrik)
+--              x transmisi (manual | matic | none = listrik tanpa gearbox).
+-- Aturan: template, part, dan paket hanya berlaku pada kelas yang cocok. Transmisi kendaraan yang belum
+-- diisi hanya cocok dengan template yang berlaku untuk manual DAN matic, atau yang terikat model cocok.
+-- =====================================================================
+
+-- 1) Fungsi bantu (murni, tanpa efek samping)
+create or replace function svc_kat_key(kat text) returns text
+language sql immutable as $$
+  select case
+    when kat is null then 'lainnya'
+    when lower(kat) like '%roda dua%' or lower(kat) like '%motor%' then 'motor'
+    when lower(kat) like '%niaga%' then 'niaga'
+    when lower(kat) like '%roda empat%' or lower(kat) like '%mobil%' then 'mobil'
+    else 'lainnya' end
+$$;
+
+create or replace function svc_norm(t text) returns text
+language sql immutable as $$ select regexp_replace(lower(coalesce(t, '')), '[^a-z0-9]', '', 'g') $$;
+
+-- 2) Tabel referensi (hanya baca untuk klien; ditulis oleh migrasi ini)
+create table if not exists task_template_scope (
+  template_key text primary key,
+  nama text not null,
+  berlaku_kategori text[] not null,
+  berlaku_powertrain text[] not null,
+  berlaku_transmisi text[] not null,
+  merk_kendaraan text,
+  model_kendaraan text,
+  kecuali_model text[],
+  sumber text,
+  verifikasi text not null default 'estimasi' check (verifikasi in ('buku_servis', 'profil', 'estimasi')),
+  baru_rev15 boolean not null default false,
+  alasan text,
+  created_at timestamptz not null default now(),
+  check (berlaku_kategori &lt;@ array['motor','mobil','niaga','lainnya']),
+  check (berlaku_powertrain &lt;@ array['bensin_diesel','hybrid','listrik']),
+  check (berlaku_transmisi &lt;@ array['manual','matic','none'])
+);
+
+create table if not exists service_package (
+  kode text primary key,
+  nama text not null,
+  jenis text not null check (jenis in ('bundle', 'schedule', 'checklist')),
+  kumulatif boolean not null default false,
+  urutan int not null default 1,
+  berlaku_kategori text[] not null,
+  berlaku_powertrain text[] not null,
+  berlaku_transmisi text[] not null,
+  merk_kendaraan text,
+  model_kendaraan text,
+  interval_km int,
+  offset_km int,
+  horizon_km int,
+  sumber text,
+  verifikasi text not null check (verifikasi in ('buku_servis', 'profil', 'estimasi')),
+  catatan text,
+  created_at timestamptz not null default now(),
+  check (berlaku_kategori &lt;@ array['motor','mobil','niaga','lainnya']),
+  check (berlaku_powertrain &lt;@ array['bensin_diesel','hybrid','listrik']),
+  check (berlaku_transmisi &lt;@ array['manual','matic','none'])
+);
+
+create table if not exists service_package_item (
+  id uuid primary key default gen_random_uuid(),
+  package_kode text not null references service_package(kode) on delete cascade,
+  template_key text not null references task_template_scope(template_key),
+  urut int not null default 1,
+  interval_km int,
+  offset_km int,
+  interval_bulan int,
+  unique (package_kode, template_key)
+);
+create index if not exists service_package_item_pkg_idx on service_package_item (package_kode);
+
+-- 3) Data pemetaan (upsert; aman diulang)
+insert into task_template_scope (template_key, nama, berlaku_kategori, berlaku_powertrain, berlaku_transmisi, merk_kendaraan, model_kendaraan, kecuali_model, sumber, verifikasi, baru_rev15, alasan) values
+  ('oli_mesin', 'Change Engine Oil', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('filter_oli', 'Change Oil Filter', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('filter_udara', 'Change Air Filter', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('ban_rotasi', 'Rotate &amp; Check Tires', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('ban_ganti', 'Replace Tire', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('kampas_rem', 'Change Brake Pads', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('shock_depan_check', 'Check Shock Breaker Front', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('shock_belakang_check', 'Check Shock Breaker Rear', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('shock_oli_ganti', 'Change Shock Breaker Oil', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('servis_besar', 'Major Periodic Service', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('aki', 'Replace Battery', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('timing', 'Timing Belt / Timing Chain', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('rem_cairan', 'Check &amp; Change Brake Fluid', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid','listrik']::text[], array['manual','matic','none']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('coolant', 'Check &amp; Change Radiator Fluid (Coolant)', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('busi_ganti', 'Replace Spark Plug', array['motor','mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], null, null, null, 'template generik aplikasi', 'estimasi', false, null),
+  ('ev_baterai_soh', 'Check Traction Battery Health (SOH)', array['motor','mobil','niaga','lainnya']::text[], array['listrik']::text[], array['none']::text[], null, null, null, 'template EV aplikasi', 'estimasi', false, null),
+  ('ev_charging_port', 'Check Charging Port &amp; Cable', array['motor','mobil','niaga','lainnya']::text[], array['listrik']::text[], array['none']::text[], null, null, null, 'template EV aplikasi', 'estimasi', false, null),
+  ('ev_reduction_gear_oil', 'Check/Change Reduction Gear Oil', array['motor','mobil','niaga','lainnya']::text[], array['listrik']::text[], array['none']::text[], null, null, null, 'template EV aplikasi', 'estimasi', false, null),
+  ('oli_transmisi_manual', 'Check/Change Manual Transmission Oil', array['mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['manual']::text[], null, null, null, 'template transmisi manual (mobil/niaga)', 'estimasi', false, null),
+  ('oli_cvt_matic', 'Check/Change CVT / Automatic Transmission Fluid', array['mobil','niaga','lainnya']::text[], array['bensin_diesel','hybrid']::text[], array['matic']::text[], null, null, null, 'template transmisi matic (mobil/niaga)', 'estimasi', false, null),
+  ('cvt_roller_vbelt', 'Check/Replace CVT Roller &amp; V-Belt', array['motor']::text[], array['bensin_diesel','hybrid']::text[], array['matic']::text[], null, null, null, 'template CVT motor', 'estimasi', false, null),
+  ('moto_chain_service', 'Check, Clean &amp; Lubricate Drive Chain', array['motor']::text[], array['bensin_diesel','hybrid']::text[], array['manual']::text[], null, null, null, 'template baru Rev 15 (celah audit)', 'estimasi', true, 'Motor manual berpenggerak rantai tidak punya template rantai/gir'),
+  ('moto_clutch_freeplay', 'Check &amp; Adjust Clutch Free Play', array['motor']::text[], array['bensin_diesel','hybrid']::text[], array['manual']::text[], null, null, null, 'template baru Rev 15 (celah audit)', 'estimasi', true, 'Motor manual tidak punya template kopling'),
+  ('moto_final_drive_oil', 'Replace Final Drive Oil', array['motor']::text[], array['bensin_diesel','hybrid']::text[], array['matic']::text[], null, null, array['adv150']::text[], 'template baru Rev 15 (celah audit)', 'estimasi', true, 'Skuter matic generik tidak punya template oli gardan (ADV150 punya sendiri)'),
+  ('ev_battery_coolant', 'Check Traction Battery Coolant Level', array['mobil','niaga']::text[], array['listrik']::text[], array['none']::text[], null, null, null, 'template baru Rev 15 (celah audit)', 'estimasi', true, 'EV roda empat berpendingin cairan: coolant disembunyikan bersama template ICE'),
+  ('hyb_hv_battery_check', 'Check Hybrid Battery, Cooling Fan &amp; Air Inlet', array['mobil','niaga','motor']::text[], array['hybrid']::text[], array['manual','matic']::text[], null, null, null, 'template baru Rev 15 (celah audit)', 'estimasi', true, 'Kendaraan hybrid tidak punya template baterai/tegangan tinggi'),
+  ('adv150_saluran_bbm', 'Check Fuel Line', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_gas_tangan', 'Check Throttle Grip Operation', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_pernafasan_bak', 'Clean Crankcase Breather', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_busi_check', 'Check Spark Plug', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_busi_ganti', 'Replace Spark Plug', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_klep', 'Check Valve Clearance', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_saringan_oli', 'Clean Oil Strainer Screen', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_idle', 'Check Idle Speed', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_coolant_check', 'Check Coolant Level &amp; Condition', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_sistem_pendingin', 'Check Cooling System', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_drivebelt_check', 'Check Drive Belt', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_drivebelt_ganti', 'Replace Drive Belt', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_roller_ganti', 'Change Roller Set (CVT)', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_final_drive_oil', 'Replace Final Drive Oil', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_aki_check', 'Check Battery Condition', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_rem_cairan_check', 'Check Brake Fluid Level', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_kampas_rem_check', 'Check Brake Pad Wear', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_sistem_rem', 'Check Brake System', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_lampu_depan', 'Check Headlight Aim', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_kampas_kopling', 'Check Clutch Wear (CVT)', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_standar_samping', 'Check Side Stand', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_suspensi', 'Check Suspension', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_mur_baut', 'Check Nuts, Bolts &amp; Fasteners', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_roda_ban', 'Check Wheels/Tires', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('adv150_bantalan_kemudi', 'Check Steering Head Bearing', array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', null, 'Honda ADV150 ABS — Jadwal Perawatan Berkala', 'profil', false, null),
+  ('prf_ertiga_valve', 'Check Valve Clearance', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_belt_inspect', 'Check Engine Accessory Drive Belt', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_belt_replace', 'Replace Engine Accessory Drive Belt', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_exhaust', 'Check Exhaust System (except catalyst)', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_fuel_lines', 'Check Fuel Lines', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_fuel_filter', 'Replace Fuel Filter', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_brake_pads', 'Check Brake Discs &amp; Pads (Front)', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_brake_hoses', 'Check Brake Hoses &amp; Pipes', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_tyres', 'Check Tyres/Wheels', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_suspension', 'Check Suspension System', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_steering', 'Check Steering System', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_mt_oil', 'Replace Manual Transmission Oil (SUZUKI GEAR OIL 75W-80)', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_at_fluid', 'Check Automatic Transmission Fluid Level', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_at_change', 'Change Automatic Transmission Fluid', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_ac_filter', 'Replace Air Conditioner Filter (if equipped)', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_drain_gasket', 'Replace Drain Plug Gasket', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_cooling_system', 'Check Engine Cooling System', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_clutch', 'Check &amp; Adjust Clutch', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_brake_system', 'Check Brake System &amp; Parking Brake', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_underbody_bolts', 'Check Underbody Bolts &amp; Nuts', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_door_hinges', 'Check &amp; Lubricate Door Hinges, Locks &amp; Remote Control', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_lights', 'Check Exterior &amp; Interior Lights', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_wipers', 'Check Wipers &amp; Washer', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_battery', 'Check Battery &amp; Electrolyte Level', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_horn', 'Check Horn', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_windows_lock', 'Check Power Windows &amp; Central Door Lock', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_mirrors', 'Check Electric Door Mirrors', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_ac_system', 'Check Air Conditioning System', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_scan', 'Perform Diagnostic Scan (Suzuki Diagnostic Tool)', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_air_filter_clean', 'Check &amp; Clean Air Filter', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_brake_drums', 'Check &amp; Clean Brake Linings &amp; Drums', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_ps_fluid', 'Check &amp; Top Up Power Steering Fluid', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_mt_oil_level', 'Check &amp; Top Up Manual Transmission Oil', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_wheel_bearings', 'Check Wheel Bearing Condition', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_engine_mount', 'Check Engine Mounting', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_driveshaft', 'Check Drive Shafts &amp; Boots', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_tie_rod', 'Check Tie Rod Ball Joints &amp; Dust Covers', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_ac_filter_check', 'Check Air Conditioner Filter', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_transfer_oil', 'Replace Transfer Case Oil', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_diff_oil', 'Replace Differential Oil', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_head_bolts', 'Check Cylinder Head &amp; Manifold Nuts/Bolts', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_ign_timing', 'Check Ignition Timing', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_spark_check', 'Check Spark Plug', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_fuel_filter_check', 'Check Fuel Filter', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_evap', 'Check Evaporative Emission Control System', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_pcv', 'Check PCV Valve', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_exhaust_emission', 'Check Exhaust Emission', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_ertiga_instruments', 'Check Instrument Panel &amp; Body Electrical', array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', null, 'Suzuki All New Ertiga (manual global 73RS3-01E)', 'profil', false, null),
+  ('prf_picanto_atf_change', 'Change Automatic Transmission Fluid (ATF)', array['mobil']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_valve', 'Check Valve Clearance', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_head_bolts', 'Check Cylinder Head &amp; Manifold Nuts/Bolts', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_engine_mount', 'Check Engine Mounting', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_drive_belt', 'Check Drive Belt', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_ign_timing', 'Check Ignition Timing', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_fuel_filter', 'Check Fuel Filter', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_fuel_lines', 'Check Fuel Lines', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_evap', 'Check Evaporative Emission Control System', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_pcv', 'Check PCV Valve', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_exhaust_emission', 'Check Exhaust Emission', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_brake_pads', 'Check Brake Disc/Pad &amp; Drum/Shoe', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_brake_hoses', 'Check Brake Hoses &amp; Pipes', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_parking_brake', 'Check Parking Brake Cable &amp; Lever', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_clutch_pedal', 'Check Clutch Pedal', array['mobil']::text[], array['bensin_diesel']::text[], array['manual']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_wheels', 'Check Wheels', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_driveshaft', 'Check Drive Shaft / Propeller Shaft', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_suspension', 'Check Suspension System', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_steering', 'Check Steering System', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_doors', 'Check Doors, Hinges &amp; Locks', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_power_steering', 'Check Power Steering', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_instruments', 'Check Instrument Panel &amp; Body Electrical', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_wipers', 'Check Wiper Blades', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null),
+  ('prf_picanto_ac', 'Replace A/C Filter Element (if equipped)', array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', null, 'KIA Picanto 2014 (Indonesia)', 'profil', false, null)
+on conflict (template_key) do update set nama = excluded.nama, berlaku_kategori = excluded.berlaku_kategori, berlaku_powertrain = excluded.berlaku_powertrain,
+  berlaku_transmisi = excluded.berlaku_transmisi, merk_kendaraan = excluded.merk_kendaraan, model_kendaraan = excluded.model_kendaraan,
+  kecuali_model = excluded.kecuali_model, sumber = excluded.sumber, verifikasi = excluded.verifikasi, baru_rev15 = excluded.baru_rev15, alasan = excluded.alasan;
+
+insert into service_package (kode, nama, jenis, kumulatif, urutan, berlaku_kategori, berlaku_powertrain, berlaku_transmisi, merk_kendaraan, model_kendaraan, interval_km, offset_km, horizon_km, sumber, verifikasi, catatan) values
+  ('SUZ-ERTIGA-A', 'Suzuki All New Ertiga — Periodic Service Package A', 'bundle', true, 1, array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', 10000, 5000, null, 'Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D', 'buku_servis', 'Kumulatif: paket yang lebih tinggi memuat seluruh item paket di bawahnya.'),
+  ('SUZ-ERTIGA-B', 'Suzuki All New Ertiga — Periodic Service Package B', 'bundle', true, 2, array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', 20000, 10000, null, 'Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D', 'buku_servis', 'Kumulatif: paket yang lebih tinggi memuat seluruh item paket di bawahnya.'),
+  ('SUZ-ERTIGA-C', 'Suzuki All New Ertiga — Periodic Service Package C', 'bundle', true, 3, array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', 40000, 20000, null, 'Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D', 'buku_servis', 'Kumulatif: paket yang lebih tinggi memuat seluruh item paket di bawahnya.'),
+  ('SUZ-ERTIGA-D', 'Suzuki All New Ertiga — Periodic Service Package D', 'bundle', true, 4, array['mobil']::text[], array['bensin_diesel','hybrid']::text[], array['manual','matic']::text[], 'suzuki', 'ertiga', 40000, 0, null, 'Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D', 'buku_servis', 'Item 46 tidak terlihat pada foto (kemungkinan SCAN SDT, sudah tercakup). Interval buku servis berbeda dari manual global untuk beberapa komponen: lihat keputusan K-01.'),
+  ('HND-ADV150-BERKALA', 'Honda ADV150 ABS — Periodic Maintenance Schedule', 'schedule', false, 1, array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], 'honda', 'adv150', 6000, 0, 36000, 'Honda ADV150 ABS 2019', 'profil', 'Jadwal berbasis kunjungan: tiap 6.000 km, item muncul sesuai interval dan offset masing-masing; item berbasis waktu (bulan) tampil terpisah.'),
+  ('KIA-PICANTO-BERKALA', 'Kia Picanto 2014 — Periodic Maintenance Schedule', 'schedule', false, 1, array['mobil']::text[], array['bensin_diesel']::text[], array['manual','matic']::text[], 'kia', 'picanto', 10000, 0, 60000, 'KIA Picanto 2014 (Indonesia)', 'profil', 'Jadwal berbasis kunjungan: tiap 10.000 km, item muncul sesuai interval dan offset masing-masing; item berbasis waktu (bulan) tampil terpisah.'),
+  ('GEN-MOTOR-ICE-MT', 'Generic Maintenance Checklist — Motorcycle · Petrol/Diesel · Manual', 'checklist', false, 1, array['motor']::text[], array['bensin_diesel']::text[], array['manual']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOTOR-ICE-AT', 'Generic Maintenance Checklist — Motorcycle · Petrol/Diesel · Automatic/CVT', 'checklist', false, 1, array['motor']::text[], array['bensin_diesel']::text[], array['matic']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOTOR-HEV-MT', 'Generic Maintenance Checklist — Motorcycle · Hybrid · Manual', 'checklist', false, 1, array['motor']::text[], array['hybrid']::text[], array['manual']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOTOR-HEV-AT', 'Generic Maintenance Checklist — Motorcycle · Hybrid · Automatic/CVT', 'checklist', false, 1, array['motor']::text[], array['hybrid']::text[], array['matic']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOTOR-EV-1S', 'Generic Maintenance Checklist — Motorcycle · Electric · Single-speed', 'checklist', false, 1, array['motor']::text[], array['listrik']::text[], array['none']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOBIL-ICE-MT', 'Generic Maintenance Checklist — Car · Petrol/Diesel · Manual', 'checklist', false, 1, array['mobil']::text[], array['bensin_diesel']::text[], array['manual']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOBIL-ICE-AT', 'Generic Maintenance Checklist — Car · Petrol/Diesel · Automatic/CVT', 'checklist', false, 1, array['mobil']::text[], array['bensin_diesel']::text[], array['matic']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOBIL-HEV-MT', 'Generic Maintenance Checklist — Car · Hybrid · Manual', 'checklist', false, 1, array['mobil']::text[], array['hybrid']::text[], array['manual']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOBIL-HEV-AT', 'Generic Maintenance Checklist — Car · Hybrid · Automatic/CVT', 'checklist', false, 1, array['mobil']::text[], array['hybrid']::text[], array['matic']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-MOBIL-EV-1S', 'Generic Maintenance Checklist — Car · Electric · Single-speed', 'checklist', false, 1, array['mobil']::text[], array['listrik']::text[], array['none']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-NIAGA-ICE-MT', 'Generic Maintenance Checklist — Light Commercial · Petrol/Diesel · Manual', 'checklist', false, 1, array['niaga']::text[], array['bensin_diesel']::text[], array['manual']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-NIAGA-ICE-AT', 'Generic Maintenance Checklist — Light Commercial · Petrol/Diesel · Automatic/CVT', 'checklist', false, 1, array['niaga']::text[], array['bensin_diesel']::text[], array['matic']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-NIAGA-HEV-MT', 'Generic Maintenance Checklist — Light Commercial · Hybrid · Manual', 'checklist', false, 1, array['niaga']::text[], array['hybrid']::text[], array['manual']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-NIAGA-HEV-AT', 'Generic Maintenance Checklist — Light Commercial · Hybrid · Automatic/CVT', 'checklist', false, 1, array['niaga']::text[], array['hybrid']::text[], array['matic']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.'),
+  ('GEN-NIAGA-EV-1S', 'Generic Maintenance Checklist — Light Commercial · Electric · Single-speed', 'checklist', false, 1, array['niaga']::text[], array['listrik']::text[], array['none']::text[], null, null, null, null, null, 'Template generik aplikasi + template baru Rev 15', 'estimasi', 'ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.')
+on conflict (kode) do update set nama = excluded.nama, jenis = excluded.jenis, kumulatif = excluded.kumulatif, urutan = excluded.urutan,
+  berlaku_kategori = excluded.berlaku_kategori, berlaku_powertrain = excluded.berlaku_powertrain, berlaku_transmisi = excluded.berlaku_transmisi,
+  merk_kendaraan = excluded.merk_kendaraan, model_kendaraan = excluded.model_kendaraan, interval_km = excluded.interval_km, offset_km = excluded.offset_km,
+  horizon_km = excluded.horizon_km, sumber = excluded.sumber, verifikasi = excluded.verifikasi, catatan = excluded.catatan;
+
+insert into service_package_item (package_kode, template_key, urut, interval_km, offset_km, interval_bulan) values
+  ('SUZ-ERTIGA-A', 'oli_mesin', 1, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_drain_gasket', 2, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_belt_inspect', 3, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_cooling_system', 4, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_clutch', 5, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_brake_system', 6, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_underbody_bolts', 7, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_tyres', 8, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_door_hinges', 9, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_lights', 10, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_suspension', 11, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_wipers', 12, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_battery', 13, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_horn', 14, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_windows_lock', 15, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_mirrors', 16, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_ac_system', 17, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_steering', 18, null, null, null),
+  ('SUZ-ERTIGA-A', 'prf_ertiga_scan', 19, null, null, null),
+  ('SUZ-ERTIGA-B', 'filter_oli', 1, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_air_filter_clean', 2, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_brake_drums', 3, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_brake_pads', 4, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_ps_fluid', 5, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_mt_oil_level', 6, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_steering', 7, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_wheel_bearings', 8, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_battery', 9, null, null, null),
+  ('SUZ-ERTIGA-B', 'prf_ertiga_scan', 10, null, null, null),
+  ('SUZ-ERTIGA-C', 'busi_ganti', 1, null, null, null),
+  ('SUZ-ERTIGA-C', 'filter_udara', 2, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_engine_mount', 3, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_exhaust', 4, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_fuel_lines', 5, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_driveshaft', 6, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_tie_rod', 7, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_suspension', 8, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_ac_filter_check', 9, null, null, null),
+  ('SUZ-ERTIGA-C', 'prf_ertiga_scan', 10, null, null, null),
+  ('SUZ-ERTIGA-D', 'prf_ertiga_fuel_filter', 1, null, null, null),
+  ('SUZ-ERTIGA-D', 'rem_cairan', 2, null, null, null),
+  ('SUZ-ERTIGA-D', 'prf_ertiga_transfer_oil', 3, null, null, null),
+  ('SUZ-ERTIGA-D', 'prf_ertiga_mt_oil', 4, null, null, null),
+  ('SUZ-ERTIGA-D', 'prf_ertiga_diff_oil', 5, null, null, null),
+  ('SUZ-ERTIGA-D', 'coolant', 6, null, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_busi_ganti', 1, 12000, null, null),
+  ('HND-ADV150-BERKALA', 'filter_udara', 2, 18000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_drivebelt_check', 3, 24000, 12000, null),
+  ('HND-ADV150-BERKALA', 'adv150_drivebelt_ganti', 4, 24000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_kampas_kopling', 5, 12000, null, null),
+  ('HND-ADV150-BERKALA', 'coolant', 6, null, null, 36),
+  ('HND-ADV150-BERKALA', 'adv150_final_drive_oil', 7, 24000, null, 24),
+  ('HND-ADV150-BERKALA', 'rem_cairan', 8, 24000, null, 24),
+  ('HND-ADV150-BERKALA', 'adv150_roller_ganti', 9, 24000, null, null),
+  ('HND-ADV150-BERKALA', 'oli_mesin', 10, 6000, null, 6),
+  ('HND-ADV150-BERKALA', 'adv150_saluran_bbm', 11, 6000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_gas_tangan', 12, 6000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_pernafasan_bak', 13, 6000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_busi_check', 14, 12000, 6000, null),
+  ('HND-ADV150-BERKALA', 'adv150_klep', 15, 6000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_saringan_oli', 16, 12000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_idle', 17, 6000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_coolant_check', 18, 12000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_sistem_pendingin', 19, 12000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_aki_check', 20, 6000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_rem_cairan_check', 21, 6000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_kampas_rem_check', 22, 6000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_sistem_rem', 23, 6000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_lampu_depan', 24, 6000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_standar_samping', 25, 6000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_suspensi', 26, 6000, null, 12),
+  ('HND-ADV150-BERKALA', 'adv150_mur_baut', 27, 12000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_roda_ban', 28, 6000, null, null),
+  ('HND-ADV150-BERKALA', 'adv150_bantalan_kemudi', 29, 12000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'oli_mesin', 1, 10000, null, 6),
+  ('KIA-PICANTO-BERKALA', 'filter_oli', 2, 10000, null, 6),
+  ('KIA-PICANTO-BERKALA', 'coolant', 3, 40000, null, 24),
+  ('KIA-PICANTO-BERKALA', 'busi_ganti', 4, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'filter_udara', 5, 40000, null, 24),
+  ('KIA-PICANTO-BERKALA', 'rem_cairan', 6, 40000, null, 24),
+  ('KIA-PICANTO-BERKALA', 'oli_transmisi_manual', 7, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'ban_rotasi', 8, 10000, null, 6),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_atf_change', 9, 40000, null, 24),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_valve', 10, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_head_bolts', 11, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_engine_mount', 12, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_drive_belt', 13, 30000, null, 18),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_ign_timing', 14, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_fuel_filter', 15, 30000, null, 18),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_fuel_lines', 16, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_evap', 17, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_pcv', 18, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_exhaust_emission', 19, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_brake_pads', 20, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_brake_hoses', 21, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_parking_brake', 22, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_clutch_pedal', 23, 10000, null, 6),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_wheels', 24, 10000, null, 6),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_driveshaft', 25, 30000, null, 18),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_suspension', 26, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_steering', 27, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_doors', 28, 30000, null, 18),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_power_steering', 29, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_instruments', 30, 20000, null, 12),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_wipers', 31, 10000, null, 6),
+  ('KIA-PICANTO-BERKALA', 'prf_picanto_ac', 32, 40000, null, 24),
+  ('KIA-PICANTO-BERKALA', 'timing', 33, null, null, 60),
+  ('KIA-PICANTO-BERKALA', 'kampas_rem', 34, 20000, null, null),
+  ('GEN-MOTOR-ICE-MT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'aki', 11, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'timing', 12, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'coolant', 14, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'moto_chain_service', 16, null, null, null),
+  ('GEN-MOTOR-ICE-MT', 'moto_clutch_freeplay', 17, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'aki', 11, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'timing', 12, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'coolant', 14, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'cvt_roller_vbelt', 16, null, null, null),
+  ('GEN-MOTOR-ICE-AT', 'moto_final_drive_oil', 17, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'aki', 11, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'timing', 12, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'coolant', 14, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'moto_chain_service', 16, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'moto_clutch_freeplay', 17, null, null, null),
+  ('GEN-MOTOR-HEV-MT', 'hyb_hv_battery_check', 18, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'aki', 11, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'timing', 12, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'coolant', 14, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'cvt_roller_vbelt', 16, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'moto_final_drive_oil', 17, null, null, null),
+  ('GEN-MOTOR-HEV-AT', 'hyb_hv_battery_check', 18, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'ban_rotasi', 1, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'ban_ganti', 2, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'kampas_rem', 3, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'shock_depan_check', 4, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'shock_belakang_check', 5, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'shock_oli_ganti', 6, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'servis_besar', 7, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'aki', 8, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'rem_cairan', 9, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'ev_baterai_soh', 10, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'ev_charging_port', 11, null, null, null),
+  ('GEN-MOTOR-EV-1S', 'ev_reduction_gear_oil', 12, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'aki', 11, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'timing', 12, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'coolant', 14, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOBIL-ICE-MT', 'oli_transmisi_manual', 16, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'aki', 11, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'timing', 12, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'coolant', 14, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOBIL-ICE-AT', 'oli_cvt_matic', 16, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'aki', 11, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'timing', 12, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'coolant', 14, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'oli_transmisi_manual', 16, null, null, null),
+  ('GEN-MOBIL-HEV-MT', 'hyb_hv_battery_check', 17, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'oli_mesin', 1, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'filter_oli', 2, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'filter_udara', 3, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'ban_ganti', 5, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'kampas_rem', 6, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'servis_besar', 10, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'aki', 11, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'timing', 12, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'rem_cairan', 13, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'coolant', 14, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'busi_ganti', 15, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'oli_cvt_matic', 16, null, null, null),
+  ('GEN-MOBIL-HEV-AT', 'hyb_hv_battery_check', 17, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'ban_rotasi', 1, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'ban_ganti', 2, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'kampas_rem', 3, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'shock_depan_check', 4, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'shock_belakang_check', 5, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'shock_oli_ganti', 6, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'servis_besar', 7, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'aki', 8, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'rem_cairan', 9, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'ev_baterai_soh', 10, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'ev_charging_port', 11, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'ev_reduction_gear_oil', 12, null, null, null),
+  ('GEN-MOBIL-EV-1S', 'ev_battery_coolant', 13, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'oli_mesin', 1, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'filter_oli', 2, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'filter_udara', 3, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'ban_ganti', 5, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'kampas_rem', 6, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'servis_besar', 10, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'aki', 11, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'timing', 12, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'rem_cairan', 13, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'coolant', 14, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'busi_ganti', 15, null, null, null),
+  ('GEN-NIAGA-ICE-MT', 'oli_transmisi_manual', 16, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'oli_mesin', 1, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'filter_oli', 2, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'filter_udara', 3, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'ban_ganti', 5, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'kampas_rem', 6, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'servis_besar', 10, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'aki', 11, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'timing', 12, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'rem_cairan', 13, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'coolant', 14, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'busi_ganti', 15, null, null, null),
+  ('GEN-NIAGA-ICE-AT', 'oli_cvt_matic', 16, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'oli_mesin', 1, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'filter_oli', 2, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'filter_udara', 3, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'ban_ganti', 5, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'kampas_rem', 6, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'servis_besar', 10, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'aki', 11, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'timing', 12, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'rem_cairan', 13, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'coolant', 14, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'busi_ganti', 15, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'oli_transmisi_manual', 16, null, null, null),
+  ('GEN-NIAGA-HEV-MT', 'hyb_hv_battery_check', 17, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'oli_mesin', 1, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'filter_oli', 2, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'filter_udara', 3, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'ban_rotasi', 4, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'ban_ganti', 5, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'kampas_rem', 6, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'shock_depan_check', 7, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'shock_belakang_check', 8, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'shock_oli_ganti', 9, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'servis_besar', 10, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'aki', 11, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'timing', 12, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'rem_cairan', 13, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'coolant', 14, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'busi_ganti', 15, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'oli_cvt_matic', 16, null, null, null),
+  ('GEN-NIAGA-HEV-AT', 'hyb_hv_battery_check', 17, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'ban_rotasi', 1, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'ban_ganti', 2, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'kampas_rem', 3, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'shock_depan_check', 4, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'shock_belakang_check', 5, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'shock_oli_ganti', 6, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'servis_besar', 7, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'aki', 8, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'rem_cairan', 9, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'ev_baterai_soh', 10, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'ev_charging_port', 11, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'ev_reduction_gear_oil', 12, null, null, null),
+  ('GEN-NIAGA-EV-1S', 'ev_battery_coolant', 13, null, null, null)
+on conflict (package_kode, template_key) do update set urut = excluded.urut, interval_km = excluded.interval_km, offset_km = excluded.offset_km, interval_bulan = excluded.interval_bulan;
+
+-- 4) Pemeriksaan kecocokan (mencerminkan aturan di aplikasi; mengembalikan alasan, atau null bila cocok)
+create or replace function svc_scope_why(
+  s_kat text[], s_pt text[], s_tr text[], s_merk text, s_model text, s_except text[],
+  v_kat_label text, v_merk text, v_model text, v_pt text, v_tr text) returns text
+language plpgsql immutable as $$
+declare
+  kat text := svc_kat_key(v_kat_label);
+  pt text := coalesce(nullif(v_pt, ''), 'bensin_diesel');
+  tr text;
+  why text[] := '{}';
+  mm boolean;
+begin
+  tr := case when pt = 'listrik' then 'none' else nullif(v_tr, '') end;
+  mm := s_model is null or (svc_norm(v_merk) = svc_norm(s_merk) and position(svc_norm(s_model) in svc_norm(v_model)) &gt; 0);
+  if not (kat = any (s_kat)) then why := why || format('kategori %s tidak termasuk (%s)', kat, array_to_string(s_kat, '/')); end if;
+  if not (pt = any (s_pt)) then why := why || format('powertrain %s tidak termasuk (%s)', pt, array_to_string(s_pt, '/')); end if;
+  if tr is null then
+    if not ('manual' = any (s_tr) and 'matic' = any (s_tr)) and not (s_model is not null and mm) then
+      why := why || format('transmisi kendaraan belum diisi; khusus %s', array_to_string(s_tr, '/'));
+    end if;
+  elsif not (tr = any (s_tr)) then
+    why := why || format('transmisi %s tidak termasuk (%s)', tr, array_to_string(s_tr, '/'));
+  end if;
+  if s_model is not null and not mm then why := why || format('khusus %s %s', upper(s_merk), upper(s_model)); end if;
+  if s_except is not null and exists (select 1 from unnest(s_except) e where position(svc_norm(e) in svc_norm(v_model)) &gt; 0) then
+    why := why || 'dikecualikan untuk model ini';
+  end if;
+  return case when array_length(why, 1) is null then null else array_to_string(why, '; ') end;
+end $$;
+
+create or replace function svc_template_msg(p_kendaraan uuid, p_template text) returns text
+language plpgsql stable security definer set search_path = public as $$
+declare k record; s record; w text;
+begin
+  if p_template is null or p_kendaraan is null then return null; end if;
+  select kategori, merk, model, powertrain, transmisi into k from kendaraan where id = p_kendaraan;
+  if not found then return null; end if;
+  select * into s from task_template_scope where template_key = p_template;
+  if not found then return null; end if;       -- template di luar registri tidak diblokir
+  w := svc_scope_why(s.berlaku_kategori, s.berlaku_powertrain, s.berlaku_transmisi, s.merk_kendaraan, s.model_kendaraan, s.kecuali_model,
+                     k.kategori, k.merk, k.model, k.powertrain, k.transmisi);
+  if w is null then return null; end if;
+  return format('Template "%s" tidak berlaku untuk kendaraan ini: %s.', s.nama, w);
+end $$;
+
+create or replace function svc_part_msg(p_kendaraan uuid, p_part uuid) returns text
+language plpgsql stable security definer set search_path = public as $$
+declare k record; p record; kat text; pt text; tr text; why text[] := '{}';
+begin
+  if p_part is null or p_kendaraan is null then return null; end if;
+  select kategori, powertrain, transmisi into k from kendaraan where id = p_kendaraan;
+  if not found then return null; end if;
+  select nama, berlaku_kategori, berlaku_powertrain, berlaku_transmisi into p from part_library where id = p_part;
+  if not found then return null; end if;
+  kat := svc_kat_key(k.kategori); pt := coalesce(nullif(k.powertrain, ''), 'bensin_diesel'); tr := case when pt = 'listrik' then null else nullif(k.transmisi, '') end;
+  if coalesce(btrim(p.berlaku_powertrain), '') &lt;&gt; '' and not (pt = any (string_to_array(replace(p.berlaku_powertrain, ' ', ''), ','))) then
+    why := why || format('hanya untuk powertrain %s, kendaraan ini %s', p.berlaku_powertrain, pt); end if;
+  if coalesce(btrim(p.berlaku_kategori), '') &lt;&gt; '' and not (kat = any (string_to_array(replace(p.berlaku_kategori, ' ', ''), ','))) then
+    why := why || format('hanya untuk kategori %s, kendaraan ini %s', p.berlaku_kategori, kat); end if;
+  if coalesce(btrim(p.berlaku_transmisi), '') &lt;&gt; '' then
+    if tr is null then why := why || format('hanya untuk transmisi %s, kendaraan ini listrik atau transmisinya belum diisi', p.berlaku_transmisi);
+    elsif not (tr = any (string_to_array(replace(p.berlaku_transmisi, ' ', ''), ','))) then why := why || format('hanya untuk transmisi %s, kendaraan ini %s', p.berlaku_transmisi, tr); end if;
+  end if;
+  if array_length(why, 1) is null then return null; end if;
+  return format('Part "%s" tidak cocok dengan kendaraan: %s.', p.nama, array_to_string(why, '; '));
+end $$;
+
+-- 5) Trigger penjaga (hanya baris baru atau baris yang kolom relevannya berubah)
+create or replace function svc_guard_work_order() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare m text;
+begin
+  if NEW.task_key is null then return NEW; end if;
+  if TG_OP = 'UPDATE' and NEW.task_key is not distinct from OLD.task_key and NEW.kendaraan_id is not distinct from OLD.kendaraan_id then return NEW; end if;
+  m := svc_template_msg(NEW.kendaraan_id, NEW.task_key);
+  if m is not null then raise exception '[SVC-TIPE] %', m using errcode = 'check_violation'; end if;
+  return NEW;
+end $$;
+
+create or replace function svc_guard_job_card() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare m text; v uuid;
+begin
+  if NEW.task_key is null then return NEW; end if;
+  if TG_OP = 'UPDATE' and NEW.task_key is not distinct from OLD.task_key and NEW.work_order_id is not distinct from OLD.work_order_id then return NEW; end if;
+  select kendaraan_id into v from work_order where id = NEW.work_order_id;
+  m := svc_template_msg(v, NEW.task_key);
+  if m is not null then raise exception '[SVC-TIPE] %', m using errcode = 'check_violation'; end if;
+  return NEW;
+end $$;
+
+create or replace function svc_guard_part_order() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare m text;
+begin
+  if NEW.part_library_id is null then return NEW; end if;
+  if TG_OP = 'UPDATE' and NEW.part_library_id is not distinct from OLD.part_library_id and NEW.kendaraan_id is not distinct from OLD.kendaraan_id then return NEW; end if;
+  m := svc_part_msg(NEW.kendaraan_id, NEW.part_library_id);
+  if m is not null then raise exception '[SVC-TIPE] %', m using errcode = 'check_violation'; end if;
+  return NEW;
+end $$;
+
+create or replace function svc_guard_component() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare m text;
+begin
+  if NEW.task_key is null then return NEW; end if;
+  if TG_OP = 'UPDATE' and NEW.task_key is not distinct from OLD.task_key and NEW.kendaraan_id is not distinct from OLD.kendaraan_id then return NEW; end if;
+  m := svc_template_msg(NEW.kendaraan_id, NEW.task_key);
+  if m is not null then raise exception '[SVC-TIPE] %', m using errcode = 'check_violation'; end if;
+  return NEW;
+end $$;
+
+drop trigger if exists svc_guard_work_order_trg on work_order;
+create trigger svc_guard_work_order_trg before insert or update on work_order for each row execute function svc_guard_work_order();
+drop trigger if exists svc_guard_job_card_trg on job_card;
+create trigger svc_guard_job_card_trg before insert or update on job_card for each row execute function svc_guard_job_card();
+drop trigger if exists svc_guard_part_order_trg on part_order_plan;
+create trigger svc_guard_part_order_trg before insert or update on part_order_plan for each row execute function svc_guard_part_order();
+do $do$
+begin
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'installed_component' and column_name = 'task_key') then
+    execute 'drop trigger if exists svc_guard_component_trg on installed_component';
+    execute 'create trigger svc_guard_component_trg before insert or update on installed_component for each row execute function svc_guard_component()';
+  end if;
+end
+$do$;
+
+-- 6) View audit: baris lama yang tidak cocok dengan tipe kendaraannya (hanya dibaca; tidak ada perubahan data)
+create or replace view v_svc_pelanggaran_data_lama with (security_invoker = true) as
+  select 'work_order'::text as tabel, w.id, w.kendaraan_id, w.task_key, svc_template_msg(w.kendaraan_id, w.task_key) as alasan
+    from work_order w where w.task_key is not null and svc_template_msg(w.kendaraan_id, w.task_key) is not null
+  union all
+  select 'job_card'::text, j.id, o.kendaraan_id, j.task_key, svc_template_msg(o.kendaraan_id, j.task_key)
+    from job_card j join work_order o on o.id = j.work_order_id where j.task_key is not null and svc_template_msg(o.kendaraan_id, j.task_key) is not null
+  union all
+  select 'part_order_plan'::text, p.id, p.kendaraan_id, null::text, svc_part_msg(p.kendaraan_id, p.part_library_id)
+    from part_order_plan p where p.part_library_id is not null and svc_part_msg(p.kendaraan_id, p.part_library_id) is not null;
+
+-- 7) Akses: referensi hanya dibaca klien; fungsi bantu tidak dapat dipanggil lewat API
+alter table task_template_scope enable row level security;
+alter table service_package enable row level security;
+alter table service_package_item enable row level security;
+drop policy if exists "svc: baca referensi" on task_template_scope;
+create policy "svc: baca referensi" on task_template_scope for select using (true);
+drop policy if exists "svc: baca referensi" on service_package;
+create policy "svc: baca referensi" on service_package for select using (true);
+drop policy if exists "svc: baca referensi" on service_package_item;
+create policy "svc: baca referensi" on service_package_item for select using (true);
+grant select on task_template_scope, service_package, service_package_item to anon, authenticated;
+revoke insert, update, delete, truncate on task_template_scope, service_package, service_package_item from anon, authenticated;
+revoke all on v_svc_pelanggaran_data_lama from anon;
+revoke execute on function svc_template_msg(uuid, text), svc_part_msg(uuid, uuid), svc_scope_why(text[], text[], text[], text, text, text[], text, text, text, text, text) from public, anon, authenticated;
+revoke execute on function svc_guard_work_order(), svc_guard_job_card(), svc_guard_part_order(), svc_guard_component() from public, anon, authenticated;
+
+notify pgrst, 'reload schema';
+</pre>
+            <button class="copy-btn" onclick="copySqlSvcPkg()">Copy SQL</button>
+            <div class="hint" style="margin-top:8px;">Aman dijalankan berulang. Trigger hanya memeriksa baris baru atau yang task_key/kendaraannya diubah; data lama tidak diblokir (cek lewat <code>select * from v_svc_pelanggaran_data_lama</code>). Unduh backup dulu (Settings &rarr; Backup), jalankan di SQL Editor Supabase. Rollback: <code>service-package/sql/rollback_paket_service_tipe.sql</code>. Tanpa langkah ini aplikasi tetap memblokir tipe salah di sisi klien, tetapi basis data belum ikut menegakkan.</div>
+          </li>
         </ol>
         <div class="field">
           <label for="sbUrl">Project URL</label>
@@ -5902,6 +6667,8 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-10-31</td><td>Rev 15: <strong>Pemetaan Paket Service Berkala per tipe kendaraan</strong>. Panel Service &rarr; Service Packages; template, part, dan paket dibatasi per kelas tipe (kategori &times; powertrain &times; transmisi) dengan penjaga di aplikasi dan SQL langkah 42; profil model (ADV150, Ertiga, Picanto) hanya berlaku pada tipe yang cocok; 5 template baru berlabel Estimasi.</td></tr>
+            <tr><td class="mono">2026-10-31</td><td>Rev 14: paket hosting hanya berisi satu berkas HTML, yaitu <strong>index.html</strong> (404.html dan berkas pengalih nama lama dihapus; pengalihan nama lama kini hanya lewat service worker). Daftar opsi Work Type berbahasa Inggris sejak Rev 12; bila masih Indonesia, muat ulang paksa atau unggah paket terbaru.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 13: Groundwork / AltairOrdo diganti nama menjadi <strong>Altair Project Management</strong> di seluruh tampilan; kartu rencana AltairOrdo dihapus (sama dengan koneksi ini). Penanda teknis di data tidak berubah.</td></tr>
           </table>
           <p class="hint" style="margin-top:8px;">Versi lengkap &amp; terbaru dari riwayat ini ada di dokumen Konsep Aplikasi (Claude Docs).</p>
@@ -5963,7 +6730,7 @@ function drivetrainBadgeLabel(v){
 
 const NAV_GROUPS = [
   { key:'home', navBtnId:'navHomeBtn', panels:['home','appraisal'] },
-  { key:'service', navBtnId:'navGroupServiceBtn', panels:['program','planboard','project','workorder','parts','partlib','kerusakan','inspeksi','event'] },
+  { key:'service', navBtnId:'navGroupServiceBtn', panels:['program','svcpkg','planboard','project','workorder','parts','partlib','kerusakan','inspeksi','event'] },
   { key:'insight', navBtnId:'navGroupInsightBtn', panels:['kpi','usage','laporan','risiko','ela','biaya'] },
   { key:'library', navBtnId:'navGroupLibraryBtn', panels:['playbook','guide','mguide','concepts','dasar','governance','tool','mitra','dokumen','support'] },
   { key:'settings', navBtnId:'navSettingsBtn', panels:['settings'] }
@@ -5982,7 +6749,7 @@ const PANEL_LABELS = {
   event:'Event',
   program:'Program', project:'Project', parts:'Parts', workorder:'Work Order', kerusakan:'Defects',
   risiko:'Problem', ela:'Electrical', biaya:'Cost', inspeksi:'Inspection', kpi:'Dashboard', tool:'Tools',
-  mitra:'Partners', dokumen:'Documents', support:'Support', settings:'Settings', guide:'Guide', concepts:'Concepts', dasar:'Dasar & Guidance', usage:'Usage', partlib:'Part Library', laporan:'Reports', planboard:'Plan Board', mguide:'Maintenance Guide'
+  mitra:'Partners', dokumen:'Documents', support:'Support', settings:'Settings', guide:'Guide', concepts:'Concepts', dasar:'Dasar & Guidance', usage:'Usage', svcpkg:'Service Packages', partlib:'Part Library', laporan:'Reports', planboard:'Plan Board', mguide:'Maintenance Guide'
 };
 let activeGroupKey = 'home';
 const groupLastPanel = {};
@@ -6082,6 +6849,7 @@ function showPanel(name){
   document.getElementById('panel-concepts').hidden = name !== 'concepts';
   document.getElementById('panel-dasar').hidden = name !== 'dasar';
   document.getElementById('panel-usage').hidden = name !== 'usage';
+  { const _sp = document.getElementById('panel-svcpkg'); if(_sp) _sp.hidden = name !== 'svcpkg'; }
   document.getElementById('panel-partlib').hidden = name !== 'partlib';
   document.getElementById('panel-laporan').hidden = name !== 'laporan';
   document.getElementById('panel-planboard').hidden = name !== 'planboard';
@@ -6108,6 +6876,7 @@ function showPanel(name){
   if(typeof DASAR !== 'undefined'){ if(name === 'dasar') DASAR.onShow(); else DASAR.ctx(name); }
   if(typeof USAGE !== 'undefined'){ if(name === 'usage') USAGE.onShow(); else USAGE.note(name); }
   if(typeof PARTS !== 'undefined' && name === 'partlib') PARTS.onShow();
+  if(window.SVCPKG && name === 'svcpkg') SVCPKG.onShow();
   if(typeof REPORTS !== 'undefined' && name === 'laporan') REPORTS.onShow();
   if(window.AC6){ if(name === 'planboard' && AC6.plan) AC6.plan.onShow(); if(name === 'mguide') AC6.guide.onShow(); if(name === 'settings') AC6.settings.onShow(); }
   window.scrollTo({top:0, behavior:'instant'});
@@ -6243,6 +7012,9 @@ function copySqlTouringEvent(){
 }
 function copySqlAkunAdmin(){
   navigator.clipboard.writeText(document.getElementById('sqlBlockAkunAdmin').textContent).catch(()=>{});
+}
+function copySqlSvcPkg(){
+  navigator.clipboard.writeText(document.getElementById('sqlBlockSvcPkg').textContent).catch(()=>{});
 }
 function copySqlPolarisHub(){
   navigator.clipboard.writeText(document.getElementById('sqlBlockPolarisHub').textContent).catch(()=>{});
@@ -6801,7 +7573,7 @@ const MAINT_TEMPLATES = [
    key off those ids by exact string match). */
 function isHondaAdv150(v){
   if(!v) return false;
-  return normText(v.merk) === 'honda' && normText(v.model).replace(/\s+/g, '').includes('adv150');
+  return normText(v.merk) === 'honda' && normText(v.model).replace(/\s+/g, '').includes('adv150') && (!window.SVCPKG || SVCPKG.modelOk('adv150', v));
 }
 
 // Overrides interval VALUES only on existing generic ids, applied when the vehicle matches.
@@ -7571,6 +8343,7 @@ document.getElementById('componentForm').addEventListener('submit', async functi
   if(!programVehicleId){ showMsg('icFormMsg','err','Pilih kendaraan dulu.'); return; }
   const nama = fieldOrNull('ic_nama');
   if(!nama){ showMsg('icFormMsg','err','Nama komponen wajib diisi.'); return; }
+  { const g = window.SVCPKG ? SVCPKG.guardTask(vehicles.find(x => x.id === programVehicleId), fieldOrNull('ic_task_key')) : null; if(g){ showMsg('icFormMsg','err',g); return; } }
   const replacesSel = document.getElementById('ic_replaces');
   const replacesId = replacesSel ? replacesSel.value : '';
   const payload = {
@@ -8091,6 +8864,7 @@ document.getElementById('workOrderForm').addEventListener('submit', async functi
   if(!programVehicleId){ showMsg('woFormMsg','err','Pilih kendaraan dulu.'); return; }
   const judul = fieldOrNull('wo_judul');
   if(!judul){ showMsg('woFormMsg','err','Judul wajib diisi.'); return; }
+  { const g = (window.SVCPKG && pendingWoTaskKey) ? SVCPKG.guardTask(vehicles.find(x => x.id === programVehicleId), pendingWoTaskKey) : null; if(g){ showMsg('woFormMsg','err',g); return; } }
   const payload = {
     kendaraan_id: programVehicleId,
     judul,
@@ -8489,6 +9263,7 @@ document.getElementById('jcAddForm').addEventListener('submit', async function(e
   if(!sb || !jcActiveWorkOrderId) return;
   const judul = fieldOrNull('jc_judul');
   if(!judul){ showMsg('jcMsg','err','Judul tugas wajib diisi.'); return; }
+  { const _wo = workOrders.find(w => w.id === jcActiveWorkOrderId); const g = (window.SVCPKG && _wo) ? SVCPKG.guardTask(vehicles.find(x => x.id === _wo.kendaraan_id), fieldOrNull('jc_task')) : null; if(g){ showMsg('jcMsg','err',g); return; } }
   const existing = jobCards.filter(j => j.work_order_id === jcActiveWorkOrderId);
   const payload = {
     work_order_id: jcActiveWorkOrderId,
@@ -13422,7 +14197,7 @@ const PROFILES6 = {
   }
 };
 const KIND_LABEL = { milestone:'Milestone', annual_inspection:'Annual Inspection', regular_replacement:'Regular Replacement', pre_ride:'Pre-Ride' };
-function profileFor(v){ if(!v) return null; return Object.keys(PROFILES6).map(k => PROFILES6[k]).find(p => p.match(v)) || null; }
+function profileFor(v){ if(!v) return null; return Object.keys(PROFILES6).map(k => PROFILES6[k]).find(p => p.match(v) && (!window.SVCPKG || SVCPKG.profileAllowed(p, v))) || null; }
 function coverage(v, p){
   const out = [];
   const add = (k, ok, t) => out.push({ k, ok, t });
@@ -13822,6 +14597,7 @@ async function createPlanned(c, how){
   if(PB.busy[key]) return { skip:true };
   PB.busy[key] = true;
   try{
+    { const _g = window.SVCPKG ? SVCPKG.guardTask((typeof vehicles !== 'undefined' ? vehicles : []).find(x => x.id === c.vid), c.tpl.id) : null; if(_g) return { error:{ message:_g } }; }
     const payload = { kendaraan_id:c.vid, plan_key:c.key, task_key:c.tpl.id, judul:'Planned: ' + c.name, status:'open', prioritas:'normal',
       deskripsi:'Dibuat oleh Plan Board (' + (how || c.trigger || 'manual') + '). Target ' + (c.targetKm != null ? fk(c.targetKm) + ' km' : 'tanggal') + '.', tanggal_target:ymd(c.sched || c.orig), km_target:c.targetKm != null ? Math.round(c.targetKm) : null,
       catatan:'Auto/Planned — Plan Board' };
@@ -14549,7 +15325,7 @@ function guessKelas(name){
 }
 function guessKelompok(name){
   const n = low(name);
-  if(/baterai traksi|hv battery|battery pack|high voltage|inverter|\bbms\b|dc-?dc|onboard charger|charging|charge port|konektor cas|kabel cas|motor traksi|motor listrik|kabel hv/.test(n)) return 'Baterai & HV (listrik)';
+  if(/baterai traksi|hv battery|battery pack|high voltage|inverter|\bbms\b|dc-?dc|on ?board charger|charging|charge port|konektor cas|kabel cas|motor traksi|motor listrik|kabel hv/.test(n)) return 'Baterai & HV (listrik)';
   if(/\bfilter\b|saringan/.test(n)) return 'Filter';
   if(/oli|minyak|coolant|pelumas|grease|gemuk|\batf\b|fluid|air radiator/.test(n)) return 'Cairan & Pelumas';
   if(/kampas|brake|cakram|disc|piringan|tromol|kaliper|caliper|master rem|selang rem|\brem\b/.test(n)) return 'Rem';
@@ -14567,7 +15343,7 @@ function guessKelompok(name){
 const REQ = [
   { re:/busi|spark plug|glow plug|oli mesin|engine oil|filter oli|oil filter|piston|ring piston|klep\b|valve|kamprat|camshaft|timing belt|timing chain|rantai keteng|cam chain|karburator|injektor|injector|throttle body|knalpot|exhaust|catalytic|filter bensin|fuel filter|fuel pump|pompa bensin|filter solar|turbo|filter udara|air filter|air cleaner|tangki bensin|tangki bahan bakar|roller cvt|kampas ganda|belt cvt|cvt belt/,
     powertrain:['bensin_diesel', 'hybrid'], why:'memerlukan mesin pembakaran' },
-  { re:/baterai traksi|hv battery|battery pack|high voltage|inverter|\bbms\b|dc-?dc|motor traksi|motor listrik|kabel hv|onboard charger|charging|charge port|konektor cas|kabel cas/,
+  { re:/baterai traksi|hv battery|battery pack|high voltage|inverter|\bbms\b|dc-?dc|motor traksi|motor listrik|kabel hv|on ?board charger|charging|charge port|konektor cas|kabel cas/,
     powertrain:['listrik', 'hybrid'], why:'memerlukan sistem tegangan tinggi' },
   { re:/plat kopling|clutch disc|clutch cover|master kopling|release bearing|bearing pelepas|kampas kopling(?!.*(cvt|ganda|sentrifugal))/,
     transmisi:['manual'], why:'hanya untuk transmisi manual' },
@@ -14576,7 +15352,14 @@ const REQ = [
   { re:/rantai roda|drive chain|chain set|sprocket|gir depan|gir belakang|kick starter|roller cvt|kampas ganda/,
     kategori:['motor'], why:'komponen khas sepeda motor' },
   { re:/airbag|filter kabin|cabin filter|filter ac|link stabilizer|kompresor ac|ac compressor|tie rod end/,
-    kategori:['mobil', 'niaga'], why:'komponen khas mobil/niaga' }
+    kategori:['mobil', 'niaga'], why:'komponen khas mobil/niaga' },
+  /* Rev 15: celah hasil audit tipe kendaraan */
+  { re:/oli transmisi manual|manual transmission (?:oil|fluid)|gear oil manual|oli persneling|oli gigi manual/, transmisi:['manual'], why:'khusus transmisi manual' },
+  { re:/\batf\b|automatic transmission|oli transmisi otomatis|transmisi otomatis|cvt fluid|oli cvt|oli transmisi matic/, transmisi:['matic'], kategori:['mobil', 'niaga', 'lainnya'], why:'khusus transmisi matic/otomatis mobil/niaga' },
+  { re:/reduction gear|gearbox reduksi|oli reduksi|reduction oil|reduction gear oil/, powertrain:['listrik'], why:'khusus penggerak listrik (reduction gear)' },
+  { re:/kick ?starter|engkol starter|selahan/, powertrain:['bensin_diesel', 'hybrid'], kategori:['motor'], why:'memerlukan mesin pembakaran motor' },
+  { re:/on ?board charger|charge port|charging port|konektor cas|kabel cas|charging cable|socket cas/, powertrain:['listrik'], why:'khusus kendaraan listrik (hybrid non-plug-in tidak punya port cas)' },
+  { re:/v-?belt cvt|cvt v-?belt|v-?belt (?:skuter|scooter|matic)/, kategori:['motor'], why:'komponen khas skuter matic' }
 ];
 function infer(name){
   const n = low(name), out = { powertrain:null, kategori:null, transmisi:null, reasons:[] };
@@ -19374,7 +20157,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:13,date:'2026-10-31'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:15,date:'2026-10-31'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -19569,6 +20352,132 @@ register();
   setInterval(function () { if (S && (!S.sel.isConnected || S.sel.disabled)) close(false); }, 250);
 
   window.SelectSearch = { version: 1, open: open, close: function () { close(true); }, isOpen: function () { return !!S; } };
+})();
+
+</script>
+<script id="svcpkgScript">
+window.SVCPKG_DATA={"versi":"2026-10-31-r15","kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"kelas":[{"kat":"motor","pt":"bensin_diesel","tr":"manual","key":"motor|bensin_diesel|manual"},{"kat":"motor","pt":"bensin_diesel","tr":"matic","key":"motor|bensin_diesel|matic"},{"kat":"motor","pt":"hybrid","tr":"manual","key":"motor|hybrid|manual"},{"kat":"motor","pt":"hybrid","tr":"matic","key":"motor|hybrid|matic"},{"kat":"motor","pt":"listrik","tr":"none","key":"motor|listrik|none"},{"kat":"mobil","pt":"bensin_diesel","tr":"manual","key":"mobil|bensin_diesel|manual"},{"kat":"mobil","pt":"bensin_diesel","tr":"matic","key":"mobil|bensin_diesel|matic"},{"kat":"mobil","pt":"hybrid","tr":"manual","key":"mobil|hybrid|manual"},{"kat":"mobil","pt":"hybrid","tr":"matic","key":"mobil|hybrid|matic"},{"kat":"mobil","pt":"listrik","tr":"none","key":"mobil|listrik|none"},{"kat":"niaga","pt":"bensin_diesel","tr":"manual","key":"niaga|bensin_diesel|manual"},{"kat":"niaga","pt":"bensin_diesel","tr":"matic","key":"niaga|bensin_diesel|matic"},{"kat":"niaga","pt":"hybrid","tr":"manual","key":"niaga|hybrid|manual"},{"kat":"niaga","pt":"hybrid","tr":"matic","key":"niaga|hybrid|matic"},{"kat":"niaga","pt":"listrik","tr":"none","key":"niaga|listrik|none"}],"registri":{"oli_mesin":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Change Engine Oil","trigger":"km","interval":{"motor":3000,"mobil":8000,"niaga":8000,"lainnya":5000},"intervalBulan":null},"filter_oli":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Change Oil Filter","trigger":"km","interval":{"motor":6000,"mobil":10000,"niaga":10000,"lainnya":8000},"intervalBulan":null},"filter_udara":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Change Air Filter","trigger":"km","interval":{"motor":9000,"mobil":15000,"niaga":15000,"lainnya":12000},"intervalBulan":null},"ban_rotasi":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Rotate & Check Tires","trigger":"km","interval":{"motor":8000,"mobil":10000,"niaga":10000,"lainnya":10000},"intervalBulan":null},"ban_ganti":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Replace Tire","trigger":"km","interval":{"motor":20000,"mobil":40000,"niaga":35000,"lainnya":30000},"intervalBulan":null},"kampas_rem":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Change Brake Pads","trigger":"km","interval":{"motor":12000,"mobil":20000,"niaga":20000,"lainnya":15000},"intervalBulan":null},"shock_depan_check":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Check Shock Breaker Front","trigger":"km","interval":{"motor":10000,"mobil":20000,"niaga":20000,"lainnya":15000},"intervalBulan":null},"shock_belakang_check":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Check Shock Breaker Rear","trigger":"km","interval":{"motor":10000,"mobil":20000,"niaga":20000,"lainnya":15000},"intervalBulan":null},"shock_oli_ganti":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Change Shock Breaker Oil","trigger":"km","interval":{"motor":24000,"mobil":40000,"niaga":40000,"lainnya":30000},"intervalBulan":null},"servis_besar":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Major Periodic Service","trigger":"km","interval":{"motor":24000,"mobil":40000,"niaga":40000,"lainnya":30000},"intervalBulan":null},"aki":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Replace Battery","trigger":"waktu","interval":null,"intervalBulan":24},"timing":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Timing Belt / Timing Chain","trigger":"waktu","interval":null,"intervalBulan":60},"rem_cairan":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid","listrik"],"tr":["manual","matic","none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Check & Change Brake Fluid","trigger":"waktu","interval":null,"intervalBulan":24},"coolant":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Check & Change Radiator Fluid (Coolant)","trigger":"waktu","interval":null,"intervalBulan":24},"busi_ganti":{"kat":["motor","mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template generik aplikasi","verif":"estimasi","nama":"Replace Spark Plug","trigger":"km","interval":{"motor":10000,"mobil":20000,"niaga":20000,"lainnya":15000},"intervalBulan":null},"ev_baterai_soh":{"kat":["motor","mobil","niaga","lainnya"],"pt":["listrik"],"tr":["none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template EV aplikasi","verif":"estimasi","nama":"Check Traction Battery Health (SOH)","trigger":"waktu","interval":null,"intervalBulan":12},"ev_charging_port":{"kat":["motor","mobil","niaga","lainnya"],"pt":["listrik"],"tr":["none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template EV aplikasi","verif":"estimasi","nama":"Check Charging Port & Cable","trigger":"waktu","interval":null,"intervalBulan":6},"ev_reduction_gear_oil":{"kat":["motor","mobil","niaga","lainnya"],"pt":["listrik"],"tr":["none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template EV aplikasi","verif":"estimasi","nama":"Check/Change Reduction Gear Oil","trigger":"km","interval":{"motor":20000,"mobil":40000,"niaga":40000,"lainnya":20000},"intervalBulan":null},"oli_transmisi_manual":{"kat":["mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["manual"],"merk":null,"model":null,"exceptModel":null,"sumber":"template transmisi manual (mobil/niaga)","verif":"estimasi","nama":"Check/Change Manual Transmission Oil","trigger":"km","interval":{"mobil":40000,"niaga":40000,"lainnya":40000}},"oli_cvt_matic":{"kat":["mobil","niaga","lainnya"],"pt":["bensin_diesel","hybrid"],"tr":["matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template transmisi matic (mobil/niaga)","verif":"estimasi","nama":"Check/Change CVT / Automatic Transmission Fluid","trigger":"km","interval":{"mobil":40000,"niaga":40000,"lainnya":40000}},"cvt_roller_vbelt":{"kat":["motor"],"pt":["bensin_diesel","hybrid"],"tr":["matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template CVT motor","verif":"estimasi","nama":"Check/Replace CVT Roller & V-Belt","trigger":"km","interval":{"motor":24000}},"moto_chain_service":{"kat":["motor"],"pt":["bensin_diesel","hybrid"],"tr":["manual"],"merk":null,"model":null,"exceptModel":null,"sumber":"template baru Rev 15 (celah audit)","verif":"estimasi","nama":"Check, Clean & Lubricate Drive Chain","trigger":"km","interval":{"motor":4000,"lainnya":4000},"intervalBulan":null,"alasan":"Motor manual berpenggerak rantai tidak punya template rantai/gir","baru":true},"moto_clutch_freeplay":{"kat":["motor"],"pt":["bensin_diesel","hybrid"],"tr":["manual"],"merk":null,"model":null,"exceptModel":null,"sumber":"template baru Rev 15 (celah audit)","verif":"estimasi","nama":"Check & Adjust Clutch Free Play","trigger":"km","interval":{"motor":6000,"lainnya":6000},"intervalBulan":null,"alasan":"Motor manual tidak punya template kopling","baru":true},"moto_final_drive_oil":{"kat":["motor"],"pt":["bensin_diesel","hybrid"],"tr":["matic"],"merk":null,"model":null,"exceptModel":["adv150"],"sumber":"template baru Rev 15 (celah audit)","verif":"estimasi","nama":"Replace Final Drive Oil","trigger":"km","interval":{"motor":12000,"lainnya":12000},"intervalBulan":24,"alasan":"Skuter matic generik tidak punya template oli gardan (ADV150 punya sendiri)","baru":true},"ev_battery_coolant":{"kat":["mobil","niaga"],"pt":["listrik"],"tr":["none"],"merk":null,"model":null,"exceptModel":null,"sumber":"template baru Rev 15 (celah audit)","verif":"estimasi","nama":"Check Traction Battery Coolant Level","trigger":"waktu","interval":null,"intervalBulan":12,"alasan":"EV roda empat berpendingin cairan: coolant disembunyikan bersama template ICE","baru":true},"hyb_hv_battery_check":{"kat":["mobil","niaga","motor"],"pt":["hybrid"],"tr":["manual","matic"],"merk":null,"model":null,"exceptModel":null,"sumber":"template baru Rev 15 (celah audit)","verif":"estimasi","nama":"Check Hybrid Battery, Cooling Fan & Air Inlet","trigger":"waktu","interval":null,"intervalBulan":12,"alasan":"Kendaraan hybrid tidak punya template baterai/tegangan tinggi","baru":true},"adv150_saluran_bbm":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Fuel Line","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_gas_tangan":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Throttle Grip Operation","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_pernafasan_bak":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Clean Crankcase Breather","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_busi_check":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Spark Plug","trigger":"km","interval":{"motor":12000},"intervalBulan":null,"offsetKm":6000},"adv150_busi_ganti":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Replace Spark Plug","trigger":"km","interval":{"motor":12000},"intervalBulan":null,"offsetKm":null},"adv150_klep":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Valve Clearance","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_saringan_oli":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Clean Oil Strainer Screen","trigger":"km","interval":{"motor":12000},"intervalBulan":null,"offsetKm":null},"adv150_idle":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Idle Speed","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_coolant_check":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Coolant Level & Condition","trigger":"km","interval":{"motor":12000},"intervalBulan":null,"offsetKm":null},"adv150_sistem_pendingin":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Cooling System","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_drivebelt_check":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Drive Belt","trigger":"km","interval":{"motor":24000},"intervalBulan":null,"offsetKm":12000},"adv150_drivebelt_ganti":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Replace Drive Belt","trigger":"km","interval":{"motor":24000},"intervalBulan":null,"offsetKm":null},"adv150_roller_ganti":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Change Roller Set (CVT)","trigger":"km","interval":{"motor":24000},"intervalBulan":null,"offsetKm":null},"adv150_final_drive_oil":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Replace Final Drive Oil","trigger":"waktu","interval":null,"intervalBulan":24,"offsetKm":null},"adv150_aki_check":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Battery Condition","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_rem_cairan_check":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Brake Fluid Level","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_kampas_rem_check":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Brake Pad Wear","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_sistem_rem":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Brake System","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_lampu_depan":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Headlight Aim","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_kampas_kopling":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Clutch Wear (CVT)","trigger":"km","interval":{"motor":12000},"intervalBulan":null,"offsetKm":null},"adv150_standar_samping":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Side Stand","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_suspensi":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Suspension","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_mur_baut":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Nuts, Bolts & Fasteners","trigger":"km","interval":{"motor":12000},"intervalBulan":null,"offsetKm":null},"adv150_roda_ban":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Wheels/Tires","trigger":"km","interval":{"motor":6000},"intervalBulan":null,"offsetKm":null},"adv150_bantalan_kemudi":{"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"honda","model":"adv150","exceptModel":null,"sumber":"Honda ADV150 ABS — Jadwal Perawatan Berkala","verif":"profil","nama":"Check Steering Head Bearing","trigger":"km","interval":{"motor":12000},"intervalBulan":null,"offsetKm":null},"prf_ertiga_valve":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Valve Clearance","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_ertiga_belt_inspect":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Engine Accessory Drive Belt","trigger":"km","interval":{"mobil":15000,"lainnya":15000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_belt_replace":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Replace Engine Accessory Drive Belt","trigger":"km","interval":{"mobil":75000,"lainnya":75000},"intervalBulan":null,"offsetKm":null,"kondisional":null},"prf_ertiga_exhaust":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Exhaust System (except catalyst)","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_ertiga_fuel_lines":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Fuel Lines","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_ertiga_fuel_filter":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Replace Fuel Filter","trigger":"km","interval":{"mobil":105000,"lainnya":105000},"intervalBulan":null,"offsetKm":null,"kondisional":null},"prf_ertiga_brake_pads":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Brake Discs & Pads (Front)","trigger":"km","interval":{"mobil":15000,"lainnya":15000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_brake_hoses":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Brake Hoses & Pipes","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_ertiga_tyres":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Tyres/Wheels","trigger":"km","interval":{"mobil":15000,"lainnya":15000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_suspension":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Suspension System","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_ertiga_steering":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Steering System","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_ertiga_mt_oil":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Replace Manual Transmission Oil (SUZUKI GEAR OIL 75W-80)","trigger":"km","interval":{"mobil":150000,"lainnya":150000},"intervalBulan":120,"offsetKm":null,"kondisional":null},"prf_ertiga_at_fluid":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Automatic Transmission Fluid Level","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_ertiga_at_change":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Change Automatic Transmission Fluid","trigger":"km","interval":{"mobil":165000,"lainnya":165000},"intervalBulan":null,"offsetKm":null,"kondisional":null},"prf_ertiga_ac_filter":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Replace Air Conditioner Filter (if equipped)","trigger":"km","interval":{"mobil":45000,"lainnya":45000},"intervalBulan":36,"offsetKm":null,"kondisional":"jika terpasang"},"prf_ertiga_drain_gasket":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Replace Drain Plug Gasket","trigger":"km","interval":{"mobil":15000,"lainnya":15000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_cooling_system":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Engine Cooling System","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_clutch":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check & Adjust Clutch","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_brake_system":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Brake System & Parking Brake","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_underbody_bolts":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Underbody Bolts & Nuts","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_door_hinges":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check & Lubricate Door Hinges, Locks & Remote Control","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_lights":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Exterior & Interior Lights","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_wipers":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Wipers & Washer","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_battery":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Battery & Electrolyte Level","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_horn":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Horn","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_windows_lock":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Power Windows & Central Door Lock","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_mirrors":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Electric Door Mirrors","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_ac_system":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Air Conditioning System","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":"if equipped"},"prf_ertiga_scan":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Perform Diagnostic Scan (Suzuki Diagnostic Tool)","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":null,"offsetKm":5000,"kondisional":null},"prf_ertiga_air_filter_clean":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check & Clean Air Filter","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":null,"offsetKm":10000,"kondisional":null},"prf_ertiga_brake_drums":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check & Clean Brake Linings & Drums","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":null,"offsetKm":10000,"kondisional":null},"prf_ertiga_ps_fluid":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check & Top Up Power Steering Fluid","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":null,"offsetKm":10000,"kondisional":"if equipped"},"prf_ertiga_mt_oil_level":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check & Top Up Manual Transmission Oil","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":null,"offsetKm":10000,"kondisional":null},"prf_ertiga_wheel_bearings":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Wheel Bearing Condition","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":null,"offsetKm":10000,"kondisional":null},"prf_ertiga_engine_mount":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Engine Mounting","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":null,"offsetKm":20000,"kondisional":null},"prf_ertiga_driveshaft":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Drive Shafts & Boots","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":null,"offsetKm":20000,"kondisional":null},"prf_ertiga_tie_rod":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Tie Rod Ball Joints & Dust Covers","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":null,"offsetKm":20000,"kondisional":null},"prf_ertiga_ac_filter_check":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Air Conditioner Filter","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":null,"offsetKm":20000,"kondisional":"if equipped"},"prf_ertiga_transfer_oil":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Replace Transfer Case Oil","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":null,"offsetKm":null,"kondisional":"if equipped"},"prf_ertiga_diff_oil":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Replace Differential Oil","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":null,"offsetKm":null,"kondisional":"if equipped"},"prf_ertiga_head_bolts":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Cylinder Head & Manifold Nuts/Bolts","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_ign_timing":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Ignition Timing","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":10000,"kondisional":null},"prf_ertiga_spark_check":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Spark Plug","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":10000,"kondisional":null},"prf_ertiga_fuel_filter_check":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Fuel Filter","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":18,"offsetKm":null,"kondisional":null},"prf_ertiga_evap":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Evaporative Emission Control System","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_pcv":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check PCV Valve","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_exhaust_emission":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Exhaust Emission","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_ertiga_instruments":{"kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"merk":"suzuki","model":"ertiga","exceptModel":null,"sumber":"Suzuki All New Ertiga (manual global 73RS3-01E)","verif":"profil","nama":"Check Instrument Panel & Body Electrical","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":10000,"kondisional":null},"prf_picanto_atf_change":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Change Automatic Transmission Fluid (ATF)","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":24,"offsetKm":null,"kondisional":null},"prf_picanto_valve":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Valve Clearance","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_head_bolts":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Cylinder Head & Manifold Nuts/Bolts","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_engine_mount":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Engine Mounting","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_drive_belt":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Drive Belt","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":18,"offsetKm":null,"kondisional":null},"prf_picanto_ign_timing":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Ignition Timing","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_fuel_filter":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Fuel Filter","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":18,"offsetKm":null,"kondisional":null},"prf_picanto_fuel_lines":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Fuel Lines","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_evap":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Evaporative Emission Control System","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_pcv":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check PCV Valve","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_exhaust_emission":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Exhaust Emission","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_brake_pads":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Brake Disc/Pad & Drum/Shoe","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_brake_hoses":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Brake Hoses & Pipes","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_parking_brake":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Parking Brake Cable & Lever","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_clutch_pedal":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Clutch Pedal","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":6,"offsetKm":null,"kondisional":null},"prf_picanto_wheels":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Wheels","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":6,"offsetKm":null,"kondisional":null},"prf_picanto_driveshaft":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Drive Shaft / Propeller Shaft","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":18,"offsetKm":null,"kondisional":null},"prf_picanto_suspension":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Suspension System","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_steering":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Steering System","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_doors":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Doors, Hinges & Locks","trigger":"km","interval":{"mobil":30000,"lainnya":30000},"intervalBulan":18,"offsetKm":null,"kondisional":null},"prf_picanto_power_steering":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Power Steering","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_instruments":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Instrument Panel & Body Electrical","trigger":"km","interval":{"mobil":20000,"lainnya":20000},"intervalBulan":12,"offsetKm":null,"kondisional":null},"prf_picanto_wipers":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Check Wiper Blades","trigger":"km","interval":{"mobil":10000,"lainnya":10000},"intervalBulan":6,"offsetKm":null,"kondisional":null},"prf_picanto_ac":{"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"merk":"kia","model":"picanto","exceptModel":null,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","nama":"Replace A/C Filter Element (if equipped)","trigger":"km","interval":{"mobil":40000,"lainnya":40000},"intervalBulan":24,"offsetKm":null,"kondisional":"jika dilengkapi"}},"paket":[{"kode":"SUZ-ERTIGA-A","nama":"Suzuki All New Ertiga — Periodic Service Package A","kind":"bundle","kumulatif":true,"urutan":1,"merk":"suzuki","model":"ertiga","kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"interval_km":10000,"offset_km":5000,"sumber":"Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D","verif":"buku_servis","catatan":"Kumulatif: paket yang lebih tinggi memuat seluruh item paket di bawahnya.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"prf_ertiga_drain_gasket","urut":2},{"template_key":"prf_ertiga_belt_inspect","urut":3},{"template_key":"prf_ertiga_cooling_system","urut":4},{"template_key":"prf_ertiga_clutch","urut":5},{"template_key":"prf_ertiga_brake_system","urut":6},{"template_key":"prf_ertiga_underbody_bolts","urut":7},{"template_key":"prf_ertiga_tyres","urut":8},{"template_key":"prf_ertiga_door_hinges","urut":9},{"template_key":"prf_ertiga_lights","urut":10},{"template_key":"prf_ertiga_suspension","urut":11},{"template_key":"prf_ertiga_wipers","urut":12},{"template_key":"prf_ertiga_battery","urut":13},{"template_key":"prf_ertiga_horn","urut":14},{"template_key":"prf_ertiga_windows_lock","urut":15},{"template_key":"prf_ertiga_mirrors","urut":16},{"template_key":"prf_ertiga_ac_system","urut":17},{"template_key":"prf_ertiga_steering","urut":18},{"template_key":"prf_ertiga_scan","urut":19}]},{"kode":"SUZ-ERTIGA-B","nama":"Suzuki All New Ertiga — Periodic Service Package B","kind":"bundle","kumulatif":true,"urutan":2,"merk":"suzuki","model":"ertiga","kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"interval_km":20000,"offset_km":10000,"sumber":"Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D","verif":"buku_servis","catatan":"Kumulatif: paket yang lebih tinggi memuat seluruh item paket di bawahnya.","items":[{"template_key":"filter_oli","urut":1},{"template_key":"prf_ertiga_air_filter_clean","urut":2},{"template_key":"prf_ertiga_brake_drums","urut":3},{"template_key":"prf_ertiga_brake_pads","urut":4},{"template_key":"prf_ertiga_ps_fluid","urut":5},{"template_key":"prf_ertiga_mt_oil_level","urut":6},{"template_key":"prf_ertiga_steering","urut":7},{"template_key":"prf_ertiga_wheel_bearings","urut":8},{"template_key":"prf_ertiga_battery","urut":9},{"template_key":"prf_ertiga_scan","urut":10}]},{"kode":"SUZ-ERTIGA-C","nama":"Suzuki All New Ertiga — Periodic Service Package C","kind":"bundle","kumulatif":true,"urutan":3,"merk":"suzuki","model":"ertiga","kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"interval_km":40000,"offset_km":20000,"sumber":"Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D","verif":"buku_servis","catatan":"Kumulatif: paket yang lebih tinggi memuat seluruh item paket di bawahnya.","items":[{"template_key":"busi_ganti","urut":1},{"template_key":"filter_udara","urut":2},{"template_key":"prf_ertiga_engine_mount","urut":3},{"template_key":"prf_ertiga_exhaust","urut":4},{"template_key":"prf_ertiga_fuel_lines","urut":5},{"template_key":"prf_ertiga_driveshaft","urut":6},{"template_key":"prf_ertiga_tie_rod","urut":7},{"template_key":"prf_ertiga_suspension","urut":8},{"template_key":"prf_ertiga_ac_filter_check","urut":9},{"template_key":"prf_ertiga_scan","urut":10}]},{"kode":"SUZ-ERTIGA-D","nama":"Suzuki All New Ertiga — Periodic Service Package D","kind":"bundle","kumulatif":true,"urutan":4,"merk":"suzuki","model":"ertiga","kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"],"interval_km":40000,"offset_km":0,"sumber":"Buku servis Indonesia (foto pengguna), Paket Service Berkala A–D","verif":"buku_servis","catatan":"Item 46 tidak terlihat pada foto (kemungkinan SCAN SDT, sudah tercakup). Interval buku servis berbeda dari manual global untuk beberapa komponen: lihat keputusan K-01.","items":[{"template_key":"prf_ertiga_fuel_filter","urut":1},{"template_key":"rem_cairan","urut":2},{"template_key":"prf_ertiga_transfer_oil","urut":3},{"template_key":"prf_ertiga_mt_oil","urut":4},{"template_key":"prf_ertiga_diff_oil","urut":5},{"template_key":"coolant","urut":6}]},{"kode":"HND-ADV150-BERKALA","nama":"Honda ADV150 ABS — Periodic Maintenance Schedule","kind":"schedule","kumulatif":false,"urutan":1,"merk":"honda","model":"adv150","kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"interval_km":6000,"offset_km":0,"horizon_km":36000,"sumber":"Honda ADV150 ABS 2019","verif":"profil","catatan":"Jadwal berbasis kunjungan: tiap 6.000 km, item muncul sesuai interval dan offset masing-masing; item berbasis waktu (bulan) tampil terpisah.","items":[{"template_key":"adv150_busi_ganti","urut":1,"interval_km":12000,"offset_km":null,"interval_bulan":null},{"template_key":"filter_udara","urut":2,"interval_km":18000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_drivebelt_check","urut":3,"interval_km":24000,"offset_km":12000,"interval_bulan":null},{"template_key":"adv150_drivebelt_ganti","urut":4,"interval_km":24000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_kampas_kopling","urut":5,"interval_km":12000,"offset_km":null,"interval_bulan":null},{"template_key":"coolant","urut":6,"interval_km":null,"offset_km":null,"interval_bulan":36},{"template_key":"adv150_final_drive_oil","urut":7,"interval_km":24000,"offset_km":null,"interval_bulan":24},{"template_key":"rem_cairan","urut":8,"interval_km":24000,"offset_km":null,"interval_bulan":24},{"template_key":"adv150_roller_ganti","urut":9,"interval_km":24000,"offset_km":null,"interval_bulan":null},{"template_key":"oli_mesin","urut":10,"interval_km":6000,"offset_km":null,"interval_bulan":6},{"template_key":"adv150_saluran_bbm","urut":11,"interval_km":6000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_gas_tangan","urut":12,"interval_km":6000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_pernafasan_bak","urut":13,"interval_km":6000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_busi_check","urut":14,"interval_km":12000,"offset_km":6000,"interval_bulan":null},{"template_key":"adv150_klep","urut":15,"interval_km":6000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_saringan_oli","urut":16,"interval_km":12000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_idle","urut":17,"interval_km":6000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_coolant_check","urut":18,"interval_km":12000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_sistem_pendingin","urut":19,"interval_km":12000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_aki_check","urut":20,"interval_km":6000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_rem_cairan_check","urut":21,"interval_km":6000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_kampas_rem_check","urut":22,"interval_km":6000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_sistem_rem","urut":23,"interval_km":6000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_lampu_depan","urut":24,"interval_km":6000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_standar_samping","urut":25,"interval_km":6000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_suspensi","urut":26,"interval_km":6000,"offset_km":null,"interval_bulan":12},{"template_key":"adv150_mur_baut","urut":27,"interval_km":12000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_roda_ban","urut":28,"interval_km":6000,"offset_km":null,"interval_bulan":null},{"template_key":"adv150_bantalan_kemudi","urut":29,"interval_km":12000,"offset_km":null,"interval_bulan":12}]},{"kode":"KIA-PICANTO-BERKALA","nama":"Kia Picanto 2014 — Periodic Maintenance Schedule","kind":"schedule","kumulatif":false,"urutan":1,"merk":"kia","model":"picanto","kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"],"interval_km":10000,"offset_km":0,"horizon_km":60000,"sumber":"KIA Picanto 2014 (Indonesia)","verif":"profil","catatan":"Jadwal berbasis kunjungan: tiap 10.000 km, item muncul sesuai interval dan offset masing-masing; item berbasis waktu (bulan) tampil terpisah.","items":[{"template_key":"oli_mesin","urut":1,"interval_km":10000,"offset_km":null,"interval_bulan":6},{"template_key":"filter_oli","urut":2,"interval_km":10000,"offset_km":null,"interval_bulan":6},{"template_key":"coolant","urut":3,"interval_km":40000,"offset_km":null,"interval_bulan":24},{"template_key":"busi_ganti","urut":4,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"filter_udara","urut":5,"interval_km":40000,"offset_km":null,"interval_bulan":24},{"template_key":"rem_cairan","urut":6,"interval_km":40000,"offset_km":null,"interval_bulan":24},{"template_key":"oli_transmisi_manual","urut":7,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"ban_rotasi","urut":8,"interval_km":10000,"offset_km":null,"interval_bulan":6},{"template_key":"prf_picanto_atf_change","urut":9,"interval_km":40000,"offset_km":null,"interval_bulan":24},{"template_key":"prf_picanto_valve","urut":10,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_head_bolts","urut":11,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_engine_mount","urut":12,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_drive_belt","urut":13,"interval_km":30000,"offset_km":null,"interval_bulan":18},{"template_key":"prf_picanto_ign_timing","urut":14,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_fuel_filter","urut":15,"interval_km":30000,"offset_km":null,"interval_bulan":18},{"template_key":"prf_picanto_fuel_lines","urut":16,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_evap","urut":17,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_pcv","urut":18,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_exhaust_emission","urut":19,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_brake_pads","urut":20,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_brake_hoses","urut":21,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_parking_brake","urut":22,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_clutch_pedal","urut":23,"interval_km":10000,"offset_km":null,"interval_bulan":6},{"template_key":"prf_picanto_wheels","urut":24,"interval_km":10000,"offset_km":null,"interval_bulan":6},{"template_key":"prf_picanto_driveshaft","urut":25,"interval_km":30000,"offset_km":null,"interval_bulan":18},{"template_key":"prf_picanto_suspension","urut":26,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_steering","urut":27,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_doors","urut":28,"interval_km":30000,"offset_km":null,"interval_bulan":18},{"template_key":"prf_picanto_power_steering","urut":29,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_instruments","urut":30,"interval_km":20000,"offset_km":null,"interval_bulan":12},{"template_key":"prf_picanto_wipers","urut":31,"interval_km":10000,"offset_km":null,"interval_bulan":6},{"template_key":"prf_picanto_ac","urut":32,"interval_km":40000,"offset_km":null,"interval_bulan":24},{"template_key":"timing","urut":33,"interval_km":null,"offset_km":null,"interval_bulan":60},{"template_key":"kampas_rem","urut":34,"interval_km":20000,"offset_km":null,"interval_bulan":null}]},{"kode":"GEN-MOTOR-ICE-MT","nama":"Generic Maintenance Checklist — Motorcycle · Petrol/Diesel · Manual","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["motor"],"pt":["bensin_diesel"],"tr":["manual"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"moto_chain_service","urut":16},{"template_key":"moto_clutch_freeplay","urut":17}]},{"kode":"GEN-MOTOR-ICE-AT","nama":"Generic Maintenance Checklist — Motorcycle · Petrol/Diesel · Automatic/CVT","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"cvt_roller_vbelt","urut":16},{"template_key":"moto_final_drive_oil","urut":17}]},{"kode":"GEN-MOTOR-HEV-MT","nama":"Generic Maintenance Checklist — Motorcycle · Hybrid · Manual","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["motor"],"pt":["hybrid"],"tr":["manual"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"moto_chain_service","urut":16},{"template_key":"moto_clutch_freeplay","urut":17},{"template_key":"hyb_hv_battery_check","urut":18}]},{"kode":"GEN-MOTOR-HEV-AT","nama":"Generic Maintenance Checklist — Motorcycle · Hybrid · Automatic/CVT","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["motor"],"pt":["hybrid"],"tr":["matic"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"cvt_roller_vbelt","urut":16},{"template_key":"moto_final_drive_oil","urut":17},{"template_key":"hyb_hv_battery_check","urut":18}]},{"kode":"GEN-MOTOR-EV-1S","nama":"Generic Maintenance Checklist — Motorcycle · Electric · Single-speed","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["motor"],"pt":["listrik"],"tr":["none"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"ban_rotasi","urut":1},{"template_key":"ban_ganti","urut":2},{"template_key":"kampas_rem","urut":3},{"template_key":"shock_depan_check","urut":4},{"template_key":"shock_belakang_check","urut":5},{"template_key":"shock_oli_ganti","urut":6},{"template_key":"servis_besar","urut":7},{"template_key":"aki","urut":8},{"template_key":"rem_cairan","urut":9},{"template_key":"ev_baterai_soh","urut":10},{"template_key":"ev_charging_port","urut":11},{"template_key":"ev_reduction_gear_oil","urut":12}]},{"kode":"GEN-MOBIL-ICE-MT","nama":"Generic Maintenance Checklist — Car · Petrol/Diesel · Manual","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_transmisi_manual","urut":16}]},{"kode":"GEN-MOBIL-ICE-AT","nama":"Generic Maintenance Checklist — Car · Petrol/Diesel · Automatic/CVT","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["mobil"],"pt":["bensin_diesel"],"tr":["matic"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_cvt_matic","urut":16}]},{"kode":"GEN-MOBIL-HEV-MT","nama":"Generic Maintenance Checklist — Car · Hybrid · Manual","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["mobil"],"pt":["hybrid"],"tr":["manual"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_transmisi_manual","urut":16},{"template_key":"hyb_hv_battery_check","urut":17}]},{"kode":"GEN-MOBIL-HEV-AT","nama":"Generic Maintenance Checklist — Car · Hybrid · Automatic/CVT","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["mobil"],"pt":["hybrid"],"tr":["matic"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_cvt_matic","urut":16},{"template_key":"hyb_hv_battery_check","urut":17}]},{"kode":"GEN-MOBIL-EV-1S","nama":"Generic Maintenance Checklist — Car · Electric · Single-speed","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["mobil"],"pt":["listrik"],"tr":["none"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"ban_rotasi","urut":1},{"template_key":"ban_ganti","urut":2},{"template_key":"kampas_rem","urut":3},{"template_key":"shock_depan_check","urut":4},{"template_key":"shock_belakang_check","urut":5},{"template_key":"shock_oli_ganti","urut":6},{"template_key":"servis_besar","urut":7},{"template_key":"aki","urut":8},{"template_key":"rem_cairan","urut":9},{"template_key":"ev_baterai_soh","urut":10},{"template_key":"ev_charging_port","urut":11},{"template_key":"ev_reduction_gear_oil","urut":12},{"template_key":"ev_battery_coolant","urut":13}]},{"kode":"GEN-NIAGA-ICE-MT","nama":"Generic Maintenance Checklist — Light Commercial · Petrol/Diesel · Manual","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["niaga"],"pt":["bensin_diesel"],"tr":["manual"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_transmisi_manual","urut":16}]},{"kode":"GEN-NIAGA-ICE-AT","nama":"Generic Maintenance Checklist — Light Commercial · Petrol/Diesel · Automatic/CVT","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["niaga"],"pt":["bensin_diesel"],"tr":["matic"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_cvt_matic","urut":16}]},{"kode":"GEN-NIAGA-HEV-MT","nama":"Generic Maintenance Checklist — Light Commercial · Hybrid · Manual","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["niaga"],"pt":["hybrid"],"tr":["manual"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_transmisi_manual","urut":16},{"template_key":"hyb_hv_battery_check","urut":17}]},{"kode":"GEN-NIAGA-HEV-AT","nama":"Generic Maintenance Checklist — Light Commercial · Hybrid · Automatic/CVT","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["niaga"],"pt":["hybrid"],"tr":["matic"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"oli_mesin","urut":1},{"template_key":"filter_oli","urut":2},{"template_key":"filter_udara","urut":3},{"template_key":"ban_rotasi","urut":4},{"template_key":"ban_ganti","urut":5},{"template_key":"kampas_rem","urut":6},{"template_key":"shock_depan_check","urut":7},{"template_key":"shock_belakang_check","urut":8},{"template_key":"shock_oli_ganti","urut":9},{"template_key":"servis_besar","urut":10},{"template_key":"aki","urut":11},{"template_key":"timing","urut":12},{"template_key":"rem_cairan","urut":13},{"template_key":"coolant","urut":14},{"template_key":"busi_ganti","urut":15},{"template_key":"oli_cvt_matic","urut":16},{"template_key":"hyb_hv_battery_check","urut":17}]},{"kode":"GEN-NIAGA-EV-1S","nama":"Generic Maintenance Checklist — Light Commercial · Electric · Single-speed","kind":"checklist","kumulatif":false,"urutan":1,"merk":null,"model":null,"kat":["niaga"],"pt":["listrik"],"tr":["none"],"interval_km":null,"offset_km":null,"sumber":"Template generik aplikasi + template baru Rev 15","verif":"estimasi","catatan":"ESTIMASI: interval generik per kategori, bukan angka pabrikan. Gunakan paket model resmi bila ada, dan utamakan buku servis kendaraan.","items":[{"template_key":"ban_rotasi","urut":1},{"template_key":"ban_ganti","urut":2},{"template_key":"kampas_rem","urut":3},{"template_key":"shock_depan_check","urut":4},{"template_key":"shock_belakang_check","urut":5},{"template_key":"shock_oli_ganti","urut":6},{"template_key":"servis_besar","urut":7},{"template_key":"aki","urut":8},{"template_key":"rem_cairan","urut":9},{"template_key":"ev_baterai_soh","urut":10},{"template_key":"ev_charging_port","urut":11},{"template_key":"ev_reduction_gear_oil","urut":12},{"template_key":"ev_battery_coolant","urut":13}]}],"profil":{"honda_adv150_abs_2019":{"merk":"honda","model":"adv150","kat":["motor"],"pt":["bensin_diesel"],"tr":["matic"]},"suzuki_ertiga_manual_2020":{"merk":"suzuki","model":"ertiga","kat":["mobil"],"pt":["bensin_diesel","hybrid"],"tr":["manual","matic"]},"kia_picanto_2014_id":{"merk":"kia","model":"picanto","kat":["mobil"],"pt":["bensin_diesel"],"tr":["manual","matic"]}},"baru":["moto_chain_service","moto_clutch_freeplay","moto_final_drive_oil","ev_battery_coolant","hyb_hv_battery_check"]};
+/* Altair Auto — Pemetaan Paket Service Berkala per tipe kendaraan (Rev 15)
+   Aturan inti: template, part, dan paket HANYA berlaku pada kelas tipe yang cocok.
+   Kelas tipe = kategori (motor | mobil | niaga) x powertrain (bensin_diesel | hybrid | listrik) x transmisi (manual | matic | none[listrik]).
+   Data (window.SVCPKG_DATA) dihasilkan oleh build/gen.js dari satu sumber yang sama dengan SQL migrasi langkah 42. */
+(function(){
+'use strict';
+var D = window.SVCPKG_DATA; if(!D || window.SVCPKG) return;
+var REG = D.registri, PK = D.paket, PROF = D.profil;
+var PT_LBL = { bensin_diesel:'Bensin/Diesel', hybrid:'Hybrid', listrik:'Listrik' }, TR_LBL = { manual:'Manual', matic:'Matic/CVT', none:'Single-speed (listrik)' };
+var KAT_LBL = { motor:'Motor', mobil:'Mobil', niaga:'Niaga ringan', lainnya:'Lainnya' };
+var VERIF_LBL = { buku_servis:'Buku servis', profil:'Profil model (sumber tabel)', estimasi:'Estimasi, belum terverifikasi' };
+var norm = function(s){ return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); };
+var esc = function(s){ return (typeof escapeHtml === 'function') ? escapeHtml(String(s == null ? '' : s)) : String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+var fkm = function(n){ return n == null ? '–' : Number(n).toLocaleString('id-ID'); };
+function catKey(v){ try{ if(typeof catKeyOf === 'function') return catKeyOf(v); }catch(_){} return 'lainnya'; }
+/* kelas tipe sebuah kendaraan; transmisi null = belum diisi (kelas parsial) */
+function classOf(v){
+  v = v || {}; var kat = catKey(v), pt = v.powertrain || 'bensin_diesel';
+  var tr = pt === 'listrik' ? 'none' : (v.transmisi || null);
+  return { kat:kat, pt:pt, tr:tr, key:kat + '|' + pt + '|' + (tr || '?'), known:tr !== null };
+}
+function classLabel(c){ return (KAT_LBL[c.kat] || c.kat) + ' · ' + (PT_LBL[c.pt] || c.pt) + ' · ' + (c.tr ? (TR_LBL[c.tr] || c.tr) : 'transmisi belum diisi'); }
+function modelMatch(s, v){ if(!s.model) return true; return norm(v.merk) === norm(s.merk) && norm(v.model).indexOf(norm(s.model)) >= 0; }
+/* alasan penolakan (kosong = cocok). Kunci perilaku: transmisi tak diketahui hanya cocok bila cakupan memuat manual DAN matic, atau cakupan terikat model yang cocok. */
+function whyNot(s, v, c){
+  var out = [];
+  if(s.kat.indexOf(c.kat) < 0) out.push('kategori ' + (KAT_LBL[c.kat] || c.kat) + ' tidak termasuk (' + s.kat.map(function(k){ return KAT_LBL[k] || k; }).join('/') + ')');
+  if(s.pt.indexOf(c.pt) < 0) out.push('powertrain ' + (PT_LBL[c.pt] || c.pt) + ' tidak termasuk (' + s.pt.map(function(k){ return PT_LBL[k] || k; }).join('/') + ')');
+  if(c.tr === null){ if(!(s.tr.indexOf('manual') >= 0 && s.tr.indexOf('matic') >= 0) && !(s.model && modelMatch(s, v))) out.push('transmisi kendaraan belum diisi; item ini khusus ' + s.tr.map(function(k){ return TR_LBL[k] || k; }).join('/')); }
+  else if(s.tr.indexOf(c.tr) < 0) out.push('transmisi ' + (TR_LBL[c.tr] || c.tr) + ' tidak termasuk (' + s.tr.map(function(k){ return TR_LBL[k] || k; }).join('/') + ')');
+  if(s.model && !modelMatch(s, v)) out.push('khusus ' + s.merk.toUpperCase() + ' ' + s.model.toUpperCase());
+  if(s.exceptModel && s.exceptModel.some(function(m){ return norm(v.model).indexOf(norm(m)) >= 0; })) out.push('dikecualikan untuk model ini (sudah punya template sendiri)');
+  return out;
+}
+var unmapped = {};
+function scopeOf(id){ return REG[id] || null; }
+function allowed(id, v){ var s = REG[id]; if(!s){ unmapped[id] = 1; return true; } return whyNot(s, v, classOf(v)).length === 0; }
+function newTemplateObj(id){ var s = REG[id], o = { id:id, nama:s.nama, trigger:s.trigger }; if(s.interval) o.interval = JSON.parse(JSON.stringify(s.interval)); if(s.intervalBulan != null) o.intervalBulan = s.intervalBulan; if(s.offsetKm) o.offsetKm = s.offsetKm; o.svcNew = true; return o; }
+function filterTemplates(list, v){
+  var c = classOf(v), out = (list || []).filter(function(t){ var s = REG[t.id]; if(!s){ unmapped[t.id] = 1; return true; } return whyNot(s, v, c).length === 0; });
+  var have = {}; out.forEach(function(t){ have[t.id] = 1; });
+  (D.baru || []).forEach(function(id){ if(!have[id] && whyNot(REG[id], v, c).length === 0) out.push(newTemplateObj(id)); });
+  return out;
+}
+function profileAllowed(p, v){ var s = p && PROF[p.id]; if(!s) return true; var c = classOf(v); return whyNot({ kat:s.kat, pt:s.pt, tr:s.tr, model:s.model, merk:s.merk }, v, c).length === 0; }
+function profileNotice(p, v){ var s = p && PROF[p.id]; if(!s) return null; var w = whyNot({ kat:s.kat, pt:s.pt, tr:s.tr, model:s.model, merk:s.merk }, v, classOf(v)); return w.length ? w : null; }
+function modelOk(modelKey, v){ var s = Object.keys(PROF).map(function(k){ return PROF[k]; }).find(function(x){ return x.model === modelKey; }); if(!s) return true; return whyNot({ kat:s.kat, pt:s.pt, tr:s.tr, model:s.model, merk:s.merk }, v, classOf(v)).length === 0; }
+function guardTask(vehicle, taskKey){ if(!taskKey || !vehicle) return null; var s = REG[taskKey]; if(!s) return null; var w = whyNot(s, vehicle, classOf(vehicle)); return w.length ? ('Template "' + s.nama + '" tidak berlaku untuk kendaraan ini: ' + w.join('; ') + '.') : null; }
+/* ---- paket ---- */
+function pkgApplies(p, v){ return whyNot({ kat:p.kat, pt:p.pt, tr:p.tr, model:p.model, merk:p.merk }, v, classOf(v)).length === 0; }
+function packagesFor(v){
+  var c = classOf(v), list = PK.filter(function(p){ return pkgApplies(p, v); });
+  var specific = list.filter(function(p){ return p.model; });
+  /* kendaraan dengan paket khusus model (mis. Ertiga, ADV150) memakai paket itu saja; daftar periksa generik hanya untuk kendaraan tanpa profil model */
+  return specific.length ? specific : list.filter(function(p){ return p.kind !== 'checklist'; }).concat(list.filter(function(p){ return p.kind === 'checklist'; }));
+}
+function itemsFor(p, v){ var c = classOf(v); return p.items.filter(function(i){ var s = REG[i.template_key]; return !s || whyNot(s, v, c).length === 0; }); }
+function first(i, off){ return (off && off > 0) ? off : i; }
+function dueKm(interval, offset, K){ if(!interval) return false; var f = first(interval, offset); return K >= f && (K - f) % interval === 0; }
+function bundlesOf(v){ return packagesFor(v).filter(function(p){ return p.kind === 'bundle'; }).sort(function(a, b){ return a.urutan - b.urutan; }); }
+/* kunjungan berikutnya pada/ setelah km tertentu */
+function nextVisit(v, km){
+  var b = bundlesOf(v), K, step;
+  if(b.length){ step = 5000; K = Math.max(step, Math.ceil(Math.max(0, km) / step) * step); for(var guard = 0; guard < 400; guard++, K += step){ var hit = null; b.forEach(function(p){ if(dueKm(p.interval_km, p.offset_km, K)) hit = p; }); if(hit){ var upto = b.filter(function(p){ return p.urutan <= hit.urutan; }); var seen = {}, items = []; upto.forEach(function(p){ itemsFor(p, v).forEach(function(i){ if(!seen[i.template_key]){ seen[i.template_key] = 1; items.push(i.template_key); } }); }); return { kind:'bundle', km:K, pkg:hit, items:items }; } } return null; }
+  var sc = packagesFor(v).find(function(p){ return p.kind === 'schedule'; });
+  if(!sc) return null; step = sc.interval_km; K = Math.max(step, Math.ceil(Math.max(0, km) / step) * step);
+  var items = itemsFor(sc, v).filter(function(i){ return i.interval_km && dueKm(i.interval_km, i.offset_km, K); }).map(function(i){ return i.template_key; });
+  return { kind:'schedule', km:K, pkg:sc, items:items };
+}
+/* ---- audit mandiri (dipakai uji dan panel) ---- */
+function blockedFor(v){ var c = classOf(v), out = []; Object.keys(REG).forEach(function(id){ var w = whyNot(REG[id], v, c); if(w.length) out.push({ id:id, nama:REG[id].nama, why:w }); }); return out; }
+function vehicleNotices(v){
+  var n = [], c = classOf(v); if(!c.known) n.push('Transmisi kendaraan belum diisi: template khusus manual atau matic disembunyikan sampai Anda mengisinya di data kendaraan.');
+  Object.keys(PROF).forEach(function(k){ var s = PROF[k]; if(norm(v.merk) === norm(s.merk) && norm(v.model).indexOf(norm(s.model)) >= 0){ var w = profileNotice({ id:k }, v); if(w) n.push('Profil jadwal ' + s.merk.toUpperCase() + ' ' + s.model.toUpperCase() + ' tidak diterapkan karena ' + w.join('; ') + '. Jika data kendaraan salah isi, perbaiki di data kendaraan.'); } });
+  return n;
+}
+/* ---- penyambungan ke aplikasi ---- */
+var wrapped = false;
+function install(){
+  if(wrapped) return; wrapped = true;
+  if(typeof getEffectiveMaintTemplates === 'function'){
+    var orig = getEffectiveMaintTemplates;
+    var w = function(v){ return filterTemplates(orig(v), v); };
+    for(var k in orig){ try{ w[k] = orig[k]; }catch(_){} }
+    w.__svcpkg = true; getEffectiveMaintTemplates = w;
+  }
+  if(typeof tplNameOf === 'function'){
+    var on = tplNameOf; tplNameOf = function(id){ return on(id) || (REG[id] ? REG[id].nama : ''); };
+  }
+}
+/* ---- panel Service Packages ---- */
+var UI = { vid:null };
+function vehList(){ try{ return (typeof vehicles !== 'undefined' && vehicles) ? vehicles : []; }catch(_){ return []; } }
+function currentKm(v){ try{ if(typeof effectiveKmInfo === 'function'){ var e = effectiveKmInfo(v); if(e && e.km != null) return Number(e.km); } }catch(_){} return Number(v.km_saat_ini) || 0; }
+function pill(t, cls){ return '<span class="status-pill' + (cls ? ' ' + cls : '') + '">' + esc(t) + '</span>'; }
+function cad(p){ if(p.kind === 'bundle') return 'tiap ' + fkm(p.interval_km) + ' km, mulai ' + fkm(first(p.interval_km, p.offset_km)) + ' km'; if(p.kind === 'schedule') return 'kunjungan tiap ' + fkm(p.interval_km) + ' km'; return 'daftar periksa per item'; }
+function itemCad(i){ var s = REG[i.template_key] || {}, a = [];
+  var km = i.interval_km != null ? i.interval_km : (s.interval ? (s.interval.motor || s.interval.mobil || s.interval.niaga || s.interval.lainnya) : null), mo = i.interval_bulan != null ? i.interval_bulan : s.intervalBulan;
+  if(km) a.push('tiap ' + fkm(km) + ' km' + (i.offset_km ? ' (mulai ' + fkm(i.offset_km) + ')' : '')); if(mo) a.push('tiap ' + mo + ' bln'); return a.join(' / ') || '–'; }
+function itemRow(i, showCad){ var s = REG[i.template_key] || { nama:i.template_key }; return '<li><strong>' + esc(s.nama) + '</strong>' + (s.kondisional ? ' <span class="hint">(' + esc(s.kondisional) + ')</span>' : '') + (showCad ? ' <span class="hint">· ' + esc(itemCad(i)) + '</span>' : '') + '</li>'; }
+function render(){
+  var root = document.getElementById('svcpkgRoot'); if(!root) return;
+  var vs = vehList();
+  if(!vs.length){ root.innerHTML = '<div class="card"><p class="hint" style="margin:0;">Belum ada kendaraan. Tambahkan kendaraan di Vehicles, lalu buka lagi halaman ini.</p></div>' + legend(); return; }
+  if(!UI.vid || !vs.some(function(x){ return x.id === UI.vid; })) UI.vid = (typeof programVehicleId !== 'undefined' && vs.some(function(x){ return x.id === programVehicleId; })) ? programVehicleId : vs[0].id;
+  var v = vs.find(function(x){ return x.id === UI.vid; }), c = classOf(v), km = currentKm(v), nv = nextVisit(v, km), pk = packagesFor(v), notices = vehicleNotices(v), blocked = blockedFor(v);
+  var h = '<div class="card"><div class="field" style="max-width:420px;"><label for="svcpkgVeh">Kendaraan</label><select id="svcpkgVeh" onchange="SVCPKG.pick(this.value)">' + vs.map(function(x){ return '<option value="' + esc(x.id) + '"' + (x.id === UI.vid ? ' selected' : '') + '>' + esc([x.merk, x.model, x.tahun].filter(Boolean).join(' ')) + '</option>'; }).join('') + '</select></div>';
+  h += '<p style="margin:8px 0 0;"><strong>Kelas tipe:</strong> ' + esc(classLabel(c)) + ' · <span class="hint">KM terakhir ' + fkm(km) + '</span></p>';
+  notices.forEach(function(t){ h += '<p class="hint" style="margin:6px 0 0;color:var(--warn,#a35a00);">⚠ ' + esc(t) + '</p>'; });
+  h += '</div>';
+  if(nv){ var names = nv.items.map(function(id){ return (REG[id] || { nama:id }).nama; }); h += '<div class="card"><h3 style="margin-top:0;">Kunjungan service berikutnya</h3><p style="margin:0 0 6px;"><strong>' + (nv.kind === 'bundle' ? esc(nv.pkg.nama.replace(/^.*Package /, 'Paket ')) + ' ' : '') + 'pada ' + fkm(nv.km) + ' km</strong> · ' + (nv.km - km > 0 ? 'tinggal ' + fkm(nv.km - km) + ' km' : 'sudah waktunya') + ' · ' + pill(VERIF_LBL[nv.pkg.verif] || nv.pkg.verif, nv.pkg.verif === 'estimasi' ? '' : 'ok') + '</p><details><summary>' + names.length + ' pekerjaan pada kunjungan ini</summary><ul style="margin:6px 0 0 18px;">' + names.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details></div>'; }
+  else h += '<div class="card"><h3 style="margin-top:0;">Kunjungan service berikutnya</h3><p class="hint" style="margin:0;">Belum ada paket berbasis kunjungan untuk kelas ini. Gunakan daftar periksa di bawah; interval berlabel Estimasi.</p></div>';
+  pk.forEach(function(p){ var its = itemsFor(p, v), hid = p.items.length - its.length;
+    h += '<div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;"><h3 style="margin:0;">' + esc(p.nama) + '</h3>' + pill(VERIF_LBL[p.verif] || p.verif, p.verif === 'estimasi' ? '' : 'ok') + '</div><p class="hint" style="margin:6px 0;">' + esc(cad(p)) + (p.kumulatif ? ' · kumulatif' : '') + ' · ' + its.length + ' item' + (hid ? ' (' + hid + ' item tidak berlaku untuk kelas ini)' : '') + '</p><details><summary>Lihat item</summary><ul style="margin:6px 0 0 18px;">' + its.map(function(i){ return itemRow(i, p.kind !== 'bundle'); }).join('') + '</ul></details><p class="hint" style="margin:6px 0 0;">Sumber: ' + esc(p.sumber) + '. ' + esc(p.catatan || '') + '</p></div>'; });
+  h += '<div class="card"><h3 style="margin-top:0;">Tidak berlaku untuk kendaraan ini</h3><p class="hint" style="margin:0 0 6px;">' + blocked.length + ' dari ' + Object.keys(REG).length + ' template tidak dipasang pada kelas ini, supaya part dan template tipe lain tidak tercampur.</p><details><summary>Lihat alasan</summary><ul style="margin:6px 0 0 18px;">' + blocked.slice(0, 60).map(function(b){ return '<li><strong>' + esc(b.nama) + '</strong> <span class="hint">— ' + esc(b.why[0]) + '</span></li>'; }).join('') + (blocked.length > 60 ? '<li class="hint">…dan ' + (blocked.length - 60) + ' lainnya</li>' : '') + '</ul></details></div>';
+  root.innerHTML = h + legend();
+}
+function legend(){ return '<div class="card"><h3 style="margin-top:0;">Cara membaca</h3><p class="hint" style="margin:0 0 6px;">Setiap template, part, dan paket punya cakupan: kategori (motor, mobil, niaga) × powertrain (bensin/diesel, hybrid, listrik) × transmisi (manual, matic, listrik tanpa gearbox). Template di luar cakupan tidak tampil dan ditolak saat disimpan. Paket model resmi (Ertiga, ADV150, Picanto) memakai angka dari sumbernya; daftar periksa generik berlabel <em>Estimasi</em> dan bukan angka pabrikan. Selalu utamakan buku servis kendaraan.</p><p class="hint" style="margin:0;">Pembuatan Work Order otomatis per kunjungan belum ada pada revisi ini.</p></div>'; }
+window.SVCPKG = { data:D, classOf:classOf, classLabel:classLabel, scopeOf:scopeOf, allowed:allowed, whyNot:whyNot, filterTemplates:filterTemplates, profileAllowed:profileAllowed, profileNotice:profileNotice, modelOk:modelOk, guardTask:guardTask, packagesFor:packagesFor, itemsFor:itemsFor, nextVisit:nextVisit, blockedFor:blockedFor, vehicleNotices:vehicleNotices, unmapped:function(){ return Object.keys(unmapped); }, install:install,
+  nameOf:function(id){ return REG[id] ? REG[id].nama : ''; }, pick:function(id){ UI.vid = id; render(); }, render:render, onShow:render };
+install();
 })();
 
 </script>
