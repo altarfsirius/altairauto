@@ -456,7 +456,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 20 (1 Nov 2026)" aria-label="Versi 1.0, revisi 20"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 20</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 21 (1 Nov 2026)" aria-label="Versi 1.0, revisi 21"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 21</span></div>
   </div>
 </div>
 
@@ -1064,6 +1064,8 @@
     </header>
     <div id="ac6SettingsRoot" style="margin-bottom:16px;"></div>
     <div id="healthRoot" style="margin-bottom:16px;"></div>
+    <div id="preportRoot" style="margin-bottom:16px;"></div>
+    <div id="histRoot" style="margin-bottom:16px;"></div>
     <div class="sec-title" style="margin-top:0;">Database</div>
     <div style="margin-bottom:10px;">
       <span id="statusPill" class="status-pill"><span class="dot"></span><span id="statusText">Belum terhubung ke database</span></span>
@@ -5930,6 +5932,8 @@ Deno.serve(async (req: Request) =&gt; {
       </div>
     </div>
 
+    <div id="partsPoRoot"><div class="card"><p class="hint" style="margin:0;">Memuat kebutuhan part…</p></div></div>
+
     <div class="card" id="partsEmptyCard" hidden>
       <p class="hint">Belum ada kendaraan tersimpan. Tambahkan kendaraan dulu di tab Home untuk melihat informasi part.</p>
     </div>
@@ -7454,6 +7458,8 @@ Dimensi
       <p class="page-desc">Rangkuman semua dokumen &amp; bukti teknis dari OEM Document dan Technical Record, lintas kendaraan &amp; Work Order, dalam satu daftar yang bisa dicari &mdash; digabung dengan katalog part OEM &amp; buku manual pemilik per model kendaraan.</p>
     </header>
 
+    <div id="docsRoot"></div>
+
     <div class="card">
       <h2>Search &amp; Filter</h2>
       <div class="grid2">
@@ -7724,6 +7730,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-01</td><td>Rev 21: <strong>Modul lanjutan Activity Plan</strong>. <strong>Parts</strong>: timeline kebutuhan part dari paket perawatan (qty dan harga dengan sumbernya), rencana order, Purchase Order Draft/Ordered/Received, dan perbandingan kuotasi. <strong>Dashboard</strong>: tombol Create Work Order pada paket A/C/D-Check (terhubung ke Project), kartu Projects dan Papers &amp; Recalls, biaya dikalibrasi dari data Anda, dan aturan per tipe kendaraan. <strong>Inspection</strong>: checklist Pre-trip dan Post-trip per tipe. <strong>Settings</strong>: Report to Polaris One (menandai Activity/Action Automotive, tanpa biaya) dan Import service history. <strong>Document Center</strong>: Papers &amp; Recalls dengan ekspor kalender (.ics). <strong>Antrean offline</strong> untuk pencatatan. Perlu <code>migration_rev21.sql</code> (langkah 44).</td></tr>
             <tr><td class="mono">2026-11-01</td><td>Rev 20: <strong>Dashboard baru sebagai jendela awal</strong> (menu Home, paling atas). Isinya: status laik jalan per kendaraan, Quick Actions (Refuel, Add Tire Pressure, Pre-trip, Post-trip, Incident, Accident, Defect), Every-trip Checks, Next Activity Board dan Timeline paket A/C/D-Check dan per KM, perbandingan biaya perawatan dengan potensi kerugian (Estimasi, bisa diubah), serta alasan, regulasi, konsekuensi, dan risiko per kelompok part. Dashboard lama menjadi <strong>Analytics</strong> di Insight. Hanya membaca data; tanpa migrasi SQL.</td></tr>
             <tr><td class="mono">2026-11-01</td><td>Rev 19: <strong>Dashboard dipindahkan ke menu Home</strong> (sebelumnya di Insight). Urutan Home: Vehicles, Dashboard, Appraisal. Hanya letak menu; isi halaman, izin menu per pengguna, dan data tidak berubah.</td></tr>
             <tr><td class="mono">2026-11-01</td><td>Rev 18: <strong>Kesehatan data dan kesehatan integrasi (AP-15)</strong>. Settings menampilkan daftar "perlu dibereskan" (KM mundur, Task salah tipe, Work Order tanpa Task/biaya/tanggal selesai, komponen ganda, kendaraan tanpa transmisi atau KM awal, template tanpa interval) dan ringkasan integrasi Polaris One (status tautan, antrean, gagal kirim, galat terakhir) serta pengingat rotasi rahasia (tanggal dicatat manual). Hanya membaca dan menandai; tanpa migrasi SQL baru.</td></tr>
@@ -7941,7 +7948,11 @@ function showPanel(name){
   if(typeof PARTS !== 'undefined' && name === 'partlib') PARTS.onShow();
   if(window.SVCPKG && name === 'svcpkg') SVCPKG.onShow();
   if(window.DASH && name === 'dash') DASH.onShow();
+  if(window.PARTSPO && name === 'parts') PARTSPO.onShow();
   if(window.HEALTH && name === 'settings') HEALTH.onShow();
+  if(window.VDOCS && name === 'dokumen') VDOCS.onShow();
+  if(window.PREPORT && name === 'settings') PREPORT.onShow();
+  if(window.HIST && name === 'settings') HIST.onShow();
   if(typeof REPORTS !== 'undefined' && name === 'laporan') REPORTS.onShow();
   if(window.AC6){ if(name === 'planboard' && AC6.plan) AC6.plan.onShow(); if(name === 'mguide') AC6.guide.onShow(); if(name === 'settings') AC6.settings.onShow(); }
   window.scrollTo({top:0, behavior:'instant'});
@@ -18688,7 +18699,7 @@ const STATUS_LABEL = { open:'Not Started', proses:'In Progress', tunda:'On Hold'
 
 /* ---------- konfigurasi (di perangkat ini; password TIDAK pernah disimpan) ---------- */
 const DEF = {
-  tuntas: { url:'https://bgpfulyzihoddgirkjim.supabase.co', key:'sb_publishable_wFy-BzZRALPkAiuDhk6nKQ_VtcYflLb', email:'' },
+  tuntas: { url:'', key:'', email:'' },
   groundwork: { url:'https://rxvrgipuokibbfvtghbo.supabase.co', key:'sb_publishable_5Ji4aP_XRsfIrm23muNt0w_E3B11d0g', email:'' }
 };
 function cfgRaw(){ try{ return JSON.parse(lsGet('ik_int_cfg') || '{}') || {}; }catch(e){ return {}; } }
@@ -21227,7 +21238,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:20,date:'2026-11-01'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:21,date:'2026-11-01'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -21433,6 +21444,7 @@ window.SVCPKG_DATA={"versi":"2026-11-01-r16","kat":["motor","mobil","niaga","lai
    Data (window.SVCPKG_DATA) dihasilkan oleh build/gen.js dari satu sumber yang sama dengan SQL migrasi langkah 42. */
 (function(){
 'use strict';
+function ymdL(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 var D = window.SVCPKG_DATA; if(!D || window.SVCPKG) return;
 var REG = D.registri, PK = D.paket, PROF = D.profil;
 var PT_LBL = { bensin_diesel:'Bensin/Diesel', hybrid:'Hybrid', listrik:'Listrik' }, TR_LBL = { manual:'Manual', matic:'Matic/CVT', none:'Single-speed (listrik)' };
@@ -21569,7 +21581,7 @@ async function createVisitWO(vid, km){
     if(!have){ var r = await sbx.from('work_order').select('*').eq('kendaraan_id', vid).eq('sumber_label', visitLabel(nv)).neq('status', 'batal').limit(1); if(r.error) return { error:'Gagal memeriksa duplikat: ' + (r.error.message || r.error) }; if(r.data && r.data[0]) have = r.data[0]; }
     if(have) return { dup:have };
     var names = nv.items.map(function(id){ return (REG[id] || { nama:id }).nama; });
-    var today = new Date().toISOString().slice(0, 10);
+    var today = ymdL(new Date());
     var woRow = { kendaraan_id:vid, judul:visitTitle(nv), deskripsi:names.join(', '), prioritas: km <= currentKm(v) ? 'tinggi' : 'normal', tanggal_target:today, km_target:km, status:'open', task_key:null, sumber_jenis:'program', sumber_label:visitLabel(nv) };
     var ins = await sbx.from('work_order').insert([woRow]).select().single();
     if(ins.error) return { error:'Gagal membuat Work Order: ' + (ins.error.message || ins.error) };
@@ -21783,6 +21795,7 @@ window.HEALTH = { scanData:scanData, loadIntegration:loadIntegration, integratio
    Penjelasan memakai bahasa campuran (Indonesia + English); label aplikasi tetap English. Bukan sertifikasi laik jalan resmi. */
 (function(){
 'use strict';
+function ymdL(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 if(window.DASH) return;
 var esc = function(s){ s = String(s == null ? '' : s); return (typeof escapeHtml === 'function') ? escapeHtml(s) : s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
 var DAY = 86400000;
@@ -21832,7 +21845,17 @@ function catOf(tpl){ var s = (String(tpl.id || '') + ' ' + String(tpl.nama || ''
 var SCALE = { motor:0.35, mobil:1, niaga:1.3, lainnya:1 };
 var LSK = 'altair.dash.cost.v1';
 function costOv(){ try{ return JSON.parse(localStorage.getItem(LSK) || '{}') || {}; }catch(_){ return {}; } }
-function costOf(cat, kat){ var o = costOv()[cat.id] || {}, s = SCALE[kat] == null ? 1 : SCALE[kat]; return { m:o.m != null ? Number(o.m) : Math.round(cat.m * s), f:o.f != null ? Number(o.f) : Math.round(cat.f * s), custom:o.m != null || o.f != null }; }
+/* Kalibrasi (Rev 21): biaya perawatan "m" diganti median biaya Work Order selesai milik Anda (per kelompok part dan kategori kendaraan) bila ada >= 2 catatan.
+   Hanya Work Order perawatan berkode task (bukan catatan cepat, bukan perbaikan/defect). Biaya kerusakan "f" tetap Estimasi. Pengubahan manual selalu menang. */
+var CAL = { sig:null, map:{} };
+function median(a){ a = a.slice().sort(function(x, y){ return x - y; }); var n = a.length; return n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2; }
+function calib(){
+  var W = g('workOrders') || [], V = g('vehicles') || [], sig = W.length + '/' + V.length + '/' + W.map(function(w){ return (w.status === 'selesai' ? 1 : 0) + ':' + (Number(w.biaya_part) || 0) + ':' + (Number(w.biaya_jasa) || 0); }).join(',').length;
+  if(CAL.sig === sig) return CAL.map; var vb = {}; V.forEach(function(v){ vb[v.id] = v; }); var acc = {};
+  W.forEach(function(w){ if(w.status !== 'selesai' || !w.task_key || /^quick_/.test(w.task_key) || /^(defect|problem_analysis|event)$/.test(w.sumber_jenis || '')) return; var v = vb[w.kendaraan_id]; if(!v) return; var c = catOf({ id:w.task_key, nama:w.task_key }); if(c.id === 'general') return; var amt = money(w); if(!(amt > 0)) return; var key = c.id + '|' + katOf(v); (acc[key] = acc[key] || []).push(amt); });
+  var map = {}; Object.keys(acc).forEach(function(k){ if(acc[k].length >= 2) map[k] = { m:Math.round(median(acc[k])), n:acc[k].length }; }); CAL.sig = sig; CAL.map = map; return map;
+}
+function costOf(cat, kat){ var o = costOv()[cat.id] || {}, s = SCALE[kat] == null ? 1 : SCALE[kat], cb = calib()[cat.id + '|' + kat]; return { m:o.m != null ? Number(o.m) : (cb ? cb.m : Math.round(cat.m * s)), f:o.f != null ? Number(o.f) : Math.round(cat.f * s), custom:o.m != null || o.f != null, calibrated:!!cb && o.m == null, n:cb ? cb.n : 0 }; }
 function setCost(id, key, val){ var o = costOv(); o[id] = o[id] || {}; var n = Number(val); if(val === '' || !isFinite(n) || n < 0) delete o[id][key]; else o[id][key] = Math.round(n); if(!Object.keys(o[id]).length) delete o[id]; try{ localStorage.setItem(LSK, JSON.stringify(o)); }catch(_){} render(); }
 function resetCost(){ try{ localStorage.removeItem(LSK); }catch(_){} render(); }
 /* ---- tingkat paket "Check" ala penerbangan ---- */
@@ -21878,9 +21901,9 @@ function costBlock(vs, all, wos, now){
   var done = wos.filter(function(w){ var d = toD(w.tanggal_selesai); return vb[w.kendaraan_id] && w.status === 'selesai' && d && d >= from; });
   var maint = done.filter(function(w){ return w.task_key !== 'quick_bbm'; }), spent = maint.reduce(function(s, w){ return s + money(w); }, 0), fuel = done.filter(function(w){ return w.task_key === 'quick_bbm'; }).reduce(function(s, w){ return s + money(w); }, 0);
   var avoidedKeys = {}, avoided = 0; maint.forEach(function(w){ var v = vb[w.kendaraan_id], jc = (g('jobCards') || []).filter(function(j){ return j.work_order_id === w.id && j.task_key; }); var keys = jc.map(function(j){ return j.task_key; }); if(w.task_key) keys.push(w.task_key); keys.forEach(function(k){ var c = catOf({ id:k, nama:k }), key = v.id + '|' + c.id; if(!avoidedKeys[key] && c.id !== 'general'){ avoidedKeys[key] = 1; avoided += costOf(c, katOf(v)).f; } }); });
-  var planned = 0, expo = 0, expoCats = {}, plannedCats = {};
-  all.forEach(function(i){ var v = vb[i.vid]; if(!v) return; var c = costOf(i.cat, i.kat), key = i.vid + '|' + i.cat.id; if(i.state !== 'later' && !plannedCats[key]){ plannedCats[key] = 1; planned += c.m; } if((i.overdue || i.state === 'soon') && !expoCats[key]){ expoCats[key] = 1; expo += c.f; } });
-  return { spent:spent, fuel:fuel, avoided:avoided, planned:planned, expo:expo, n:maint.length, nExpo:Object.keys(expoCats).length };
+  var planned = 0, expo = 0, expoCats = {}, plannedCats = {}, calN = 0;
+  all.forEach(function(i){ var v = vb[i.vid]; if(!v) return; var c = costOf(i.cat, i.kat), key = i.vid + '|' + i.cat.id; if(i.state !== 'later' && !plannedCats[key]){ plannedCats[key] = 1; planned += c.m; if(c.calibrated) calN++; } if((i.overdue || i.state === 'soon') && !expoCats[key]){ expoCats[key] = 1; expo += c.f; } });
+  return { spent:spent, fuel:fuel, avoided:avoided, planned:planned, expo:expo, n:maint.length, nExpo:Object.keys(expoCats).length, calN:calN };
 }
 /* ---- state ---- */
 var ST = { scope:'all', act:null, sig:'' };
@@ -21893,9 +21916,9 @@ function compute(){
   return { now:now, vs:vs, wos:wos, per:per, items:items, pkgs:pkgs, visits:visits, cost:costBlock(vs, items, wos, now) };
 }
 /* ---- tampilan ---- */
-var CSS = '#dashRoot .dx-card{background:var(--surface,#fff);border:1px solid var(--border,#d8dde6);border-radius:12px;padding:14px;margin-bottom:14px}#dashRoot h2.dx-h{margin:0 0 4px;font-size:16px}#dashRoot .dx-sub{margin:0 0 10px;color:var(--text-dim,#5b6577);font-size:13px}#dashRoot .dx-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}#dashRoot .dx-st{border:1px solid var(--border,#d8dde6);border-radius:10px;padding:10px;min-width:0}#dashRoot .dx-badge{display:inline-block;font-weight:700;font-size:12px;letter-spacing:.04em;padding:2px 8px;border-radius:999px;border:1px solid currentColor}#dashRoot .dx-ok{color:var(--ok-ink,#136c3a);background:var(--ok-bg,#e6f4ec)}#dashRoot .dx-attn{color:var(--warn-ink,#8a5200);background:var(--warn-bg,#fff2d9)}#dashRoot .dx-nogo{color:var(--danger-ink,#a11d2b);background:var(--danger-bg,#fde8ea)}#dashRoot .dx-nodata{color:var(--text-dim,#5b6577);background:transparent}#dashRoot .dx-qa{display:flex;flex-wrap:wrap;gap:8px}#dashRoot .dx-qa button{min-height:44px;padding:8px 14px}#dashRoot .dx-board{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}#dashRoot .dx-col{border:1px solid var(--border,#d8dde6);border-radius:10px;padding:8px;min-width:0}#dashRoot .dx-col h3{margin:0 0 6px;font-size:13px}#dashRoot .dx-pk{border:1px solid var(--border,#d8dde6);border-radius:8px;padding:8px;margin-bottom:6px;font-size:13px;min-width:0;overflow-wrap:anywhere}#dashRoot .dx-bar{height:14px;border-radius:4px;background:var(--accent,#2457c5);min-width:2px}#dashRoot .dx-bar.alt{background:var(--text-dim,#5b6577)}#dashRoot .dx-row{display:grid;grid-template-columns:minmax(110px,170px) 1fr minmax(80px,auto);gap:8px;align-items:center;margin:6px 0;font-size:13px}#dashRoot table{width:100%;border-collapse:collapse;font-size:13px}#dashRoot th,#dashRoot td{padding:5px 6px;border-bottom:1px solid var(--border,#d8dde6);text-align:left;vertical-align:top}#dashRoot .dx-tl{border-left:2px solid var(--border,#d8dde6);margin-left:6px;padding-left:12px}#dashRoot .dx-tl h4{margin:10px 0 4px;font-size:13px}';
+var CSS = '#dashRoot .dx-card{background:var(--surface,#fff);border:1px solid var(--border,#d8dde6);border-radius:12px;padding:14px;margin-bottom:14px}#dashRoot h2.dx-h{margin:0 0 4px;font-size:16px}#dashRoot .dx-sub{margin:0 0 10px;color:var(--text-dim,#5b6577);font-size:13px}#dashRoot .dx-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}#dashRoot .dx-st{border:1px solid var(--border,#d8dde6);border-radius:10px;padding:10px;min-width:0}#dashRoot .dx-badge{display:inline-block;font-weight:700;font-size:12px;letter-spacing:.04em;padding:2px 8px;border-radius:999px;border:1px solid currentColor}#dashRoot .dx-ok{color:var(--ok-ink,#136c3a);background:var(--ok-bg,#e6f4ec)}#dashRoot .dx-attn{color:var(--warn-ink,#8a5200);background:var(--warn-bg,#fff2d9)}#dashRoot .dx-nogo{color:var(--danger-ink,#a11d2b);background:var(--danger-bg,#fde8ea)}#dashRoot .dx-nodata{color:var(--text-dim,#5b6577);background:transparent}#dashRoot .dx-qa{display:flex;flex-wrap:wrap;gap:8px}#dashRoot .dx-qa button{min-height:44px;padding:8px 14px}#dashRoot .dx-board{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}#dashRoot .dx-col{border:1px solid var(--border,#d8dde6);border-radius:10px;padding:8px;min-width:0}#dashRoot .dx-col h3{margin:0 0 6px;font-size:13px}#dashRoot .dx-pk{border:1px solid var(--border,#d8dde6);border-radius:8px;padding:8px;margin-bottom:6px;font-size:13px;min-width:0;overflow-wrap:anywhere}#dashRoot .dx-bar{height:14px;border-radius:4px;background:var(--accent,#2457c5);min-width:2px}#dashRoot .dx-bar.alt{background:var(--text-dim,#5b6577)}#dashRoot .dx-row{display:grid;grid-template-columns:minmax(110px,170px) 1fr minmax(80px,auto);gap:8px;align-items:center;margin:6px 0;font-size:13px}#dashRoot table{width:100%;border-collapse:collapse;font-size:13px}#dashRoot th,#dashRoot td{padding:5px 6px;border-bottom:1px solid var(--border,#d8dde6);text-align:left;vertical-align:top}#dashRoot .dx-tl{border-left:2px solid var(--border,#d8dde6);margin-left:6px;padding-left:12px}#dashRoot .dx-tl h4{margin:10px 0 4px;font-size:13px}#dashRoot .dx-sub.err{color:var(--danger-ink,#a11d2b)}#dashRoot .dx-sub.ok{color:var(--ok-ink,#136c3a)}';
 function badge(lvl){ var s = STLBL[lvl]; return '<span class="dx-badge dx-' + lvl + '" title="' + esc(s[1]) + '">' + (lvl === 'ok' ? '✓ ' : lvl === 'nogo' ? '✕ ' : lvl === 'attn' ? '! ' : '') + esc(s[0]) + '</span>'; }
-function when(i){ var a = []; if(i.km != null) a.push(fkm(i.km) + ' km'); if(i.date) a.push(i.date.toISOString().slice(0, 10)); return a.join(' · '); }
+function when(i){ var a = []; if(i.km != null) a.push(fkm(i.km) + ' km'); if(i.date) a.push(ymdL(i.date)); return a.join(' · '); }
 function rel(p){ if(p.state === 'overdue') return 'OVERDUE'; var a = []; if(p.kmLeft != null && p.kmLeft > 0) a.push(fkm(p.kmLeft) + ' km'); if(p.daysLeft != null) a.push(p.daysLeft + ' d'); return a.length ? 'in ' + a.join(' / ') : ''; }
 function statusCard(C){
   var h = '<div class="dx-card"><h2 class="dx-h">Roadworthy Status</h2><p class="dx-sub">Rawat kendaraan seperti merawat pesawat: laik jalan, aman, efisien. Indikator dari data tercatat, bukan sertifikasi resmi. / Indicator from recorded data, not an official certificate.</p>';
@@ -21912,32 +21935,84 @@ function quickCard(C){
   return '<div class="dx-card"><h2 class="dx-h">Quick Actions</h2><p class="dx-sub">Catat cepat dari lapangan. Tiap tombol membuka formulir yang sudah ada, siap diisi. / Opens the existing form, ready to fill.</p><div class="field" style="max-width:360px;margin-bottom:8px;"><label for="dxAct">For vehicle</label><select id="dxAct" onchange="DASH.setAct(this.value)">' + vs.map(function(v){ return '<option value="' + esc(v.id) + '"' + (v.id === ST.act ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select></div><div class="dx-qa">' +
     B('fuel', 'Refuel', 'Catat pengisian BBM / log fuel purchase') + B('tire', 'Add Tire Pressure', 'Catat tambah angin atau nitrogen / log tire air') + B('pre', 'Pre-trip Check', 'Pemeriksaan sebelum dipakai (Before Departure)') + B('post', 'Post-trip Check', 'Pemeriksaan setelah dipakai (After Arrival)') + B('inc', 'Report Incident', 'Kejadian tanpa kecelakaan / near-miss') + B('acc', 'Report Accident', 'Kecelakaan / accident') + B('def', 'Report Defect', 'Temuan kerusakan / defect') + '</div></div>';
 }
+/* ---- aturan per tipe kendaraan (Rev 21, AP-39). Hanya rujukan yang tercantum di Dasar & Guidance; yang belum terverifikasi diberi label. Bukan nasihat hukum. ---- */
+var TYPEREG = {
+ motor:{ label:'Motor / Motorcycle', pts:[
+  ['UU 22/2009 Pasal 48', 'Kendaraan wajib memenuhi persyaratan teknis dan laik jalan, termasuk sistem rem, lampu, dan ban. Pemakai sepeda motor ikut bertanggung jawab menjaganya. / Roadworthiness is the operator duty.', 'ok'],
+  ['PM 12/2019', 'Perlindungan keselamatan pengguna sepeda motor yang digunakan untuk kepentingan masyarakat (mis. ojek): perlengkapan dan kelaikan. Hanya relevan bila motor dipakai untuk melayani orang lain. / Applies when used for public service.', 'sebagian'],
+  ['JASO T903:2023', 'Oli 4-tak untuk motor berkopling basah: pilih label JASO MA/MA2. Oli mobil hemat energi dapat membuat kopling selip dan merusak kampas kopling. / Wrong oil can cause clutch slip.', 'ok'],
+  ['UU 22/2009 Pasal 52', 'Modifikasi (knalpot, ban, velg, dimensi) tidak boleh membahayakan keselamatan atau mengganggu lalu lintas; yang mengubah tipe wajib uji tipe ulang. / Modifications must not compromise safety.', 'ok']] },
+ mobil:{ label:'Car / Mobil', pts:[
+  ['UU 22/2009 Pasal 48', 'Persyaratan teknis dan laik jalan: rem, kemudi, lampu, ban, emisi. Jadi dasar kebiasaan cek sebelum dan sesudah jalan. / Basis for pre/post-trip checks.', 'ok'],
+  ['UU 22/2009 Pasal 53 ayat (1)', 'Uji berkala wajib untuk kendaraan umum, bus, dan mobil barang. Mobil pribadi tidak diwajibkan, sehingga pengecekan bersifat mandiri; di sinilah jadwal Check di aplikasi ini berperan. / For private cars the check is self-driven.', 'ok'],
+  ['UU 22/2009 Pasal 49–50', 'Uji tipe dan uji berkala untuk kendaraan buatan/rakitan dalam negeri; berlaku juga bila modifikasi mengubah tipe. / Type approval.', 'ok'],
+  ['UU 22/2009 Pasal 52', 'Modifikasi tidak boleh membahayakan keselamatan, mengganggu lalu lintas, atau merusak jalan; yang mengubah konstruksi wajib uji tipe ulang. / Modifications.', 'ok']] },
+ niaga:{ label:'Commercial / Niaga', pts:[
+  ['UU 22/2009 Pasal 53 ayat (1)', 'Uji berkala (KIR) wajib untuk mobil barang dan bus. Kendaraan yang tidak lulus uji tidak boleh dioperasikan sampai diperbaiki. / Periodic inspection is mandatory.', 'ok'],
+  ['UU 22/2009 Pasal 48', 'Persyaratan teknis dan laik jalan, termasuk rem, ban, dan sistem penerangan, berlaku penuh pada kendaraan niaga. / Roadworthiness.', 'ok'],
+  ['PP 55/2012 (Pasal 16, 18, 58, 65, 70, 80, 110)', 'Rincian persyaratan sumbu, kemudi, rem, dan ban. Ringkasan dari Penjelasan; rumusan tiap ayat diringkas. / Detailed technical requirements, summarised.', 'sebagian'],
+  ['Muatan dan sumbu', 'Muatan berlebih mempercepat aus rem, ban, dan suspensi, serta menaikkan risiko kecelakaan. Perawatan dan pembatasan muatan berjalan bersama. / Overload accelerates wear.', 'catatan']] },
+ listrik:{ label:'Electric / Listrik', pts:[
+  ['UU 22/2009 Pasal 48', 'Persyaratan teknis dan laik jalan berlaku sama: rem, kemudi, lampu, ban. Rem dan ban sering lebih berat bekerja pada kendaraan listrik. / Same duty applies.', 'ok'],
+  ['UU 22/2009 Pasal 52 · PM 33/2018', 'Modifikasi atau konversi yang mengubah tipe kendaraan memerlukan uji tipe. Sebelum mengubah sistem baterai atau penggerak, periksa dulu persyaratannya. / Conversions need type approval.', 'sebagian'],
+  ['Sistem tegangan tinggi', 'Belum ada rujukan hukum yang terverifikasi di Dasar & Guidance untuk perawatan baterai dan sistem tegangan tinggi. Ikuti manual pabrikan dan bengkel resmi. / Follow the manufacturer manual; not yet verified here.', 'belum']] }
+};
+function typeKey(v){ return (v && v.powertrain === 'listrik') ? 'listrik' : (TYPEREG[katOf(v)] ? katOf(v) : 'mobil'); }
+function typeRegBlock(C){
+  var seen = {}, keys = []; (C.vs || []).forEach(function(v){ var k = typeKey(v); if(!seen[k]){ seen[k] = 1; keys.push(k); } });
+  if(!keys.length) return '';
+  var tag = { ok:'<span class="dx-badge dx-ok">terverifikasi</span>', sebagian:'<span class="dx-badge dx-attn">sebagian terverifikasi</span>', catatan:'<span class="dx-badge dx-nodata">catatan operator</span>', belum:'<span class="dx-badge dx-nogo">belum terverifikasi</span>' };
+  return '<details style="margin:6px 0;" open><summary><strong>Aturan untuk tipe kendaraan Anda / Rules by vehicle type</strong></summary>' + keys.map(function(k){ var T = TYPEREG[k]; return '<p style="margin:8px 0 2px;"><strong>' + esc(T.label) + '</strong></p><ul style="margin:2px 0 6px 18px;padding:0;">' + T.pts.map(function(x){ return '<li><strong>' + esc(x[0]) + '</strong> ' + (tag[x[2]] || '') + '<br>' + esc(x[1]) + '</li>'; }).join('') + '</ul>'; }).join('') + '</details>';
+}
 function riskCard(C){
   var cnt = {}; C.items.forEach(function(i){ var c = cnt[i.cat.id] = cnt[i.cat.id] || { cat:i.cat, od:0, soon:0, n:0 }; c.n++; if(i.overdue) c.od++; else if(i.state === 'soon') c.soon++; });
   var list = CATS.filter(function(c){ return c.id !== 'general' && (c.safety || cnt[c.id]); }).sort(function(a, b){ var x = cnt[a.id] || {}, y = cnt[b.id] || {}; return ((y.od || 0) - (x.od || 0)) || ((y.soon || 0) - (x.soon || 0)) || ((b.safety ? 1 : 0) - (a.safety ? 1 : 0)); }).slice(0, 8);
   var D = window.DASAR_DATA, h = '<div class="dx-card"><h2 class="dx-h">Why It Matters: Regulation, Reason, Consequence & Risk</h2><p class="dx-sub">Alasan merawat tiap kelompok part, dasar aturannya, dan akibat jika ditunda. Rujukan hukum berupa ringkasan; baca teks resmi (Dasar &amp; Guidance). / Summaries, not legal advice.</p>';
+  h += typeRegBlock(C);
   list.forEach(function(c){ var k = cnt[c.id] || { od:0, soon:0, n:0 }; h += '<details style="margin:6px 0;"' + (k.od ? ' open' : '') + '><summary><strong>' + esc(c.label) + '</strong> ' + (c.safety ? '<span class="dx-badge dx-attn">SAFETY</span> ' : '') + (k.od ? '<span class="dx-badge dx-nogo">' + k.od + ' overdue</span> ' : k.soon ? '<span class="dx-badge dx-attn">' + k.soon + ' due soon</span> ' : '<span class="dx-sub">' + (k.n ? k.n + ' scheduled' : 'no schedule yet') + '</span>') + '</summary><div style="padding:6px 0 2px 14px;font-size:13px;"><p style="margin:2px 0;"><strong>Mengapa / Why:</strong> ' + esc(c.why) + '</p><p style="margin:2px 0;"><strong>Regulasi / Regulation:</strong> ' + esc(c.reg) + '</p><p style="margin:2px 0;"><strong>Konsekuensi / Consequence:</strong> ' + esc(c.cons) + '</p><p style="margin:2px 0;"><strong>Analogi penerbangan:</strong> ' + esc(c.avi) + '</p></div></details>'; });
   return h + '<p class="dx-sub" style="margin:8px 0 0;">' + (D ? '<button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="showPanel(\'dasar\')">Open Dasar &amp; Guidance ›</button>' : '') + '</p></div>';
 }
+function calCell(c){ var map = calib(), out = []; ['motor', 'mobil', 'niaga', 'lainnya'].forEach(function(k){ var x = map[c.id + '|' + k]; if(x) out.push(k + ': ' + rp(x.m) + ' (n=' + x.n + ')'); }); return out.length ? esc(out.join(' · ')) : '<span class="dx-sub">belum cukup data (butuh ≥ 2)</span>'; }
 function costCard(C){
   var k = C.cost, mx = Math.max(k.spent, k.planned, k.expo, k.avoided, 1), bar = function(label, v, alt, note){ return '<div class="dx-row"><span>' + esc(label) + '</span><span aria-hidden="true"><div class="dx-bar' + (alt ? ' alt' : '') + '" style="width:' + Math.max(1, Math.round(v / mx * 100)) + '%"></div></span><strong>' + rp(v) + '</strong></div>' + (note ? '<div class="dx-sub" style="margin:-2px 0 4px;">' + esc(note) + '</div>' : ''); };
   var h = '<div class="dx-card"><h2 class="dx-h">Cost: Maintenance vs Cost of Neglect</h2><p class="dx-sub">Biaya perawatan nyata dibandingkan potensi kerugian jika ditunda. Angka bertanda <strong>Estimasi</strong> memakai asumsi bawaan per kelompok part (bisa Anda ubah di bawah), bukan prediksi pasti. / Estimates, not forecasts.</p>';
   h += bar('Spent, last 12 months (actual)', k.spent, false, k.n + ' completed work orders, excl. fuel; fuel ' + rp(k.fuel) + ' tidak dihitung / not counted');
-  h += bar('Planned next ~90 days (Estimasi)', k.planned, true, 'biaya perawatan tipikal untuk item due soon/upcoming');
+  h += bar('Planned next ~90 days' + (k.calN ? '' : ' (Estimasi)'), k.planned, true, k.calN ? 'dikalibrasi dari ' + k.calN + ' kelompok part dengan data biaya Anda (median ≥ 2 catatan); sisanya Estimasi' : 'biaya perawatan tipikal untuk item due soon/upcoming');
   h += bar('Exposure if ignored (Estimasi, worst case)', k.expo, true, k.nExpo ? k.nExpo + ' kelompok part overdue/due soon × biaya kerusakan tipikal' : 'tidak ada item overdue atau due soon');
   h += bar('Loss avoided by doing maintenance (Estimasi)', k.avoided, true, 'kelompok part yang dirawat 12 bulan terakhir × biaya kerusakan tipikal, dihitung sekali per kendaraan');
   if(k.spent > 0 && k.avoided > 0) h += '<p style="margin:8px 0;"><strong>Efisiensi:</strong> tiap Rp 1 perawatan, hingga ≈ Rp ' + (k.avoided / k.spent).toFixed(1) + ' potensi kerugian terhindar <span class="dx-sub">(Estimasi)</span>.</p>';
   else h += '<p class="dx-sub" style="margin:8px 0;">Rasio efisiensi muncul setelah ada Work Order selesai dengan biaya tercatat. / Efficiency ratio appears once completed work orders have costs.</p>';
-  var ov = costOv(); h += '<details><summary>Cost assumptions (Estimasi) · ubah sesuai pengalaman Anda</summary><p class="dx-sub">Disimpan di perangkat ini saja. Motor ×0,35, niaga ×1,3 dari angka mobil. / Stored on this device only.</p><div style="overflow-x:auto"><table><thead><tr><th>Group</th><th>Maintenance (Rp)</th><th>Failure (Rp)</th></tr></thead><tbody>' + CATS.map(function(c){ var o = ov[c.id] || {}; return '<tr><td>' + esc(c.label) + '</td><td><input type="number" min="0" inputmode="numeric" aria-label="Maintenance cost ' + esc(c.label) + '" value="' + (o.m != null ? o.m : '') + '" placeholder="' + c.m + '" onchange="DASH.setCost(\'' + c.id + '\',\'m\',this.value)" style="max-width:130px"></td><td><input type="number" min="0" inputmode="numeric" aria-label="Failure cost ' + esc(c.label) + '" value="' + (o.f != null ? o.f : '') + '" placeholder="' + c.f + '" onchange="DASH.setCost(\'' + c.id + '\',\'f\',this.value)" style="max-width:130px"></td></tr>'; }).join('') + '</tbody></table></div><p style="margin:8px 0 0;"><button type="button" class="ghost" onclick="DASH.resetCost()">Reset to defaults</button></p></details></div>';
+  var ov = costOv(); h += '<details><summary>Cost assumptions (Estimasi) · ubah sesuai pengalaman Anda</summary><p class="dx-sub">Disimpan di perangkat ini saja. Motor ×0,35, niaga ×1,3 dari angka mobil. / Stored on this device only.</p><div style="overflow-x:auto"><table><thead><tr><th>Group</th><th>Maintenance (Rp)</th><th>Failure (Rp)</th><th>Your data</th></tr></thead><tbody>' + CATS.map(function(c){ var o = ov[c.id] || {}; return '<tr><td>' + esc(c.label) + '</td><td><input type="number" min="0" inputmode="numeric" aria-label="Maintenance cost ' + esc(c.label) + '" value="' + (o.m != null ? o.m : '') + '" placeholder="' + c.m + '" onchange="DASH.setCost(\'' + c.id + '\',\'m\',this.value)" style="max-width:130px"></td><td><input type="number" min="0" inputmode="numeric" aria-label="Failure cost ' + esc(c.label) + '" value="' + (o.f != null ? o.f : '') + '" placeholder="' + c.f + '" onchange="DASH.setCost(\'' + c.id + '\',\'f\',this.value)" style="max-width:130px"></td><td>' + calCell(c) + '</td></tr>'; }).join('') + '</tbody></table></div><p style="margin:8px 0 0;"><button type="button" class="ghost" onclick="DASH.resetCost()">Reset to defaults</button></p></details></div>';
   return h;
 }
 function boardCard(C){
   var all = C.pkgs.concat(C.visits), cols = [['overdue', 'Overdue'], ['soon', 'Due Soon'], ['upcoming', 'Next 90 days'], ['later', 'Later']];
-  var h = '<div class="dx-card"><h2 class="dx-h">Next Activity Board</h2><p class="dx-sub">Paket pekerjaan jatuh tempo, dikelompokkan ala Check pesawat dan per KM sesuai tipe kendaraan. / Packages grouped like aircraft checks and by km per vehicle type.</p>';
+  var h = '<div class="dx-card"><h2 class="dx-h">Next Activity Board</h2><p class="dx-sub">Paket pekerjaan jatuh tempo, dikelompokkan ala Check pesawat dan per KM sesuai tipe kendaraan. / Packages grouped like aircraft checks and by km per vehicle type.</p><p id="dxMsg" class="dx-sub" role="status" hidden></p>';
   if(!all.length) return h + '<p class="dx-sub" style="margin:0;">Belum ada paket terjadwal. Isi KM kendaraan dan catat perawatan terakhir. / No packages yet.</p></div>';
   h += '<div class="dx-board">' + cols.map(function(c){ var xs = all.filter(function(p){ return p.state === c[0]; }).sort(function(a, b){ return (a.date || 0) - (b.date || 0); });
-    return '<div class="dx-col"><h3>' + c[1] + ' · ' + xs.length + '</h3>' + (xs.length ? xs.map(function(p){ var nm = p.level === 'KM' ? 'Service visit' : LV[p.level].name; return '<div class="dx-pk"><strong>' + esc(nm) + '</strong> · ' + esc(p.vehicle) + '<br>' + (p.km != null ? fkm(p.km) + ' km' : '') + (p.date ? ' · ' + p.date.toISOString().slice(0, 10) : '') + '<br>' + p.items.length + ' tasks' + (p.est ? ' · ' + rp(p.est) + ' <span class="dx-sub">(Estimasi)</span>' : '') + '<details><summary>Tasks</summary><ul style="margin:4px 0 0 16px;padding:0;">' + p.items.slice(0, 20).map(function(i){ return '<li>' + esc(i.tpl.nama) + '</li>'; }).join('') + (p.items.length > 20 ? '<li>…' + (p.items.length - 20) + ' more</li>' : '') + '</ul></details></div>'; }).join('') : '<div class="dx-sub">—</div>') + '</div>'; }).join('') + '</div>';
+    return '<div class="dx-col"><h3>' + c[1] + ' · ' + xs.length + '</h3>' + (xs.length ? xs.map(function(p){ var nm = p.level === 'KM' ? 'Service visit' : LV[p.level].name; return '<div class="dx-pk"><strong>' + esc(nm) + '</strong> · ' + esc(p.vehicle) + '<br>' + (p.km != null ? fkm(p.km) + ' km' : '') + (p.date ? ' · ' + ymdL(p.date) : '') + '<br>' + p.items.length + ' tasks' + (p.est ? ' · ' + rp(p.est) + ' <span class="dx-sub">(Estimasi)</span>' : '') + (p.level !== 'KM' && window.CHECKS ? '<br><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;margin-top:4px;" data-dx-mk="' + esc(p.vid + '|' + p.level) + '" onclick="CHECKS.mkWO(\'' + esc(p.vid) + '\',\'' + esc(p.level) + '\')">Create Work Order</button>' : '') + '<details><summary>Tasks</summary><ul style="margin:4px 0 0 16px;padding:0;">' + p.items.slice(0, 20).map(function(i){ return '<li>' + esc(i.tpl.nama) + '</li>'; }).join('') + (p.items.length > 20 ? '<li>…' + (p.items.length - 20) + ' more</li>' : '') + '</ul></details></div>'; }).join('') : '<div class="dx-sub">—</div>') + '</div>'; }).join('') + '</div>';
   h += '<p class="dx-sub" style="margin:8px 0 0;">A-Check = servis rutin ringan · C-Check = servis menengah-besar · D-Check = overhaul besar · Service visit = paket per KM. Pembuatan Work Order: <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="showPanel(\'svcpkg\')">Service Packages ›</button> <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="showPanel(\'program\')">Program ›</button></p></div>';
+  return h;
+}
+function projectsCard(C){
+  if(!window.PREPORT) return '';
+  var P = PREPORT.projects() || [], W = g('workOrders') || [], vsel = {}; (C.vs || []).forEach(function(v){ vsel[v.id] = 1; });
+  if(!ST.projLoaded && !ST.projLoading){ ST.projLoading = true; try{ PREPORT.loadProjects().then(function(){ ST.projLoaded = true; ST.projLoading = false; render(); }, function(){ ST.projLoaded = true; ST.projLoading = false; }); }catch(_){ ST.projLoaded = true; ST.projLoading = false; } }
+  var rows = P.filter(function(p){ return p.status !== 'batal' && p.status !== 'selesai' && (!p.kendaraan_id || vsel[p.kendaraan_id]); }).map(function(p){ var ws = W.filter(function(w){ return w.project_id === p.id && w.status !== 'batal'; }), done = ws.filter(function(w){ return w.status === 'selesai'; }).length; return { p:p, n:ws.length, done:done }; }).filter(function(r){ return r.n > 0; });
+  var h = '<div class="dx-card"><h2 class="dx-h">Projects</h2><p class="dx-sub">Kumpulan Work Order yang berjalan sebagai satu Activity (mis. A/C/D-Check). Diteruskan ke Polaris One sebagai Activity. / Open projects and their progress.</p>';
+  if(!rows.length) return h + '<p class="dx-sub" style="margin:0;">Belum ada Project berisi Work Order. Buat dari tombol “Create Work Order” pada papan di atas. / No project with work orders yet.</p></div>';
+  h += '<div style="overflow-x:auto"><table><thead><tr><th>Project</th><th>Type</th><th>Work Orders</th><th>Polaris One</th></tr></thead><tbody>' + rows.slice(0, 12).map(function(r){ var pct = Math.round(100 * r.done / r.n); return '<tr><td>' + esc(r.p.nomor_project || '') + ' ' + esc(r.p.nama || '') + '</td><td>' + esc(r.p.jenis_paket || '') + '</td><td>' + r.done + '/' + r.n + ' (' + pct + '%)</td><td>' + (r.p.polaris_sync && r.p.polaris_area === 'automotive' ? 'Reported' : 'Not reported') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
+  return h;
+}
+function papersCard(C){
+  if(!window.VDOCS) return '';
+  if(!VDOCS._st.loaded && !VDOCS._st.loading && !ST.docsAsked){ ST.docsAsked = true; try{ VDOCS.load().then(function(){ render(); }); }catch(_){} }
+  var A = VDOCS.attention(C.now), rec = (VDOCS._st.rows || []).filter(function(r){ return r.jenis === 'recall' && VDOCS.statusOf(r).key === 'soon'; }), vb = {}; (C.vs || []).forEach(function(v){ vb[v.id] = v; });
+  A = A.filter(function(x){ return vb[x.r.kendaraan_id] && x.r.jenis !== 'recall'; }); rec = rec.filter(function(r){ return vb[r.kendaraan_id]; });
+  var h = '<div class="dx-card"><h2 class="dx-h">Papers &amp; Recalls</h2><p class="dx-sub">Dokumen yang segera atau sudah lewat masa berlakunya, dan recall yang masih terbuka. / Documents due and open recalls.</p>';
+  if(!VDOCS._st.rows.length) return h + '<p class="dx-sub" style="margin:0;">Belum ada dokumen tercatat. <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="showPanel(\'dokumen\')">Papers &amp; Recalls ›</button></p></div>';
+  if(!A.length && !rec.length) return h + '<p class="dx-sub" style="margin:0;">Semua dokumen aktif dan tidak ada recall terbuka. / All papers valid.</p></div>';
+  h += '<div style="overflow-x:auto"><table><thead><tr><th>Vehicle</th><th>Document</th><th>Status</th></tr></thead><tbody>' + A.map(function(x){ return '<tr><td>' + esc(vname(vb[x.r.kendaraan_id])) + '</td><td>' + esc(x.r.judul) + '</td><td><span class="dx-badge ' + (x.st.key === 'expired' ? 'dx-nogo' : 'dx-attn') + '">' + esc(x.st.label) + '</span></td></tr>'; }).join('') + rec.map(function(r){ return '<tr><td>' + esc(vname(vb[r.kendaraan_id])) + '</td><td>Recall: ' + esc(r.judul) + '</td><td><span class="dx-badge dx-attn">' + esc(VDOCS.statusOf(r).label) + '</span></td></tr>'; }).join('') + '</tbody></table></div></div>';
   return h;
 }
 function everyTripCard(C){
@@ -21952,7 +22027,7 @@ function timelineCard(C){
   var all = C.pkgs.concat(C.visits).filter(function(p){ return p.date; }).sort(function(a, b){ return a.date - b.date; }).slice(0, 24);
   var h = '<div class="dx-card"><h2 class="dx-h">Timeline</h2><p class="dx-sub">Urutan paket berikutnya. Tanggal dari KM dihitung dengan asumsi pemakaian tahunan (Estimasi). / Dates from km use an assumed annual mileage.</p>';
   if(!all.length) return h + '<p class="dx-sub" style="margin:0;">—</p></div>';
-  var by = {}; all.forEach(function(p){ var k = p.state === 'overdue' ? 'Overdue' : p.date.toISOString().slice(0, 7); (by[k] = by[k] || []).push(p); });
+  var by = {}; all.forEach(function(p){ var k = p.state === 'overdue' ? 'Overdue' : ymdL(p.date).slice(0, 7); (by[k] = by[k] || []).push(p); });
   var keys = Object.keys(by).sort(function(a, b){ return a === 'Overdue' ? -1 : b === 'Overdue' ? 1 : a < b ? -1 : 1; });
   return h + '<div class="dx-tl">' + keys.map(function(k){ return '<h4>' + esc(k) + '</h4><ul style="margin:0 0 0 14px;padding:0;font-size:13px;">' + by[k].map(function(p){ return '<li><strong>' + esc(p.level === 'KM' ? 'Service visit' : LV[p.level].name) + '</strong> · ' + esc(p.vehicle) + ' · ' + (p.km != null ? fkm(p.km) + ' km · ' : '') + p.items.length + ' tasks</li>'; }).join('') + '</ul>'; }).join('') + '</div></div>';
 }
@@ -21961,10 +22036,10 @@ function render(){
   if(!document.getElementById('dashStyle')){ var s = document.createElement('style'); s.id = 'dashStyle'; s.textContent = CSS; document.head.appendChild(s); }
   var vs = vehList(), C; try{ C = compute(); }catch(e){ root.innerHTML = '<div class="dx-card"><p class="dx-sub" style="margin:0;">Dashboard tidak dapat dihitung: ' + esc(e && e.message) + '</p></div>'; return; }
   var sel = '<div class="dx-card" style="padding:10px 14px;"><div class="field" style="max-width:360px;margin:0;"><label for="dxScope">Scope</label><select id="dxScope" onchange="DASH.setScope(this.value)"><option value="all"' + (ST.scope === 'all' ? ' selected' : '') + '>All vehicles (fleet)</option>' + vs.map(function(v){ return '<option value="' + esc(v.id) + '"' + (ST.scope === v.id ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select></div></div>';
-  root.innerHTML = sel + statusCard(C) + quickCard(C) + everyTripCard(C) + boardCard(C) + timelineCard(C) + costCard(C) + riskCard(C);
+  root.innerHTML = sel + statusCard(C) + quickCard(C) + everyTripCard(C) + boardCard(C) + timelineCard(C) + projectsCard(C) + papersCard(C) + costCard(C) + riskCard(C);
   ST.sig = signature();
 }
-function signature(){ var a = [vehList(), g('workOrders') || [], g('jobCards') || [], g('defectLogs') || [], g('inspectionSessions') || []]; return a.map(function(x){ return x.length; }).join('/') + '|' + vehList().map(function(v){ return v.id + ':' + v.km_saat_ini; }).join(','); }
+function signature(){ var a = [vehList(), g('workOrders') || [], g('jobCards') || [], g('defectLogs') || [], g('inspectionSessions') || []]; return a.map(function(x){ return x.length; }).join('/') + (window.VDOCS ? '|d' + (VDOCS._st.rows || []).length : '') + '|' + vehList().map(function(v){ return v.id + ':' + v.km_saat_ini; }).join(','); }
 function setScope(v){ ST.scope = v; if(v !== 'all') ST.act = v; render(); }
 function setAct(v){ ST.act = v; }
 function qa(k){
@@ -21977,7 +22052,844 @@ function qa(k){
 }
 /* tampilan segar saat data dimuat setelah panel dibuka */
 setInterval(function(){ var p = document.getElementById('panel-dash'); if(p && !p.hidden && signature() !== ST.sig){ var a = document.activeElement; if(a && a.closest && a.closest('#dashRoot') && /INPUT|SELECT/.test(a.tagName)) return; render(); } }, 1500);
-window.DASH = { render:render, onShow:render, compute:compute, catOf:catOf, levelOf:levelOf, statusOf:statusOf, costOf:costOf, setCost:setCost, resetCost:resetCost, setScope:setScope, setAct:setAct, qa:qa, CATS:CATS, _st:ST };
+window.DASH = { typeKey:typeKey, TYPEREG:TYPEREG, calib:calib, render:render, onShow:render, compute:compute, catOf:catOf, levelOf:levelOf, statusOf:statusOf, costOf:costOf, setCost:setCost, resetCost:resetCost, setScope:setScope, setAct:setAct, qa:qa, CATS:CATS, _st:ST };
+})();
+
+</script>
+<script id="ppoScript">
+/* Altair Auto — Parts Demand & Purchase Orders (Rev 21): kebutuhan part dari paket perawatan, qty + harga, draft PO, penerimaan.
+   Letak: panel Spare Part (BUKAN Dashboard). Data kebutuhan dihitung dari template (change/replacement) + perkiraan jadwal.
+   Menulis ke part_order_plan lewat PL_ADAPTER (kolom baru dibuang otomatis bila migrasi belum dijalankan; peringatan ditampilkan).
+   Angka harga/qty bawaan = ESTIMASI umum; sumber tiap harga ditampilkan. Pengubahan harga per baris tersimpan di perangkat ini. */
+(function(){
+'use strict';
+if(window.PARTSPO) return;
+var DAY = 86400000;
+var esc = function(s){ s = String(s == null ? '' : s); return (typeof escapeHtml === 'function') ? escapeHtml(s) : s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+var rp = function(n){ n = Math.round(Number(n) || 0); return 'Rp ' + n.toLocaleString('id-ID'); };
+function g(name){ try{ return (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+function toD(x){ if(!x) return null; var d = new Date(String(x).length <= 10 ? x + 'T00:00:00' : x); return isNaN(d) ? null : d; }
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fd(d){ return d ? d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) : '–'; }
+function vname(v){ return [v.merk, v.model, v.plat_nomor].filter(Boolean).join(' ') || v.id; }
+function katOf(v){ try{ return typeof catKeyOf === 'function' ? catKeyOf(v) : 'lainnya'; }catch(_){ return 'lainnya'; } }
+function vehList(){ return g('vehicles') || []; }
+
+/* ---- qty dan harga satuan bawaan (ESTIMASI umum, Rupiah). q = jumlah, u = satuan, p = harga per satuan ---- */
+var DEF = {
+ oli_mesin:{ motor:{ q:1, u:'L', p:85000 }, mobil:{ q:4, u:'L', p:95000 }, niaga:{ q:6, u:'L', p:85000 }, lainnya:{ q:3, u:'L', p:90000 } },
+ filter_oli:{ motor:{ q:1, u:'pcs', p:35000 }, mobil:{ q:1, u:'pcs', p:65000 }, niaga:{ q:1, u:'pcs', p:95000 }, lainnya:{ q:1, u:'pcs', p:60000 } },
+ filter_udara:{ motor:{ q:1, u:'pcs', p:75000 }, mobil:{ q:1, u:'pcs', p:130000 }, niaga:{ q:1, u:'pcs', p:190000 }, lainnya:{ q:1, u:'pcs', p:120000 } },
+ ban:{ motor:{ q:2, u:'pcs', p:400000 }, mobil:{ q:4, u:'pcs', p:850000 }, niaga:{ q:6, u:'pcs', p:1500000 }, lainnya:{ q:4, u:'pcs', p:800000 } },
+ kampas_rem:{ motor:{ q:1, u:'set', p:130000 }, mobil:{ q:1, u:'set', p:450000 }, niaga:{ q:1, u:'set', p:800000 }, lainnya:{ q:1, u:'set', p:400000 } },
+ aki:{ motor:{ q:1, u:'pcs', p:280000 }, mobil:{ q:1, u:'pcs', p:1200000 }, niaga:{ q:1, u:'pcs', p:1800000 }, lainnya:{ q:1, u:'pcs', p:1000000 } },
+ timing:{ motor:{ q:1, u:'kit', p:550000 }, mobil:{ q:1, u:'kit', p:1900000 }, niaga:{ q:1, u:'kit', p:2600000 }, lainnya:{ q:1, u:'kit', p:1500000 } },
+ rem_cairan:{ motor:{ q:1, u:'L', p:65000 }, mobil:{ q:1, u:'L', p:95000 }, niaga:{ q:2, u:'L', p:95000 }, lainnya:{ q:1, u:'L', p:90000 } },
+ coolant:{ motor:{ q:1, u:'L', p:70000 }, mobil:{ q:4, u:'L', p:60000 }, niaga:{ q:6, u:'L', p:60000 }, lainnya:{ q:3, u:'L', p:60000 } },
+ busi:{ motor:{ q:1, u:'pcs', p:55000 }, mobil:{ q:4, u:'pcs', p:95000 }, niaga:{ q:4, u:'pcs', p:95000 }, lainnya:{ q:2, u:'pcs', p:90000 } },
+ oli_trans:{ motor:{ q:1, u:'L', p:60000 }, mobil:{ q:3, u:'L', p:100000 }, niaga:{ q:5, u:'L', p:100000 }, lainnya:{ q:2, u:'L', p:90000 } },
+ oli_cvt:{ motor:{ q:1, u:'L', p:65000 }, mobil:{ q:4, u:'L', p:145000 }, niaga:{ q:5, u:'L', p:145000 }, lainnya:{ q:3, u:'L', p:130000 } },
+ belt:{ motor:{ q:1, u:'set', p:350000 }, mobil:{ q:1, u:'set', p:450000 }, niaga:{ q:1, u:'set', p:600000 }, lainnya:{ q:1, u:'set', p:400000 } },
+ generik:{ motor:{ q:1, u:'pcs', p:120000 }, mobil:{ q:1, u:'pcs', p:300000 }, niaga:{ q:1, u:'pcs', p:450000 }, lainnya:{ q:1, u:'pcs', p:250000 } }
+};
+function defKey(tpl){
+  var s = (String(tpl.id || '') + ' ' + String(tpl.nama || '')).toLowerCase();
+  if(/oli_cvt|cvt.*(fluid|oil)|at.*fluid|matic.*oli/.test(s)) return 'oli_cvt';
+  if(/roller|v.?belt/.test(s)) return 'belt';
+  if(/trans|gardan|persneling|diferensial|differential|gear/.test(s) && /oil|oli/.test(s)) return 'oli_trans';
+  if(/filter.*oli|oil.?filter/.test(s)) return 'filter_oli';
+  if(/filter.*udara|air.?filter/.test(s)) return 'filter_udara';
+  if(/oli_mesin|engine.?oil|oli mesin/.test(s)) return 'oli_mesin';
+  if(/rem_cairan|brake.?fluid|minyak rem/.test(s)) return 'rem_cairan';
+  if(/kampas|brake.?pad|brake.?shoe/.test(s)) return 'kampas_rem';
+  if(/coolant|radiator/.test(s)) return 'coolant';
+  if(/busi|spark/.test(s)) return 'busi';
+  if(/(^|[_\s])aki|battery|accu/.test(s)) return 'aki';
+  if(/timing|rantai keteng/.test(s)) return 'timing';
+  if(/(^|[_\s])(ban|tire|tyre)/.test(s)) return 'ban';
+  return 'generik';
+}
+var KEY = 'altair.parts.v1';
+function store(){ try{ return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }catch(_){ return {}; } }
+function save(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(_){} }
+function settings(){ var s = store(); return { horizon:Number(s.horizon) || 180, lead:s.lead != null && isFinite(Number(s.lead)) ? Number(s.lead) : 7, ov:s.ov || {} }; }
+
+var ST = { quotes:[], qf:{ kelompok:'', pemasok:'', harga:'', lead:'', garansi:'' }, qmsg:'', qmsgT:'', scope:'all', plans:[], lib:[], loaded:false, loading:false, missing:false, err:'', sel:{}, msg:'', msgT:'', supp:'', view:'timeline', rec:{} };
+var A = function(){ return window.PL_ADAPTER; };
+
+async function load(force){
+  if(ST.loading || (ST.loaded && !force)) return; ST.loading = true;
+  try{ if(A() && A().ready()){ ST.plans = await A().list('part_order_plan'); try{ ST.lib = await A().list('part_library'); }catch(_){ ST.lib = []; } try{ ST.quotes = await A().list('kuotasi'); ST.qMissing = false; }catch(qe){ ST.quotes = []; ST.qMissing = /could not find the table|does not exist|schema cache|42P01|PGRST205/i.test((qe && qe.message) || ''); } ST.missing = false; ST.err = ''; } else { ST.err = 'Belum terhubung ke database.'; } ST.loaded = true; }
+  catch(e){ ST.err = (e && e.message) || String(e); ST.missing = /could not find the table|does not exist|schema cache|42P01|PGRST205/i.test(ST.err); ST.loaded = true; }
+  ST.loading = false; render();
+}
+
+/* ---- harga: urutan sumber ---- */
+function lastBought(vid, name){
+  var n = String(name || '').toLowerCase(), best = null;
+  ST.plans.forEach(function(p){ if(p.kendaraan_id !== vid || !(Number(p.harga_aktual) > 0)) return; var pn = String(p.nama_part || '').toLowerCase(); if(pn !== n && pn.indexOf(n) < 0 && n.indexOf(pn) < 0) return; var d = p.tanggal_terima || p.tanggal_order || p.created_at || ''; if(!best || d > best.d) best = { d:d, unit:Number(p.harga_aktual) / Math.max(1, Number(p.jumlah) || 1) }; });
+  return best;
+}
+function libPrice(v, name){
+  var n = String(name || '').toLowerCase(), kat = katOf(v), cands = ST.lib.filter(function(p){ return Number(p.harga_perkiraan) > 0 && String(p.nama || '').toLowerCase().indexOf(n) >= 0 && (!p.berlaku_kategori || p.berlaku_kategori === kat) && (!p.model_kendaraan || String(p.model_kendaraan).toLowerCase() === String(v.model || '').toLowerCase()); });
+  if(!cands.length) return null;
+  cands.sort(function(a, b){ return (b.model_kendaraan ? 1 : 0) - (a.model_kendaraan ? 1 : 0); });
+  return Number(cands[0].harga_perkiraan);
+}
+function priceFor(v, key, name, tplId){
+  var S = settings(), o = S.ov[v.id + '|' + tplId];
+  if(o && Number(o.p) >= 0 && o.p !== '' && o.p != null) return { p:Number(o.p), src:'manual', q:o.q != null && o.q !== '' ? Number(o.q) : null };
+  var lb = lastBought(v.id, name); if(lb) return { p:Math.round(lb.unit), src:'terakhir dibeli' };
+  var lp = libPrice(v, name); if(lp) return { p:lp, src:'Part Library' };
+  return { p:(DEF[key][katOf(v)] || DEF[key].lainnya).p, src:'estimasi' };
+}
+
+/* ---- kebutuhan part ---- */
+var REPL = /replace|change|ganti|pasang|install/i;
+function demand(now){
+  now = now || new Date(); var S = settings(), out = [], PC = g('PARTS_CATALOG') || [], byTask = {}; PC.forEach(function(p){ byTask[p.taskId] = p; });
+  var vs = vehList().filter(function(v){ return ST.scope === 'all' || v.id === ST.scope; });
+  vs.forEach(function(v){
+    var T = []; try{ T = getEffectiveMaintTemplates(v) || []; }catch(_){ return; }
+    var effV = v; try{ if(typeof effectiveVehicle === 'function') effV = effectiveVehicle(v) || v; }catch(_){}
+    var kat = katOf(v);
+    T.forEach(function(t){
+      var pc = byTask[t.id]; if(!pc && !REPL.test(t.nama || '')) return; if(/inspect|check|cek|periksa|rotasi|rotation/i.test(t.nama || '') && !pc) return;
+      var occs = []; try{ var ld = typeof lastDoneForTask === 'function' ? lastDoneForTask(v, t.id) : null; var r = forecastTask(t, effV, 2, ld); occs = (r && r.occurrences) || []; }catch(_){}
+      var o = occs[0]; if(!o) return; var d = toD(o.date); if(!d) return;
+      var days = Math.round((d - now) / DAY); if(days > S.horizon && !o.overdue) return;
+      var name = pc ? pc.nama : String(t.nama || t.id).replace(/^(change|replace|ganti|pasang|install)\s+/i, '');
+      var key = defKey(t), dq = DEF[key][kat] || DEF[key].lainnya, pr = priceFor(v, key, name, t.id);
+      var qty = pr.q != null ? pr.q : dq.q, need = new Date(Math.max(now.getTime(), d.getTime() - S.lead * DAY));
+      out.push({ vid:v.id, v:v, tpl:t, name:name, key:key, kat:kat, date:d, km:o.km, days:days, overdue:!!o.overdue, qty:qty, unit:dq.u, up:pr.p, src:pr.src, total:qty * pr.p, need:need, ref:'dem:' + v.id + ':' + t.id + ':' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') });
+    });
+  });
+  out.sort(function(a, b){ return a.date - b.date; });
+  var live = {}; ST.plans.forEach(function(p){ if(p.status !== 'batal' && p.status !== 'terpasang' && p.sumber_ref) live[p.sumber_ref] = p; });
+  out.forEach(function(i){ var ex = live[i.ref] || live['due:' + i.vid + ':' + i.tpl.id]; i.plan = ex || null; });
+  return out;
+}
+function bucket(i, now){ if(i.overdue || i.days < 0) return '0 Overdue'; var d = i.date; var y = d.getFullYear(), m = d.getMonth(); return '1 ' + y + '-' + String(m + 1).padStart(2, '0'); }
+function monthLabel(k){ if(k.charAt(0) === '0') return 'Overdue (butuh segera)'; var p = k.slice(2).split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, 1).toLocaleDateString('id-ID', { month:'long', year:'numeric' }); }
+
+/* ---- aksi ---- */
+function msg(t, k){ ST.msg = t; ST.msgT = k || ''; render(); }
+function setScope(v){ ST.scope = v; ST.sel = {}; render(); }
+function setHorizon(v){ var s = store(); s.horizon = Number(v) || 180; save(s); render(); }
+function setLead(v){ var s = store(); s.lead = Math.max(0, Math.min(60, Number(v) || 0)); save(s); render(); }
+function toggle(ref, on){ if(on) ST.sel[ref] = 1; else delete ST.sel[ref]; render(); }
+function selAll(on){ demand().forEach(function(i){ if(!i.plan){ if(on) ST.sel[i.ref] = 1; else delete ST.sel[i.ref]; } }); render(); }
+function setLine(vid, tplId, f, val){ var s = store(); s.ov = s.ov || {}; var k = vid + '|' + tplId, o = s.ov[k] || {}; if(val === '' || val == null) delete o[f]; else o[f] = Number(val); if(Object.keys(o).length) s.ov[k] = o; else delete s.ov[k]; save(s); render(); }
+function resetLines(){ var s = store(); s.ov = {}; save(s); render(); }
+
+async function createPlans(){
+  var D = demand().filter(function(i){ return ST.sel[i.ref] && !i.plan; });
+  if(!D.length){ msg('Pilih kebutuhan yang belum punya rencana order.', 'err'); return; }
+  var add = 0, fail = '';
+  for(var k = 0; k < D.length; k++){
+    var i = D[k];
+    try{ await A().insert('part_order_plan', { kendaraan_id:i.vid, nama_part:i.name, jumlah:Math.max(1, Math.round(i.qty)), satuan:i.unit, harga_satuan:i.up, sumber_harga:i.src, lead_hari:settings().lead, alasan:'maintenance', sumber_ref:i.ref, tanggal_dibutuhkan:ymd(i.need), status:'rencana', estimasi_harga:Math.round(i.total), catatan:'Dari paket perawatan: ' + i.tpl.nama + (i.km ? ' (±' + Math.round(i.km).toLocaleString('id-ID') + ' km)' : '') }); add++; }
+    catch(e){ fail = (e && e.message) || String(e); break; }
+  }
+  try{ ST.plans = await A().list('part_order_plan'); }catch(_){}
+  ST.sel = {}; msg((add ? add + ' rencana order dibuat.' : '') + (fail ? ' Gagal: ' + fail : ''), fail ? 'err' : 'ok');
+}
+function poNumber(){ var d = new Date(), pre = 'PO-' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-', n = 1, used = {}; ST.plans.forEach(function(p){ if(p.po_nomor) used[p.po_nomor] = 1; }); while(used[pre + String(n).padStart(2, '0')]) n++; return pre + String(n).padStart(2, '0'); }
+async function makePO(){
+  var ids = Object.keys(ST.sel).filter(function(id){ return ST.sel[id]; }), P = ST.plans.filter(function(p){ return ST.sel['p:' + p.id] && p.status === 'rencana' && !p.po_nomor; });
+  var sup = String(ST.supp || '').trim();
+  if(!P.length){ msg('Pilih rencana order (status Draft tanpa PO) pada daftar “Rencana order”.', 'err'); return; }
+  if(!sup){ msg('Isi nama pemasok untuk PO.', 'err'); return; }
+  var no = poNumber(), fail = '';
+  for(var k = 0; k < P.length; k++){ try{ await A().update('part_order_plan', P[k].id, { po_nomor:no, pemasok:sup }); }catch(e){ fail = (e && e.message) || String(e); break; } }
+  try{ ST.plans = await A().list('part_order_plan'); }catch(_){}
+  Object.keys(ST.sel).forEach(function(k){ if(k.indexOf('p:') === 0) delete ST.sel[k]; });
+  var dropped = (A().dropped || {}).po_nomor;
+  msg(fail ? 'Gagal: ' + fail : (dropped ? 'PO tidak tersimpan: kolom po_nomor belum ada di database. Jalankan migration_parts_po.sql lalu ulangi.' : 'PO ' + no + ' dibuat (' + P.length + ' baris, pemasok ' + sup + ').'), (fail || dropped) ? 'err' : 'ok');
+}
+function poGroups(){
+  var G = {}; ST.plans.forEach(function(p){ if(!p.po_nomor || p.status === 'batal') return; (G[p.po_nomor] = G[p.po_nomor] || []).push(p); });
+  return Object.keys(G).sort().reverse().map(function(no){ var L = G[no], st = L.every(function(p){ return p.status === 'diterima' || p.status === 'terpasang'; }) ? 'Received' : L.some(function(p){ return p.status === 'dipesan'; }) ? 'Ordered' : 'Draft'; return { no:no, lines:L, status:st, supplier:L[0].pemasok || '', total:L.reduce(function(s, p){ return s + (Number(p.harga_aktual) > 0 ? Number(p.harga_aktual) : Number(p.estimasi_harga) || 0); }, 0) }; });
+}
+async function orderPO(no){
+  var L = ST.plans.filter(function(p){ return p.po_nomor === no && p.status === 'rencana'; }); if(!L.length) return; var fail = '';
+  for(var k = 0; k < L.length; k++){ try{ await A().update('part_order_plan', L[k].id, { status:'dipesan', tanggal_order:ymd(new Date()) }); }catch(e){ fail = (e && e.message) || String(e); break; } }
+  try{ ST.plans = await A().list('part_order_plan'); }catch(_){} msg(fail ? 'Gagal: ' + fail : 'PO ' + no + ' ditandai Ordered.', fail ? 'err' : 'ok');
+}
+function recVal(id, f){ return (ST.rec[id] || {})[f]; }
+function setRec(id, f, v){ ST.rec[id] = ST.rec[id] || {}; ST.rec[id][f] = v; }
+async function receivePO(no){
+  var L = ST.plans.filter(function(p){ return p.po_nomor === no && p.status === 'dipesan'; }); if(!L.length){ msg('Tidak ada baris berstatus Ordered pada PO ini.', 'err'); return; } var fail = '';
+  for(var k = 0; k < L.length; k++){ var p = L[k], h = recVal(p.id, 'h'); var patch = { status:'diterima', tanggal_terima:ymd(new Date()) }; if(h !== '' && h != null && isFinite(Number(h))) patch.harga_aktual = Number(h); else if(Number(p.estimasi_harga) > 0) patch.harga_aktual = Number(p.estimasi_harga); var w = recVal(p.id, 'w'); if(w) patch.work_order_id = w; try{ await A().update('part_order_plan', p.id, patch); }catch(e){ fail = (e && e.message) || String(e); break; } }
+  try{ ST.plans = await A().list('part_order_plan'); }catch(_){} msg(fail ? 'Gagal: ' + fail : 'PO ' + no + ' diterima. Harga aktual dipakai untuk estimasi berikutnya.', fail ? 'err' : 'ok');
+}
+function poText(no){
+  var G = poGroups().filter(function(x){ return x.no === no; })[0]; if(!G) return '';
+  var rows = G.lines.map(function(p, i){ var v = vehList().filter(function(x){ return x.id === p.kendaraan_id; })[0]; return (i + 1) + '. ' + p.nama_part + ' — ' + (p.jumlah || 1) + ' ' + (p.satuan || 'pcs') + (p.part_nomor ? ' (PN ' + p.part_nomor + ')' : '') + (v ? ' [' + vname(v) + ']' : '') + ' — est. ' + rp(p.estimasi_harga); });
+  return 'PURCHASE ORDER ' + no + '\nPemasok: ' + (G.supplier || '-') + '\nStatus: ' + G.status + '\n\n' + rows.join('\n') + '\n\nEstimasi total: ' + rp(G.total);
+}
+function copyPO(no){ var t = poText(no); try{ navigator.clipboard.writeText(t).then(function(){ msg('Teks PO ' + no + ' disalin.', 'ok'); }, function(){ fallbackCopy(t); }); }catch(_){ fallbackCopy(t); } }
+function fallbackCopy(t){ var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); msg('Teks PO disalin.', 'ok'); }catch(_){ msg('Salin manual dari kotak teks.', 'err'); } ta.remove(); }
+function csvPO(no){
+  var G = poGroups().filter(function(x){ return x.no === no; })[0]; if(!G) return;
+  var q = function(s){ return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"'; };
+  var rows = [['PO', 'Pemasok', 'Kendaraan', 'Part', 'Part nomor', 'Qty', 'Satuan', 'Harga satuan', 'Estimasi', 'Dibutuhkan', 'Status'].map(q).join(',')];
+  G.lines.forEach(function(p){ var v = vehList().filter(function(x){ return x.id === p.kendaraan_id; })[0]; rows.push([no, G.supplier, v ? vname(v) : '', p.nama_part, p.part_nomor, p.jumlah, p.satuan, p.harga_satuan, p.estimasi_harga, p.tanggal_dibutuhkan, p.status].map(q).join(',')); });
+  try{ var b = new Blob(['﻿' + rows.join('\r\n')], { type:'text/csv;charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = no + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500); }catch(e){ msg('Unduh gagal: ' + (e && e.message), 'err'); }
+}
+function openWoPick(){ return (g('workOrders') || []).filter(function(w){ return w.status !== 'selesai' && w.status !== 'batal'; }); }
+
+
+function parseRp(x){ var t = String(x == null ? '' : x).replace(/rp\.?/ig, '').replace(/\s/g, ''); if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); else if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) t = t.replace(/,/g, ''); else t = t.replace(',', '.'); var n = Number(t); return isFinite(n) ? n : 0; }
+/* ---- perbandingan kuotasi (AP-19 / N-04) ---- */
+function qmsg(t, k){ ST.qmsg = t; ST.qmsgT = k || ''; render(); }
+function qSet(k, v){ ST.qf[k] = v; }
+async function qAdd(){
+  var f = ST.qf, h = parseRp(f.harga), lead = f.lead === '' ? null : Number(f.lead);
+  if(!String(f.kelompok).trim()){ qmsg('Isi nama pekerjaan/pembelian yang dibandingkan.', 'err'); return; }
+  if(!String(f.pemasok).trim()){ qmsg('Isi nama pemasok/bengkel.', 'err'); return; }
+  if(!(h > 0)){ qmsg('Isi harga lebih dari 0.', 'err'); return; }
+  try{ await A().insert('kuotasi', { kelompok:String(f.kelompok).trim(), pemasok:String(f.pemasok).trim(), harga:h, lead_hari:lead != null && isFinite(lead) ? lead : null, garansi:String(f.garansi || '').trim() || null, dipilih:false, kendaraan_id:ST.scope !== 'all' ? ST.scope : null }); ST.quotes = await A().list('kuotasi'); ST.qf.pemasok = ''; ST.qf.harga = ''; ST.qf.lead = ''; ST.qf.garansi = ''; qmsg('Kuotasi dicatat.', 'ok'); }
+  catch(e){ ST.qMissing = /could not find the table|does not exist|schema cache|42P01|PGRST205/i.test((e && e.message) || ''); qmsg('Gagal: ' + ((e && e.message) || e) + (ST.qMissing ? ' — jalankan migration_rev21.sql.' : ''), 'err'); }
+}
+async function qPick(id){
+  var q = ST.quotes.filter(function(x){ return x.id === id; })[0]; if(!q) return;
+  try{ var same = ST.quotes.filter(function(x){ return x.kelompok === q.kelompok; }); for(var i = 0; i < same.length; i++){ var want = same[i].id === id && !same[i].dipilih; if(!!same[i].dipilih !== want) await A().update('kuotasi', same[i].id, { dipilih:want }); } ST.quotes = await A().list('kuotasi'); var now = ST.quotes.filter(function(x){ return x.id === id; })[0]; if(now && now.dipilih) ST.supp = now.pemasok; qmsg(now && now.dipilih ? 'Dipilih: ' + q.pemasok + '. Nama pemasok dipakai di kolom PO.' : 'Pilihan dibatalkan.', 'ok'); }
+  catch(e){ qmsg('Gagal: ' + ((e && e.message) || e), 'err'); }
+}
+async function qDel(id){ try{ await A().remove('kuotasi', id); ST.quotes = await A().list('kuotasi'); qmsg('Kuotasi dihapus.', 'ok'); }catch(e){ qmsg('Gagal: ' + ((e && e.message) || e), 'err'); } }
+function quoteGroups(){ var G = {}; ST.quotes.forEach(function(q){ (G[q.kelompok] = G[q.kelompok] || []).push(q); }); return Object.keys(G).sort().map(function(k){ var L = G[k].slice().sort(function(a, b){ return Number(a.harga) - Number(b.harga); }); var minP = Math.min.apply(null, L.map(function(x){ return Number(x.harga); })), leads = L.filter(function(x){ return x.lead_hari != null; }).map(function(x){ return Number(x.lead_hari); }), minL = leads.length ? Math.min.apply(null, leads) : null; return { kelompok:k, list:L, minP:minP, minL:minL }; }); }
+function quoteCard(){
+  var G = quoteGroups(), f = ST.qf;
+  var h = '<div class="pp-card"><h2 class="pp-h">Compare quotations</h2><p class="pp-sub">Catat 2–3 kuotasi untuk pekerjaan atau pembelian yang sama; yang termurah dan tercepat ditandai. Harga bukan satu-satunya ukuran: lihat juga garansi dan lead time.</p>';
+  if(ST.qMissing) h += '<div class="pp-m err">Tabel kuotasi belum ada — jalankan migration_rev21.sql.</div>';
+  h += '<div class="pp-row"><div class="field" style="margin:0;"><label for="qK">Pekerjaan / pembelian</label><input id="qK" type="text" value="' + esc(f.kelompok) + '" oninput="PARTSPO._q(\'kelompok\',this.value)" placeholder="mis. Ganti timing belt Avanza"></div><div class="field" style="margin:0;"><label for="qP">Pemasok / bengkel</label><input id="qP" type="text" value="' + esc(f.pemasok) + '" oninput="PARTSPO._q(\'pemasok\',this.value)"></div><div class="field" style="margin:0;"><label for="qH">Harga (Rp)</label><input id="qH" class="pp-n" type="text" inputmode="numeric" value="' + esc(f.harga) + '" oninput="PARTSPO._q(\'harga\',this.value)"></div><div class="field" style="margin:0;"><label for="qL">Lead (hari)</label><input id="qL" class="pp-n" type="number" inputmode="numeric" min="0" value="' + esc(f.lead) + '" oninput="PARTSPO._q(\'lead\',this.value)"></div><div class="field" style="margin:0;"><label for="qG">Garansi</label><input id="qG" type="text" value="' + esc(f.garansi) + '" oninput="PARTSPO._q(\'garansi\',this.value)" placeholder="mis. 6 bulan"></div><button type="button" onclick="PARTSPO.qAdd()">Tambah kuotasi</button></div>';
+  if(!G.length) h += '<p class="pp-sub">Belum ada kuotasi.</p>';
+  G.forEach(function(g){ h += '<h3 style="margin:10px 0 4px;font-size:14px;">' + esc(g.kelompok) + ' <span class="pp-mut">(' + g.list.length + ' kuotasi' + (g.list.length > 1 ? ', selisih ' + rp(Number(g.list[g.list.length - 1].harga) - g.minP) : '') + ')</span></h3><div class="pp-wrap"><table><thead><tr><th>Pemasok</th><th>Harga</th><th>Lead</th><th>Garansi</th><th></th></tr></thead><tbody>' + g.list.map(function(q){ var cheap = g.list.length > 1 && Number(q.harga) === g.minP, fast = g.minL != null && g.list.length > 1 && q.lead_hari != null && Number(q.lead_hari) === g.minL; return '<tr><td>' + esc(q.pemasok) + (q.dipilih ? ' <span class="pp-bad pp-ok">Dipilih</span>' : '') + '</td><td>' + rp(q.harga) + (cheap ? ' <span class="pp-bad pp-ok">Termurah</span>' : '') + '</td><td>' + (q.lead_hari != null ? esc(q.lead_hari) + ' hari' : '–') + (fast ? ' <span class="pp-bad pp-ok">Tercepat</span>' : '') + '</td><td>' + esc(q.garansi || '–') + '</td><td><button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="PARTSPO.qPick(\'' + esc(q.id) + '\')">' + (q.dipilih ? 'Batalkan' : 'Pilih') + '</button> <button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="PARTSPO.qDel(\'' + esc(q.id) + '\')">Hapus</button></td></tr>'; }).join('') + '</tbody></table></div>'; });
+  if(ST.qmsg) h += '<div class="pp-m ' + ST.qmsgT + '" role="status">' + esc(ST.qmsg) + '</div>';
+  return h + '</div>';
+}
+/* ---- tampilan ---- */
+var CSS = '#partsPoRoot .pp-card{background:var(--surface,#fff);border:1px solid var(--border,#d8dde6);border-radius:12px;padding:14px;margin-bottom:14px}#partsPoRoot h2.pp-h{margin:0 0 4px;font-size:16px}#partsPoRoot .pp-sub{margin:0 0 10px;color:var(--text-dim,#5b6577);font-size:13px}#partsPoRoot .pp-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}#partsPoRoot .pp-kpi{border:1px solid var(--border,#d8dde6);border-radius:10px;padding:10px;min-width:0}#partsPoRoot .pp-kpi b{display:block;font-size:18px}#partsPoRoot .pp-wrap{overflow-x:auto}#partsPoRoot table{width:100%;border-collapse:collapse;font-size:13px}#partsPoRoot th,#partsPoRoot td{padding:5px 6px;border-bottom:1px solid var(--border,#d8dde6);text-align:left;vertical-align:top}#partsPoRoot input,#partsPoRoot select{font-size:16px;min-height:40px}#partsPoRoot input.pp-n{width:88px}#partsPoRoot .pp-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end}#partsPoRoot .pp-bad{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid currentColor}#partsPoRoot .pp-od{color:var(--danger-ink,#a11d2b)}#partsPoRoot .pp-ok{color:var(--ok-ink,#136c3a)}#partsPoRoot .pp-mut{color:var(--text-dim,#5b6577)}#partsPoRoot .pp-m{margin:8px 0;padding:8px 10px;border-radius:8px;font-size:13px;border:1px solid var(--border,#d8dde6)}#partsPoRoot .pp-m.err{color:var(--danger-ink,#a11d2b)}#partsPoRoot .pp-m.ok{color:var(--ok-ink,#136c3a)}#partsPoRoot .pp-mon td{background:var(--surface-2,#f3f5f9);font-weight:700}';
+function render(){
+  var root = document.getElementById('partsPoRoot'); if(!root) return;
+  if(!document.getElementById('partsPoStyle')){ var s = document.createElement('style'); s.id = 'partsPoStyle'; s.textContent = CSS; document.head.appendChild(s); }
+  if(!ST.loaded && !ST.loading) load();
+  var S = settings(), vs = vehList(), D = []; try{ D = demand(); }catch(e){ root.innerHTML = '<div class="pp-card"><p class="pp-sub">Kebutuhan part tidak dapat dihitung: ' + esc(e && e.message) + '</p></div>'; return; }
+  var total = D.reduce(function(s, i){ return s + i.total; }, 0), open = D.filter(function(i){ return !i.plan; }), od = D.filter(function(i){ return i.overdue || i.days < 0; });
+  var selN = D.filter(function(i){ return ST.sel[i.ref] && !i.plan; }).length, selTot = D.filter(function(i){ return ST.sel[i.ref] && !i.plan; }).reduce(function(s, i){ return s + i.total; }, 0);
+  var h = '';
+  h += '<div class="pp-card"><h2 class="pp-h">Parts Demand &amp; Purchase Orders</h2><p class="pp-sub">Kebutuhan part dari paket perawatan yang akan jatuh tempo (template change/replacement), lengkap dengan qty dan harga. Seperti provisioning spare di penerbangan: part disiapkan <b>sebelum</b> paket dikerjakan, supaya kendaraan tidak menunggu di bengkel. Qty dan harga bawaan = <b>Estimasi</b>; ubah per baris bila Anda tahu angkanya.</p>';
+  h += '<div class="pp-row"><div class="field" style="margin:0;"><label for="ppScope">Vehicle</label><select id="ppScope" onchange="PARTSPO.setScope(this.value)"><option value="all"' + (ST.scope === 'all' ? ' selected' : '') + '>All vehicles</option>' + vs.map(function(v){ return '<option value="' + esc(v.id) + '"' + (ST.scope === v.id ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select></div>';
+  h += '<div class="field" style="margin:0;"><label for="ppHor">Horizon</label><select id="ppHor" onchange="PARTSPO.setHorizon(this.value)">' + [90, 180, 365].map(function(n){ return '<option value="' + n + '"' + (S.horizon === n ? ' selected' : '') + '>' + n + ' hari</option>'; }).join('') + '</select></div>';
+  h += '<div class="field" style="margin:0;"><label for="ppLead">Lead time (hari)</label><input id="ppLead" class="pp-n" type="number" inputmode="numeric" min="0" max="60" value="' + S.lead + '" onchange="PARTSPO.setLead(this.value)"></div></div></div>';
+  if(ST.err) h += '<div class="pp-m err">' + esc(ST.err) + (ST.missing ? ' — jalankan SQL Part Library (tabel part_order_plan) dan migration_parts_po.sql.' : '') + '</div>';
+  h += '<div class="pp-card"><div class="pp-grid"><div class="pp-kpi"><span class="pp-mut">Kebutuhan dalam ' + S.horizon + ' hari</span><b>' + D.length + ' item</b></div><div class="pp-kpi"><span class="pp-mut">Estimasi total</span><b>' + rp(total) + '</b></div><div class="pp-kpi"><span class="pp-mut">Overdue</span><b class="' + (od.length ? 'pp-od' : '') + '">' + od.length + '</b></div><div class="pp-kpi"><span class="pp-mut">Belum ada rencana order</span><b>' + open.length + '</b></div></div></div>';
+  h += '<div class="pp-card"><h2 class="pp-h">Timeline kebutuhan part</h2><p class="pp-sub">Tanggal “Dibutuhkan” = perkiraan jatuh tempo paket dikurangi lead time. Perkiraan jatuh tempo dihitung dari interval template dan pemakaian KM/tahun; bila belum ada riwayat penggantian, jadwalnya perkiraan.</p>';
+  if(!D.length){ h += '<p class="pp-sub">Tidak ada kebutuhan part pada horizon ini. Lengkapi KM kendaraan atau perpanjang horizon.</p>'; }
+  else{
+    var groups = {}; D.forEach(function(i){ (groups[bucket(i)] = groups[bucket(i)] || []).push(i); });
+    h += '<div class="pp-wrap"><table><thead><tr><th></th><th>Vehicle</th><th>Part</th><th>Paket / Task</th><th>Jatuh tempo</th><th>Dibutuhkan</th><th>Qty</th><th>Harga satuan</th><th>Total</th><th>Status</th></tr></thead><tbody>';
+    Object.keys(groups).sort().forEach(function(k){
+      var G = groups[k], sub = G.reduce(function(s, i){ return s + i.total; }, 0);
+      h += '<tr class="pp-mon"><td colspan="8">' + esc(monthLabel(k)) + ' · ' + G.length + ' item</td><td colspan="2">' + rp(sub) + '</td></tr>';
+      G.forEach(function(i){
+        var due = fd(i.date) + (i.km ? '<br><span class="pp-mut">±' + Math.round(i.km).toLocaleString('id-ID') + ' km</span>' : '');
+        var st = i.plan ? '<span class="pp-bad pp-ok">' + (i.plan.po_nomor ? esc(i.plan.po_nomor) : esc(({ rencana:'Draft', dipesan:'Ordered', diterima:'Received' })[i.plan.status] || i.plan.status)) + '</span>' : (i.overdue || i.days < 0 ? '<span class="pp-bad pp-od">Overdue</span>' : '<span class="pp-bad pp-mut">Belum diorder</span>');
+        h += '<tr><td>' + (i.plan ? '' : '<input type="checkbox" aria-label="Pilih ' + esc(i.name) + '" ' + (ST.sel[i.ref] ? 'checked ' : '') + 'onchange="PARTSPO.toggle(\'' + esc(i.ref) + '\',this.checked)">') + '</td><td>' + esc(vname(i.v)) + '</td><td>' + esc(i.name) + '</td><td>' + esc(i.tpl.nama) + '</td><td>' + due + '</td><td>' + fd(i.need) + '</td>';
+        h += '<td><input class="pp-n" type="number" inputmode="decimal" min="0" step="any" value="' + i.qty + '" aria-label="Qty" onchange="PARTSPO.setLine(\'' + esc(i.vid) + '\',\'' + esc(i.tpl.id) + '\',\'q\',this.value)"> ' + esc(i.unit) + '</td>';
+        h += '<td><input class="pp-n" type="number" inputmode="numeric" min="0" value="' + i.up + '" aria-label="Harga satuan" onchange="PARTSPO.setLine(\'' + esc(i.vid) + '\',\'' + esc(i.tpl.id) + '\',\'p\',this.value)"><br><span class="pp-mut">' + esc(i.src) + '</span></td><td>' + rp(i.total) + '</td><td>' + st + '</td></tr>';
+      });
+    });
+    h += '</tbody></table></div>';
+    h += '<div class="pp-row" style="margin-top:10px;"><button type="button" class="ghost" onclick="PARTSPO.selAll(true)">Pilih semua yang belum diorder</button><button type="button" class="ghost" onclick="PARTSPO.selAll(false)">Kosongkan</button><button type="button" onclick="PARTSPO.createPlans()"' + (selN ? '' : ' disabled') + '>Buat rencana order (' + selN + ' · ' + rp(selTot) + ')</button><button type="button" class="ghost" onclick="PARTSPO.resetLines()">Reset angka manual</button></div>';
+  }
+  h += '</div>';
+  /* rencana order + PO */
+  var plans = ST.plans.filter(function(p){ return p.status === 'rencana' && !p.po_nomor && (ST.scope === 'all' || p.kendaraan_id === ST.scope); });
+  h += '<div class="pp-card"><h2 class="pp-h">Rencana order → Purchase Order</h2><p class="pp-sub">Pilih beberapa rencana order, isi pemasok, lalu buat PO (status Draft). Tandai Ordered saat Anda memesan, lalu Received saat barang tiba (isi harga aktual supaya estimasi berikutnya makin akurat).</p>';
+  if(!plans.length) h += '<p class="pp-sub">Belum ada rencana order berstatus Draft tanpa PO.</p>';
+  else{ h += '<div class="pp-wrap"><table><thead><tr><th></th><th>Vehicle</th><th>Part</th><th>Qty</th><th>Estimasi</th><th>Dibutuhkan</th></tr></thead><tbody>' + plans.map(function(p){ var v = vehList().filter(function(x){ return x.id === p.kendaraan_id; })[0]; return '<tr><td><input type="checkbox" aria-label="Pilih ' + esc(p.nama_part) + '" ' + (ST.sel['p:' + p.id] ? 'checked ' : '') + 'onchange="PARTSPO.toggle(\'p:' + esc(p.id) + '\',this.checked)"></td><td>' + esc(v ? vname(v) : '') + '</td><td>' + esc(p.nama_part) + '</td><td>' + esc(p.jumlah || 1) + ' ' + esc(p.satuan || '') + '</td><td>' + rp(p.estimasi_harga) + '</td><td>' + esc(p.tanggal_dibutuhkan || '–') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    h += '<div class="pp-row" style="margin-top:10px;"><div class="field" style="margin:0;"><label for="ppSupp">Pemasok</label><input id="ppSupp" type="text" value="' + esc(ST.supp) + '" oninput="PARTSPO._supp(this.value)" placeholder="mis. toko / bengkel"></div><button type="button" onclick="PARTSPO.makePO()">Buat PO</button></div>'; }
+  var PG = poGroups();
+  if(PG.length){
+    h += '<h3 style="margin:14px 0 6px;font-size:14px;">Purchase Orders</h3>';
+    PG.forEach(function(P){
+      h += '<div class="pp-card" style="margin-bottom:8px;"><div class="pp-row" style="justify-content:space-between;"><div><b>' + esc(P.no) + '</b> · ' + esc(P.supplier) + ' <span class="pp-bad ' + (P.status === 'Received' ? 'pp-ok' : 'pp-mut') + '">' + P.status + '</span></div><div><b>' + rp(P.total) + '</b></div></div>';
+      h += '<div class="pp-wrap"><table><tbody>' + P.lines.map(function(p){ var rcv = p.status === 'dipesan'; return '<tr><td>' + esc(p.nama_part) + '</td><td>' + esc(p.jumlah || 1) + ' ' + esc(p.satuan || '') + '</td><td>' + (rcv ? '<input class="pp-n" type="number" inputmode="numeric" min="0" placeholder="harga aktual" aria-label="Harga aktual" value="' + esc(recVal(p.id, 'h') == null ? '' : recVal(p.id, 'h')) + '" oninput="PARTSPO._rec(\'' + esc(p.id) + '\',\'h\',this.value)">' : rp(Number(p.harga_aktual) > 0 ? p.harga_aktual : p.estimasi_harga)) + '</td><td>' + (rcv ? '<select aria-label="Work Order" onchange="PARTSPO._rec(\'' + esc(p.id) + '\',\'w\',this.value)"><option value="">Tanpa WO</option>' + openWoPick().filter(function(w){ return w.kendaraan_id === p.kendaraan_id; }).map(function(w){ return '<option value="' + esc(w.id) + '"' + (recVal(p.id, 'w') === w.id ? ' selected' : '') + '>' + esc((w.nomor_wo || '') + ' ' + (w.judul || '')) + '</option>'; }).join('') + '</select>' : (p.work_order_id ? 'WO terhubung' : '')) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      h += '<div class="pp-row" style="margin-top:8px;">' + (P.status === 'Draft' ? '<button type="button" onclick="PARTSPO.orderPO(\'' + esc(P.no) + '\')">Tandai Ordered</button>' : '') + (P.status === 'Ordered' ? '<button type="button" onclick="PARTSPO.receivePO(\'' + esc(P.no) + '\')">Tandai Received</button>' : '') + '<button type="button" class="ghost" onclick="PARTSPO.copyPO(\'' + esc(P.no) + '\')">Salin teks PO</button><button type="button" class="ghost" onclick="PARTSPO.csvPO(\'' + esc(P.no) + '\')">Unduh CSV</button></div></div>';
+    });
+  }
+  h += '</div>';
+  h += quoteCard();
+  if(ST.msg) h += '<div class="pp-m ' + ST.msgT + '" role="status">' + esc(ST.msg) + '</div>';
+  var ae = document.activeElement, fid = ae && root.contains(ae) ? ae.id : '';
+  root.innerHTML = h;
+  if(fid){ var e = document.getElementById(fid); if(e){ e.focus(); try{ if(e.type === 'text') e.setSelectionRange(e.value.length, e.value.length); }catch(_){} } }
+}
+function onShow(){ load(true); render(); }
+window.PARTSPO = { qAdd:qAdd, qPick:qPick, qDel:qDel, quoteGroups:quoteGroups, _q:qSet, render:render, onShow:onShow, demand:demand, poGroups:poGroups, setScope:setScope, setHorizon:setHorizon, setLead:setLead, toggle:toggle, selAll:selAll, setLine:setLine, resetLines:resetLines, createPlans:createPlans, makePO:makePO, orderPO:orderPO, receivePO:receivePO, copyPO:copyPO, csvPO:csvPO, poText:poText, DEF:DEF, defKey:defKey, _supp:function(v){ ST.supp = v; }, _rec:function(id, f, v){ setRec(id, f, v); }, _st:ST };
+})();
+
+</script>
+<script id="chkScript">
+/* Altair Auto — Paket Check (Rev 21): (1) checklist Pre-trip / Post-trip per tipe kendaraan, (2) pembuat Work Order untuk paket A / C / D-Check.
+   Checklist menggantikan daftar umum di form Inspection (checklistItemsFor) hanya untuk Before Departure dan After Arrival; jenis lain tetap daftar lama.
+   Work Order Check dibuat dari paket yang sama dengan Dashboard (DASH.compute). Tipe tak berlaku tidak ikut (template sudah difilter per tipe).
+   Bukan sertifikasi laik jalan; daftar ini pedoman operator (analog "walk-around" sebelum terbang). */
+(function(){
+'use strict';
+function ymdL(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+if(window.CHECKS) return;
+function g(name){ try{ return (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+var fkm = function(n){ return Number(n).toLocaleString('id-ID'); };
+function vname(v){ return [v.merk, v.model, v.plat_nomor].filter(Boolean).join(' ') || v.id; }
+function kat(v){ try{ return typeof catKeyOf === 'function' ? catKeyOf(v) : 'lainnya'; }catch(_){ return 'lainnya'; } }
+function pt(v){ return (v && v.powertrain) || 'bensin_diesel'; }
+
+/* ---- Pre-trip dan Post-trip per profil ---- */
+var PRE = {
+ motor:[ 'Ban: tekanan dan kondisi (depan & belakang)', 'Rem depan & belakang: tuas/pedal tidak kosong, tidak berbunyi', 'Rantai / belt dan kopling: kondisi dan pelumasan', 'Oli mesin: level di jendela / dipstick', 'Bahan bakar cukup untuk perjalanan', 'Lampu utama, rem, sein, dan klakson berfungsi', 'Spion, handle gas, dan kemudi: tidak longgar', 'Tidak ada kebocoran di bawah mesin', 'Aki / starter normal, dokumen (STNK, SIM) dibawa' ],
+ mobil:[ 'Ban: tekanan, alur, benjolan, dan ban cadangan', 'Rem: pedal tidak dalam/lembek; minyak rem di batas', 'Oli mesin dan coolant: level di batas', 'Bahan bakar cukup untuk perjalanan', 'Lampu depan, belakang, rem, sein, hazard, klakson', 'Wiper dan air wiper; kaca dan spion bersih', 'Tidak ada kebocoran di bawah kendaraan', 'Lampu peringatan dashboard mati setelah start', 'Dokumen (STNK, SIM), segitiga pengaman, dongkrak dan kunci roda' ],
+ listrik:[ 'Ban: tekanan, alur, benjolan, dan ban cadangan/repair kit', 'Rem: pedal normal; regen bekerja', 'Level baterai (SoC) cukup untuk jarak + cadangan', 'Kabel dan port pengisian: tidak rusak, tidak panas', 'Lampu depan, belakang, rem, sein, hazard, klakson', 'Wiper dan air wiper; kaca dan spion bersih', 'Tidak ada kebocoran di bawah kendaraan', 'Lampu peringatan dashboard / sistem tegangan tinggi mati', 'Dokumen (STNK, SIM), segitiga pengaman' ],
+ niaga:[ 'Ban semua posisi: tekanan, alur, baut roda', 'Rem: pedal dan rem tangan; tekanan angin (bila rem angin)', 'Oli mesin, coolant, minyak rem/kopling: level', 'Bahan bakar cukup untuk rute', 'Lampu, sein, hazard, klakson, dan alat pemantul', 'Muatan: terikat, tidak melebihi batas, seimbang', 'Kebocoran bawah kendaraan dan sambungan', 'Lampu peringatan dashboard mati setelah start', 'Dokumen (STNK, SIM, KIR bila berlaku), segitiga pengaman' ],
+ lainnya:[ 'Kondisi roda/ban/track dan baut pengikat', 'Rem dan kontrol: bekerja normal', 'Oli dan cairan: level', 'Bahan bakar / daya cukup', 'Lampu dan tanda peringatan', 'Tidak ada kebocoran atau bunyi tak biasa', 'Pengaman dan dokumen yang diperlukan tersedia' ]
+};
+var POST = {
+ motor:[ 'Ban: tidak ada paku/benjolan, tekanan masih wajar', 'Rem: tidak bergetar atau berdecit', 'Kebocoran di bawah mesin (oli, bensin)', 'Rantai / belt: kendur, kering, atau berisik', 'Lampu dan klakson masih berfungsi', 'Suhu atau bau tak biasa; bunyi baru', 'Catat KM, isi BBM, dan temuan hari ini' ],
+ mobil:[ 'Ban: paku, benjolan, aus tidak rata', 'Rem: getaran, bunyi, atau pedal berubah', 'Kebocoran di bawah kendaraan (oli, coolant, minyak rem)', 'Suhu mesin, bau terbakar, atau bunyi baru', 'Lampu peringatan dashboard yang muncul selama perjalanan', 'Lampu dan wiper masih berfungsi', 'Catat KM, isi BBM, dan temuan hari ini' ],
+ listrik:[ 'Ban: paku, benjolan, aus tidak rata', 'Rem dan regen: perubahan rasa', 'Kebocoran di bawah kendaraan', 'Suhu, bau, atau bunyi tak biasa dari baterai / motor', 'Peringatan sistem tegangan tinggi selama perjalanan', 'Port pengisian dan kabel: kondisi setelah dipakai', 'Catat KM, SoC, dan temuan hari ini' ],
+ niaga:[ 'Ban semua posisi: paku, benjolan, panas berlebih', 'Rem: tarikan, bunyi, atau panas', 'Kebocoran (oli, coolant, hidrolik, rem)', 'Suhu mesin, bau, bunyi baru', 'Muatan dan pengikat: bergeser atau longgar', 'Lampu dan alat pemantul', 'Catat KM, isi BBM, dan temuan hari ini' ],
+ lainnya:[ 'Roda/ban/track dan pengikat', 'Kebocoran dan bunyi tak biasa', 'Peringatan yang muncul selama dipakai', 'Catat jam/KM, isi bahan bakar, dan temuan hari ini' ]
+};
+function profile(v){ if(!v) return 'lainnya'; if(pt(v) === 'listrik') return 'listrik'; var k = kat(v); return PRE[k] ? k : 'lainnya'; }
+function itemsFor(jenis, v){
+  v = v || vehicleNow(); var p = profile(v);
+  if(jenis === 'before_departure') return PRE[p].slice();
+  if(jenis === 'after_arrival') return POST[p].slice();
+  return null;
+}
+function vehicleNow(){ var id = g('programVehicleId'); return (g('vehicles') || []).filter(function(v){ return v.id === id; })[0] || null; }
+/* ganti checklistItemsFor (deklarasi global) dengan versi sadar-tipe; jenis lain dikembalikan ke aslinya */
+function install(){
+  var orig = window.checklistItemsFor; if(typeof orig !== 'function' || orig.__chk) return;
+  var w = function(jenis){ var x = (jenis === 'before_departure' || jenis === 'after_arrival') ? itemsFor(jenis) : null; return x || orig(jenis); };
+  w.__chk = 1; w.orig = orig; window.checklistItemsFor = w;
+}
+
+/* ---- Work Order untuk paket Check ---- */
+var busy = {};
+function pkgOf(vid, level){
+  var C = window.DASH && DASH.compute ? DASH.compute() : null; if(!C) return null;
+  return (C.pkgs || []).filter(function(p){ return p.vid === vid && p.level === level; })[0] || null;
+}
+function label(p){ return 'Check ' + p.level + ' · ' + (p.km != null ? fkm(Math.round(p.km)) + ' km' : (p.date ? ymdL(p.date).slice(0, 7) : 'jadwal')); }
+function jenisFor(nama){ return /\b(ganti|change|replace|replacement)\b/i.test(nama) ? 'ganti_part' : /inspect|check|cek|periksa/i.test(nama) ? 'inspeksi' : 'perawatan'; }
+async function createPackageWO(vid, level){
+  var v = (g('vehicles') || []).filter(function(x){ return x.id === vid; })[0]; if(!v) return { error:'Kendaraan tidak ditemukan.' };
+  var sbx = null; try{ sbx = (typeof sb !== 'undefined') ? sb : null; }catch(_){}
+  if(!sbx) return { error:'Hubungkan database dulu (Settings → Connections).' };
+  var p = pkgOf(vid, level); if(!p) return { error:'Paket ' + level + '-Check tidak ditemukan untuk kendaraan ini.' };
+  if(!p.items.length) return { error:'Paket ini tidak memiliki pekerjaan.' };
+  if(window.SVCPKG && SVCPKG.guardTask){ for(var q = 0; q < p.items.length; q++){ var gm = SVCPKG.guardTask(v, p.items[q].tpl.id); if(gm) return { error:gm }; } }
+  var lb = label(p), key = vid + '|' + lb; if(busy[key]) return { error:'Sedang diproses, tunggu sebentar.' }; busy[key] = 1;
+  try{
+    var have = (g('workOrders') || []).filter(function(w){ return w.kendaraan_id === vid && w.sumber_label === lb && w.status !== 'batal'; })[0];
+    if(!have){ var r = await sbx.from('work_order').select('*').eq('kendaraan_id', vid).eq('sumber_label', lb).neq('status', 'batal').limit(1); if(r.error) return { error:'Gagal memeriksa duplikat: ' + (r.error.message || r.error) }; if(r.data && r.data[0]) have = r.data[0]; }
+    if(have) return { dup:have };
+    var today = ymdL(new Date()), names = p.items.map(function(i){ return i.tpl.nama; });
+    var proj = null; try{ if(window.PREPORT && PREPORT.ensureProject) proj = await PREPORT.ensureProject({ vid:vid, nama:'Check ' + level + ' · ' + vname(v) + ' ' + new Date().getFullYear(), jenis:level, tahun:new Date().getFullYear(), deskripsi:'Project paket ' + level + '-Check dibuat dari Dashboard.' }); }catch(_){}
+    var woRow = { kendaraan_id:vid, judul:lb + ' — ' + vname(v), deskripsi:names.join(', '), prioritas:p.state === 'overdue' ? 'tinggi' : 'normal', tanggal_target:today, km_target:p.km != null ? Math.round(p.km) : null, status:'open', task_key:null, sumber_jenis:'program', sumber_label:lb, plan_key:'check:' + level + ':' + vid };
+    if(proj && proj.id) woRow.project_id = proj.id;
+    var ins = await sbx.from('work_order').insert([woRow]).select().single();
+    if(ins.error) return { error:'Gagal membuat Work Order: ' + (ins.error.message || ins.error) };
+    var wo = ins.data;
+    var mk = function(auto){ return p.items.map(function(i, idx){ return { work_order_id:wo.id, urutan:idx + 1, judul:i.tpl.nama, status:'belum', jenis_pekerjaan:auto ? jenisFor(i.tpl.nama) : 'lainnya', task_key:i.tpl.id }; }); };
+    var jc = await sbx.from('job_card').insert(mk(true)).select();
+    if(jc.error && /check|jenis_pekerjaan|23514/i.test((jc.error.code || '') + ' ' + (jc.error.message || ''))) jc = await sbx.from('job_card').insert(mk(false)).select();
+    if(jc.error){ var del = await sbx.from('work_order').delete().eq('id', wo.id); return { error:'Gagal membuat Task: ' + (jc.error.message || jc.error) + (del.error ? ' (Work Order sempat dibuat dan gagal dibatalkan; hapus manual)' : ' — Work Order dibatalkan otomatis.') }; }
+    return { wo:wo, tasks:jc.data || [] };
+  } finally { delete busy[key]; }
+}
+function say(text, kind){ var el = document.getElementById('dxMsg'); if(!el) return; el.textContent = text; el.className = 'dx-sub ' + (kind || ''); el.hidden = !text; }
+async function mkWO(vid, level){
+  var r = await createPackageWO(vid, level);
+  if(r.error){ say(r.error, 'err'); return r; }
+  try{ if(typeof loadWorkOrders === 'function') await loadWorkOrders(); if(typeof loadJobCards === 'function') await loadJobCards(); }catch(_){}
+  try{ if(window.DASH) DASH.render(); }catch(_){}
+  say(r.dup ? 'Work Order untuk paket ini sudah ada (' + (r.dup.nomor_wo || '–') + '); tidak dibuat ulang.' : 'Work Order ' + (r.wo.nomor_wo || '') + ' dibuat dengan ' + r.tasks.length + ' Task. Isi hasil tiap Task di halaman Work Order.', 'ok');
+  return r;
+}
+install(); document.addEventListener('DOMContentLoaded', install);
+window.CHECKS = { PRE:PRE, POST:POST, profile:profile, itemsFor:itemsFor, install:install, createPackageWO:createPackageWO, mkWO:mkWO, label:label };
+})();
+
+</script>
+<script id="prpScript">
+/* Altair Auto — Laporan Activity & Action ke Polaris One (Rev 21, AP-36/AP-41).
+   Memakai kontrak yang SUDAH ADA (polaris-hub/1): Project = Activity (L1), Work Order = Sub-Activity (L2), Task = Action (L3).
+   Modul ini hanya menandai item Automotive agar ikut dikirim (polaris_sync + polaris_area = 'automotive'); pengiriman tetap oleh trigger DB + Edge Function yang sudah terpasang.
+   Tidak mengubah Edge Function. Area 'personal' tidak pernah disentuh. BIAYA tidak dikirim (kontrak tidak membawa biaya; K-18).
+   Kejadian yang bukan Work Order (Incident, Accident, Problem, Defect) dibuatkan Activity + 1 Action HANYA atas klik pengguna (K-20). */
+(function(){
+'use strict';
+function ymdL(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+if(window.PREPORT) return;
+function g(name){ try{ return (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+var esc = function(s){ s = String(s == null ? '' : s); return (typeof escapeHtml === 'function') ? escapeHtml(s) : s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+function db(){ try{ return (typeof sb !== 'undefined') ? sb : null; }catch(_){ return null; } }
+function vname(v){ return [v.merk, v.model, v.plat_nomor].filter(Boolean).join(' ') || v.id; }
+var KEY = 'altair.preport.v1';
+function pol(){ try{ var o = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; return { quick:!!o.quick, auto:!!o.auto }; }catch(_){ return { quick:false, auto:false }; } }
+function setPol(k, v){ try{ var o = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; o[k] = !!v; localStorage.setItem(KEY, JSON.stringify(o)); }catch(_){} }
+var ST = { projects:[], loaded:false, busy:false, msg:'', msgT:'', last:null, missing:false };
+var AUTO = { polaris_sync:true, polaris_area:'automotive' };
+function isQuick(w){ return /^quick_/.test(String(w.task_key || '')); }
+function eligibleWO(w, P){ return w.status !== 'batal' && w.polaris_area !== 'personal' && (P.quick || !isQuick(w)); }
+function missingPol(e){ return /polaris_(sync|area)|column .* does not exist|schema cache/i.test(String((e && e.message) || e || '')); }
+
+async function loadProjects(){
+  var s = db(); if(!s){ ST.projects = []; ST.loaded = true; return; }
+  var r = await s.from('project').select('id,kendaraan_id,nama,nomor_project,jenis_paket,tahun,status,polaris_sync,polaris_area'); if(r.error){ ST.msg = 'Gagal membaca Project: ' + (r.error.message || r.error); ST.msgT = 'err'; ST.missing = missingPol(r.error); ST.projects = []; }
+  else { ST.projects = r.data || []; ST.missing = false; }
+  ST.loaded = true;
+}
+function umbrellaName(v, year){ return 'Perawatan ' + vname(v) + ' ' + year; }
+async function ensureProject(o){
+  /* o: { vid, nama, jenis ('A'|'C'|'D'|'lainnya'), tahun } -> project row | null (tidak pernah melempar) */
+  try{
+    var s = db(); if(!s) return null; if(!ST.loaded) await loadProjects();
+    var hit = ST.projects.filter(function(p){ return p.kendaraan_id === o.vid && p.nama === o.nama; })[0]; if(hit) return hit;
+    var q = await s.from('project').select('id,kendaraan_id,nama,nomor_project,jenis_paket,tahun,status,polaris_sync,polaris_area').eq('kendaraan_id', o.vid).eq('nama', o.nama).limit(1);
+    if(!q.error && q.data && q.data[0]){ ST.projects.push(q.data[0]); return q.data[0]; }
+    var row = { kendaraan_id:o.vid, nama:o.nama, jenis_paket:o.jenis || 'lainnya', tahun:o.tahun || new Date().getFullYear(), status:'proses', prioritas:'normal', sumber:'lokal', deskripsi:o.deskripsi || null };
+    var ins = await s.from('project').insert([Object.assign({}, row, AUTO)]).select().single();
+    if(ins.error && missingPol(ins.error)) ins = await s.from('project').insert([row]).select().single();
+    if(ins.error) return null; ST.projects.push(ins.data); return ins.data;
+  }catch(_){ return null; }
+}
+
+/* ---- rencana penandaan ---- */
+function plan(){
+  var P = pol(), vs = g('vehicles') || [], W = (g('workOrders') || []).filter(function(w){ return eligibleWO(w, P); }), J = g('jobCards') || [], wid = {}; W.forEach(function(w){ wid[w.id] = w; });
+  var needWO = W.filter(function(w){ return !(w.polaris_sync && w.polaris_area === 'automotive') || !w.project_id; });
+  var noProj = W.filter(function(w){ return !w.project_id; });
+  var jobs = J.filter(function(j){ return wid[j.work_order_id] && !(j.polaris_sync && j.polaris_area === 'automotive'); });
+  var projs = ST.projects.filter(function(p){ return p.polaris_area !== 'personal' && p.status !== 'batal' && !(p.polaris_sync && p.polaris_area === 'automotive'); });
+  var vNeed = {}; noProj.forEach(function(w){ vNeed[w.kendaraan_id] = 1; });
+  return { P:P, W:W, needWO:needWO, noProj:noProj, jobs:jobs, projs:projs, umbrellas:Object.keys(vNeed).filter(function(id){ return vs.some(function(v){ return v.id === id; }); }), total:needWO.length + jobs.length + projs.length };
+}
+async function applyAll(){
+  var s = db(); if(!s){ say('Hubungkan database dulu (Settings → Connections).', 'err'); return { error:'nodb' }; }
+  if(ST.busy) return { error:'busy' }; ST.busy = true; var res = { projects:0, wos:0, tasks:0, umbrellas:0 };
+  try{
+    await loadProjects(); var p = plan(), vs = g('vehicles') || [], year = new Date().getFullYear(), umb = {};
+    for(var i = 0; i < p.umbrellas.length; i++){ var v = vs.filter(function(x){ return x.id === p.umbrellas[i]; })[0]; if(!v) continue; var pr = await ensureProject({ vid:v.id, nama:umbrellaName(v, year), jenis:'lainnya', tahun:year, deskripsi:'Wadah otomatis untuk Work Order tanpa Project, agar dapat dilaporkan ke Polaris One.' }); if(pr){ umb[v.id] = pr; res.umbrellas++; } }
+    /* Project: tandai dikirim */
+    var pids = ST.projects.filter(function(x){ return x.polaris_area !== 'personal' && x.status !== 'batal' && !(x.polaris_sync && x.polaris_area === 'automotive') && (p.W.some(function(w){ return w.project_id === x.id; }) || umb[x.kendaraan_id] === x || x.kendaraan_id); }).map(function(x){ return x.id; });
+    if(pids.length){ var r1 = await s.from('project').update(AUTO).in('id', pids); if(r1.error) throw r1.error; res.projects = pids.length; ST.projects.forEach(function(x){ if(pids.indexOf(x.id) >= 0) Object.assign(x, AUTO); }); }
+    /* WO: beri Project (bila kosong) lalu tandai dikirim */
+    for(var k = 0; k < p.needWO.length; k++){ var w = p.needWO[k], patch = Object.assign({}, AUTO); if(!w.project_id && umb[w.kendaraan_id]) patch.project_id = umb[w.kendaraan_id].id; else if(!w.project_id) continue; var r2 = await s.from('work_order').update(patch).eq('id', w.id); if(r2.error) throw r2.error; Object.assign(w, patch); res.wos++; }
+    /* Task */
+    var okW = {}; (g('workOrders') || []).forEach(function(w){ if(w.polaris_sync && w.polaris_area === 'automotive' && w.project_id) okW[w.id] = 1; });
+    var jids = p.jobs.filter(function(j){ return okW[j.work_order_id]; }).map(function(j){ return j.id; });
+    for(var c = 0; c < jids.length; c += 100){ var chunk = jids.slice(c, c + 100); var r3 = await s.from('job_card').update(AUTO).in('id', chunk); if(r3.error) throw r3.error; }
+    (g('jobCards') || []).forEach(function(j){ if(jids.indexOf(j.id) >= 0) Object.assign(j, AUTO); }); res.tasks = jids.length;
+    ST.last = res; say('Ditandai untuk dikirim ke Polaris One: ' + res.projects + ' Project, ' + res.wos + ' Work Order, ' + res.tasks + ' Task' + (res.umbrellas ? ' (' + res.umbrellas + ' Project wadah dibuat/dipakai)' : '') + '. Pengiriman berjalan otomatis lewat antrean; lihat panel Polaris di Settings.', 'ok');
+  }catch(e){ ST.missing = missingPol(e); say('Gagal: ' + ((e && e.message) || e) + (ST.missing ? ' — jalankan migration_polaris_hub_1.sql lebih dulu.' : ''), 'err'); res.error = (e && e.message) || String(e); }
+  ST.busy = false; render(); return res;
+}
+
+/* ---- kejadian yang belum menjadi Activity ---- */
+function events(){
+  var W = g('workOrders') || [], have = {}; W.forEach(function(w){ if(w.sumber_ref_id) have[w.sumber_ref_id] = w; });
+  var out = [], vs = g('vehicles') || [], vn = function(id){ var v = vs.filter(function(x){ return x.id === id; })[0]; return v ? vname(v) : ''; };
+  (g('inspectionSessions') || []).forEach(function(s){ if(/^(incident|accident|problem)$/.test(s.jenis_inspeksi) && !have[s.id]) out.push({ kind:'insp', id:s.id, vid:s.kendaraan_id, vname:vn(s.kendaraan_id), jenis:s.jenis_inspeksi, tgl:s.tanggal, text:s.deskripsi_kejadian || s.catatan_umum || '' }); });
+  (g('defectLogs') || []).forEach(function(d){ if(d.status !== 'selesai' && !d.work_order_id && !have[d.id]) out.push({ kind:'defect', id:d.id, vid:d.kendaraan_id, vname:vn(d.kendaraan_id), jenis:'defect · ' + (d.tingkat_keparahan || ''), tgl:d.tanggal_ditemukan, text:d.gejala || '', sev:d.tingkat_keparahan }); });
+  return out.sort(function(a, b){ return String(b.tgl).localeCompare(String(a.tgl)); });
+}
+async function createActivity(kind, id){
+  var s = db(); if(!s) return { error:'Hubungkan database dulu (Settings → Connections).' };
+  var ev = events().filter(function(e){ return e.kind === kind && e.id === id; })[0]; if(!ev) return { error:'Kejadian tidak ditemukan atau sudah dilaporkan.' };
+  var v = (g('vehicles') || []).filter(function(x){ return x.id === ev.vid; })[0]; if(!v) return { error:'Kendaraan tidak ditemukan.' };
+  var pr = await ensureProject({ vid:v.id, nama:umbrellaName(v, new Date().getFullYear()), jenis:'lainnya', deskripsi:'Wadah otomatis untuk Work Order tanpa Project, agar dapat dilaporkan ke Polaris One.' });
+  if(!pr) return { error:'Project wadah tidak dapat dibuat. Periksa koneksi dan tabel project.' };
+  var title = (kind === 'defect' ? 'Defect' : ev.jenis.charAt(0).toUpperCase() + ev.jenis.slice(1)) + ' — ' + (ev.text || ev.tgl).slice(0, 60);
+  var prio = kind === 'defect' ? (ev.sev === 'darurat' ? 'darurat' : ev.sev === 'berat' ? 'tinggi' : 'normal') : (ev.jenis === 'accident' ? 'tinggi' : 'normal');
+  var row = Object.assign({ kendaraan_id:v.id, judul:title, deskripsi:ev.text || null, prioritas:prio, tanggal_target:ymdL(new Date()), status:'open', task_key:null, sumber_jenis:kind === 'defect' ? 'defect' : 'inspeksi', sumber_ref_id:ev.id, sumber_label:(kind === 'defect' ? 'Defect ' : ev.jenis + ' ') + ev.tgl, project_id:pr.id }, AUTO);
+  var ins = await s.from('work_order').insert([row]).select().single();
+  if(ins.error && missingPol(ins.error)){ ST.missing = true; return { error:'Kolom Polaris belum ada di database: jalankan migration_polaris_hub_1.sql.' }; }
+  if(ins.error) return { error:'Gagal membuat Activity: ' + (ins.error.message || ins.error) };
+  var wo = ins.data;
+  var tk = { work_order_id:wo.id, urutan:1, judul:'Tindak lanjut: periksa dan perbaiki', status:'belum', jenis_pekerjaan:'lainnya' };
+  var jc = await s.from('job_card').insert([Object.assign({}, tk, AUTO)]).select();
+  if(jc.error){ await s.from('work_order').delete().eq('id', wo.id); return { error:'Gagal membuat Action: ' + (jc.error.message || jc.error) + ' — Activity dibatalkan otomatis.' }; }
+  if(kind === 'defect'){ var u = await s.from('defect_log').update({ work_order_id:wo.id }).eq('id', ev.id); if(u.error) return { wo:wo, warn:'Activity dibuat tetapi tautan ke Defect gagal: ' + (u.error.message || u.error) }; }
+  return { wo:wo };
+}
+async function reportEvent(kind, id){
+  var r = await createActivity(kind, id);
+  if(r.error){ say(r.error, 'err'); return r; }
+  try{ if(typeof loadWorkOrders === 'function') await loadWorkOrders(); if(typeof loadJobCards === 'function') await loadJobCards(); if(kind === 'defect' && typeof loadDefectLogs === 'function') await loadDefectLogs(); }catch(_){}
+  say(r.warn || ('Activity ' + (r.wo.nomor_wo || '') + ' dibuat dan ditandai untuk dikirim ke Polaris One.'), r.warn ? 'err' : 'ok'); render(); return r;
+}
+async function reportAllEvents(){ var E = events(), n = 0, fail = ''; for(var i = 0; i < E.length; i++){ var r = await createActivity(E[i].kind, E[i].id); if(r.error){ fail = r.error; break; } n++; } try{ if(typeof loadWorkOrders === 'function') await loadWorkOrders(); if(typeof loadJobCards === 'function') await loadJobCards(); if(typeof loadDefectLogs === 'function') await loadDefectLogs(); }catch(_){} say(n + ' kejadian dilaporkan sebagai Activity.' + (fail ? ' Berhenti: ' + fail : ''), fail ? 'err' : 'ok'); render(); return { n:n, fail:fail }; }
+function say(t, k){ ST.msg = t; ST.msgT = k || ''; var el = document.getElementById('prMsg'); if(el){ el.textContent = t; el.className = 'pr-m ' + (k || ''); el.hidden = !t; } }
+
+/* ---- tampilan (di Settings) ---- */
+var CSS = '#preportRoot .pr-card{background:var(--surface,#fff);border:1px solid var(--border,#d8dde6);border-radius:12px;padding:14px;margin:14px 0}#preportRoot h2{margin:0 0 4px;font-size:16px}#preportRoot .pr-sub{margin:0 0 10px;color:var(--text-dim,#5b6577);font-size:13px}#preportRoot .pr-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}#preportRoot label.pr-ck{display:flex;gap:8px;align-items:flex-start;font-weight:normal;margin:6px 0;font-size:14px}#preportRoot label.pr-ck input{width:auto;margin-top:3px;min-height:auto}#preportRoot .pr-m{margin:8px 0;padding:8px 10px;border-radius:8px;font-size:13px;border:1px solid var(--border,#d8dde6)}#preportRoot .pr-m.err{color:var(--danger-ink,#a11d2b)}#preportRoot .pr-m.ok{color:var(--ok-ink,#136c3a)}#preportRoot table{width:100%;border-collapse:collapse;font-size:13px}#preportRoot th,#preportRoot td{padding:5px 6px;border-bottom:1px solid var(--border,#d8dde6);text-align:left;vertical-align:top}#preportRoot .pr-w{overflow-x:auto}';
+function render(){
+  var root = document.getElementById('preportRoot'); if(!root) return;
+  if(!document.getElementById('preportStyle')){ var st = document.createElement('style'); st.id = 'preportStyle'; st.textContent = CSS; document.head.appendChild(st); }
+  if(!ST.loaded){ loadProjects().then(render); }
+  var p = plan(), E = events(), P = p.P;
+  var h = '<div class="pr-card"><h2>Report to Polaris One</h2><p class="pr-sub">Tujuan: seluruh Activity dan Action Automotive terplaning dan diatur di Polaris One. Project = Activity, Work Order = Sub-Activity, Task = Action (kontrak polaris-hub/1). Item area Personal tidak pernah dikirim. <b>Biaya tidak ikut dikirim.</b> Kendaraan, KM, dan isi BBM tetap hanya di Altair Auto.</p>';
+  h += '<label class="pr-ck"><input type="checkbox" id="prQuick"' + (P.quick ? ' checked' : '') + ' onchange="PREPORT.setQuick(this.checked)"><span>Sertakan catatan cepat (isi BBM, tambah angin) sebagai Activity. Bawaan: tidak, supaya Polaris One tidak dibanjiri catatan kecil.</span></label>';
+  h += '<label class="pr-ck"><input type="checkbox" id="prAuto"' + (P.auto ? ' checked' : '') + ' onchange="PREPORT.setAuto(this.checked)"><span>Tandai otomatis saat halaman ini dibuka dan data baru muncul. Bawaan: mati; Anda menekan tombol sendiri.</span></label>';
+  h += '<div class="pr-row"><b>Belum ditandai:</b> ' + p.needWO.length + ' Work Order · ' + p.jobs.length + ' Task · ' + p.projs.length + ' Project' + (p.noProj.length ? ' (' + p.noProj.length + ' Work Order tanpa Project akan dimasukkan ke Project wadah per kendaraan)' : '') + '</div>';
+  h += '<div class="pr-row"><button type="button" onclick="PREPORT.applyAll()"' + ((ST.busy || !p.total) ? ' disabled' : '') + '>Tandai semua untuk dikirim' + (p.total ? ' (' + p.total + ')' : '') + '</button></div>';
+  if(ST.missing) h += '<div class="pr-m err">Kolom Polaris belum ada di database. Jalankan migration_polaris_hub_1.sql dan pasang koneksi di panel Polaris.</div>';
+  h += '<h3 style="margin:12px 0 4px;font-size:14px;">Kejadian yang belum menjadi Activity (' + E.length + ')</h3><p class="pr-sub">Incident, Accident, Problem, dan Defect belum berupa Work Order. Dibuatkan Activity + 1 Action hanya jika Anda menekan tombolnya.</p>';
+  if(!E.length) h += '<p class="pr-sub">Tidak ada.</p>';
+  else h += '<div class="pr-w"><table><thead><tr><th>Tanggal</th><th>Kendaraan</th><th>Jenis</th><th>Isi</th><th></th></tr></thead><tbody>' + E.slice(0, 30).map(function(e){ return '<tr><td>' + esc(e.tgl) + '</td><td>' + esc(e.vname) + '</td><td>' + esc(e.jenis) + '</td><td>' + esc((e.text || '').slice(0, 80)) + '</td><td><button type="button" class="ghost" onclick="PREPORT.reportEvent(\'' + e.kind + '\',\'' + esc(e.id) + '\')">Buat Activity</button></td></tr>'; }).join('') + '</tbody></table></div><div class="pr-row"><button type="button" class="ghost" onclick="PREPORT.reportAllEvents()">Laporkan semuanya</button></div>';
+  h += '<div id="prMsg" class="pr-m ' + ST.msgT + '" role="status"' + (ST.msg ? '' : ' hidden') + '>' + esc(ST.msg) + '</div></div>';
+  root.innerHTML = h;
+}
+var lastSig = '';
+function sig(){ var P = pol(); return (g('workOrders') || []).length + '/' + (g('jobCards') || []).length + '/' + (g('defectLogs') || []).length + '/' + (g('inspectionSessions') || []).length + '/' + P.quick; }
+setInterval(function(){
+  try{ var root = document.getElementById('preportRoot'); if(!root || root.offsetParent === null) return; var s = sig(); if(s === lastSig) return; lastSig = s; render(); if(pol().auto && db() && !ST.busy){ var p = plan(); if(p.total) applyAll(); } }catch(_){}
+}, 2000);
+window.PREPORT = { render:render, onShow:function(){ lastSig = ''; loadProjects().then(render); render(); }, plan:plan, applyAll:applyAll, events:events, createActivity:createActivity, reportEvent:reportEvent, reportAllEvents:reportAllEvents, ensureProject:ensureProject, setQuick:function(v){ setPol('quick', v); render(); }, setAuto:function(v){ setPol('auto', v); render(); }, projects:function(){ return ST.projects; }, loadProjects:loadProjects, _st:ST };
+})();
+
+</script>
+<script id="vdcScript">
+/* Altair Auto — Papers & Recalls (Rev 21, AP-13 + AP-17): pelacak dokumen kendaraan dengan masa berlaku (pajak, STNK, SIM, asuransi, garansi, uji emisi, KIR),
+   register recall/TSB per kendaraan, dan ekspor kalender .ics (dokumen jatuh tempo + paket Check berikutnya).
+   Nomor identitas (nomor dokumen) hanya tampil tersamar di layar dan TIDAK PERNAH dikirim ke Polaris One, dicatat di log, atau dimasukkan ke berkas .ics.
+   Tabel: kendaraan_dokumen (migration_rev21.sql). Tanpa tabel, modul memberi tahu dan tidak merusak apa pun. Pengingat bukan jaminan; periksa tanggal pada dokumen asli. */
+(function(){
+'use strict';
+if(window.VDOCS) return;
+var DAY = 86400000;
+var esc = function(s){ s = String(s == null ? '' : s); return (typeof escapeHtml === 'function') ? escapeHtml(s) : s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+function g(name){ try{ return (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+function db(){ try{ return (typeof sb !== 'undefined') ? sb : null; }catch(_){ return null; } }
+function toD(x){ if(!x) return null; var d = new Date(String(x).length <= 10 ? x + 'T00:00:00' : x); return isNaN(d) ? null : d; }
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fd(d){ return d ? d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) : '–'; }
+function vname(v){ return [v.merk, v.model, v.plat_nomor].filter(Boolean).join(' ') || v.id; }
+function vehs(){ return g('vehicles') || []; }
+var JENIS = {
+ pajak_tahunan:{ label:'Pajak tahunan (PKB)', years:1 },
+ stnk_5thn:{ label:'STNK 5 tahun / ganti pelat', years:5 },
+ sim:{ label:'SIM', years:5 },
+ asuransi:{ label:'Asuransi', years:1 },
+ garansi:{ label:'Garansi', years:null },
+ uji_emisi:{ label:'Uji emisi', years:1 },
+ kir:{ label:'KIR / uji berkala', months:6 },
+ recall:{ label:'Recall / TSB', years:null },
+ lainnya:{ label:'Lainnya', years:null }
+};
+var RECALL = { terbuka:'Terbuka', terjadwal:'Terjadwal', selesai:'Selesai', tidak_berlaku:'Tidak berlaku' };
+var SOON = 60;
+var ST = { rows:[], loaded:false, loading:false, missing:false, err:'', msg:'', msgT:'', form:null, reveal:{} };
+
+function mask(n){ n = String(n || ''); if(!n) return '–'; return n.length <= 4 ? '••••' : '••••' + n.slice(-4); }
+function statusOf(r, now){
+  now = now || new Date();
+  if(r.jenis === 'recall'){ var s = r.status_recall || 'terbuka'; return { key:s === 'selesai' || s === 'tidak_berlaku' ? 'ok' : 'soon', label:RECALL[s] || s, days:null }; }
+  var d = toD(r.berlaku_sampai); if(!d) return { key:'nodate', label:'Tanpa tanggal', days:null };
+  var left = Math.floor((d - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / DAY);
+  return left < 0 ? { key:'expired', label:'Lewat ' + (-left) + ' hari', days:left } : left <= SOON ? { key:'soon', label:'Segera · ' + left + ' hari', days:left } : { key:'ok', label:'Aktif · ' + left + ' hari', days:left };
+}
+async function load(force){
+  if(ST.loading || (ST.loaded && !force)) return; ST.loading = true; var s = db();
+  if(!s){ ST.err = 'Hubungkan database dulu (Settings → Connections).'; ST.loaded = true; ST.loading = false; render(); return; }
+  var r = await s.from('kendaraan_dokumen').select('*').order('berlaku_sampai', { ascending:true });
+  if(r.error){ ST.err = r.error.message || String(r.error); ST.missing = /could not find the table|does not exist|schema cache|42P01|PGRST205/i.test(ST.err); ST.rows = []; }
+  else { ST.rows = r.data || []; ST.err = ''; ST.missing = false; }
+  ST.loaded = true; ST.loading = false; render();
+}
+function msg(t, k){ ST.msg = t; ST.msgT = k || ''; render(); }
+function newForm(vid){ var v = vid || (vehs()[0] || {}).id || ''; ST.form = { id:null, kendaraan_id:v, jenis:'pajak_tahunan', judul:'', nomor:'', tanggal_terbit:ymd(new Date()), berlaku_sampai:'', status_recall:'terbuka', sumber:'', catatan:'' }; suggest(); render(); }
+function suggest(){ var f = ST.form; if(!f || f.id) return; var J = JENIS[f.jenis]; if(!f.judul) f.judul = J.label; var t = toD(f.tanggal_terbit); if(t && (J.years || J.months)){ var d = new Date(t); if(J.years) d.setFullYear(d.getFullYear() + J.years); else d.setMonth(d.getMonth() + J.months); f.berlaku_sampai = ymd(d); } }
+function edit(id){ var r = ST.rows.filter(function(x){ return x.id === id; })[0]; if(!r) return; ST.form = Object.assign({}, r); render(); }
+function setF(k, v){ if(!ST.form) return; ST.form[k] = v; if(k === 'jenis'){ ST.form.judul = ''; suggest(); render(); } else if(k === 'tanggal_terbit'){ if(!ST.form.id) suggest(); render(); } }
+function cancel(){ ST.form = null; render(); }
+async function save(){
+  var f = ST.form; if(!f) return; var s = db(); if(!s){ msg('Hubungkan database dulu.', 'err'); return; }
+  if(!f.kendaraan_id){ msg('Pilih kendaraan.', 'err'); return; }
+  if(!String(f.judul || '').trim()){ msg('Isi judul dokumen.', 'err'); return; }
+  if(f.jenis !== 'recall' && !f.berlaku_sampai){ msg('Isi tanggal berlaku sampai.', 'err'); return; }
+  var row = { kendaraan_id:f.kendaraan_id, jenis:f.jenis, judul:String(f.judul).trim(), nomor:String(f.nomor || '').trim() || null, tanggal_terbit:f.tanggal_terbit || null, berlaku_sampai:f.berlaku_sampai || null, status_recall:f.jenis === 'recall' ? (f.status_recall || 'terbuka') : null, sumber:String(f.sumber || '').trim() || null, catatan:String(f.catatan || '').trim() || null, updated_at:new Date().toISOString() };
+  var r = f.id ? await s.from('kendaraan_dokumen').update(row).eq('id', f.id) : await s.from('kendaraan_dokumen').insert([row]);
+  if(r.error){ ST.missing = /could not find the table|does not exist|schema cache|42P01|PGRST205/i.test(r.error.message || ''); msg('Gagal menyimpan: ' + (r.error.message || r.error) + (ST.missing ? ' — jalankan migration_rev21.sql.' : ''), 'err'); return; }
+  ST.form = null; ST.loaded = false; await load(true); msg('Tersimpan.', 'ok');
+}
+async function remove(id){ var s = db(); if(!s) return; if(ST.del !== id){ ST.del = id; msg('Tekan Hapus sekali lagi untuk menghapus.', 'err'); return; } ST.del = null; var r = await s.from('kendaraan_dokumen').delete().eq('id', id); if(r.error){ msg('Gagal menghapus: ' + (r.error.message || r.error), 'err'); return; } ST.loaded = false; await load(true); msg('Dihapus.', 'ok'); }
+async function renew(id){ var r0 = ST.rows.filter(function(x){ return x.id === id; })[0]; if(!r0) return; var J = JENIS[r0.jenis] || {}; if(!(J.years || J.months)){ edit(id); return; } var d = toD(r0.berlaku_sampai) || new Date(); if(d < new Date()) d = new Date(); var n = new Date(d); if(J.years) n.setFullYear(n.getFullYear() + J.years); else n.setMonth(n.getMonth() + J.months); var s = db(); if(!s) return; var r = await s.from('kendaraan_dokumen').update({ tanggal_terbit:ymd(new Date()), berlaku_sampai:ymd(n), updated_at:new Date().toISOString() }).eq('id', id); if(r.error){ msg('Gagal memperpanjang: ' + (r.error.message || r.error), 'err'); return; } ST.loaded = false; await load(true); msg('Diperpanjang sampai ' + fd(n) + '. Periksa dengan tanggal pada dokumen asli.', 'ok'); }
+function toggleReveal(id){ ST.reveal[id] = !ST.reveal[id]; render(); }
+
+/* ---- ringkasan untuk Dashboard ---- */
+function attention(now){
+  now = now || new Date(); return ST.rows.map(function(r){ return { r:r, st:statusOf(r, now) }; }).filter(function(x){ return x.st.key === 'expired' || x.st.key === 'soon'; }).sort(function(a, b){ return (a.st.days == null ? -1 : a.st.days) - (b.st.days == null ? -1 : b.st.days); });
+}
+
+/* ---- kalender .ics ---- */
+function esc2(s){ return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function fold(line){ var out = [], b = line; while(b.length > 73){ out.push(b.slice(0, 73)); b = ' ' + b.slice(73); } out.push(b); return out.join('\r\n'); }
+function icsDate(d){ return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
+function events(now){
+  now = now || new Date(); var out = [], vs = vehs(), vn = function(id){ var v = vs.filter(function(x){ return x.id === id; })[0]; return v ? vname(v) : ''; };
+  ST.rows.forEach(function(r){ if(r.jenis === 'recall') return; var d = toD(r.berlaku_sampai); if(!d) return; out.push({ uid:'doc-' + r.id + '@altair-auto', date:d, title:(JENIS[r.jenis] ? JENIS[r.jenis].label : r.judul) + ' berakhir · ' + vn(r.kendaraan_id), desc:'Dokumen: ' + r.judul + '. Periksa tanggal pada dokumen asli.', alarms:[60, 30, 7] }); });
+  try{ var C = window.DASH && DASH.compute ? DASH.compute() : null; if(C){ (C.pkgs || []).concat(C.visits || []).forEach(function(p){ if(!p.date) return; var nm = p.level === 'KM' ? 'Service visit' : p.level + '-Check'; out.push({ uid:'pkg-' + p.vid + '-' + p.level + '-' + (p.km != null ? Math.round(p.km) : icsDate(p.date)) + '@altair-auto', date:p.date, title:nm + ' · ' + p.vehicle + (p.km != null ? ' · ' + Math.round(p.km).toLocaleString('id-ID') + ' km' : ''), desc:p.items.length + ' pekerjaan. Perkiraan jatuh tempo berdasarkan interval dan pemakaian.', alarms:[14, 3] }); }); } }catch(_){}
+  return out;
+}
+function buildICS(now){
+  now = now || new Date(); var stamp = now.getUTCFullYear() + String(now.getUTCMonth() + 1).padStart(2, '0') + String(now.getUTCDate()).padStart(2, '0') + 'T' + String(now.getUTCHours()).padStart(2, '0') + String(now.getUTCMinutes()).padStart(2, '0') + String(now.getUTCSeconds()).padStart(2, '0') + 'Z';
+  var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Altair Auto//Rev 21//ID', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Altair Auto'];
+  events(now).forEach(function(e){ var d2 = new Date(e.date.getTime() + DAY); L.push('BEGIN:VEVENT', 'UID:' + e.uid, 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + icsDate(e.date), 'DTEND;VALUE=DATE:' + icsDate(d2), fold('SUMMARY:' + esc2(e.title)), fold('DESCRIPTION:' + esc2(e.desc))); (e.alarms || []).forEach(function(n){ L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + esc2(e.title), 'TRIGGER:-P' + n + 'D', 'END:VALARM'); }); L.push('END:VEVENT'); });
+  L.push('END:VCALENDAR'); return L.join('\r\n') + '\r\n';
+}
+function exportICS(){
+  var t = buildICS(); try{ var b = new Blob([t], { type:'text/calendar;charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'altair-auto.ics'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500); msg('Berkas altair-auto.ics dibuat (' + events().length + ' acara). Buka di Kalender; pengingat 60/30/7 hari untuk dokumen.', 'ok'); }catch(e){ msg('Gagal membuat berkas: ' + (e && e.message), 'err'); }
+}
+
+/* ---- tampilan ---- */
+var CSS = '#docsRoot .vd-card{background:var(--surface,#fff);border:1px solid var(--border,#d8dde6);border-radius:12px;padding:14px;margin-bottom:14px}#docsRoot h2{margin:0 0 4px;font-size:16px}#docsRoot .vd-sub{margin:0 0 10px;color:var(--text-dim,#5b6577);font-size:13px}#docsRoot .vd-row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:8px 0}#docsRoot .vd-w{overflow-x:auto}#docsRoot table{width:100%;border-collapse:collapse;font-size:13px}#docsRoot th,#docsRoot td{padding:5px 6px;border-bottom:1px solid var(--border,#d8dde6);text-align:left;vertical-align:top}#docsRoot input,#docsRoot select,#docsRoot textarea{font-size:16px;min-height:40px}#docsRoot .vd-b{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid currentColor}#docsRoot .vd-ok{color:var(--ok-ink,#136c3a)}#docsRoot .vd-soon{color:var(--warn-ink,#8a5200)}#docsRoot .vd-expired{color:var(--danger-ink,#a11d2b)}#docsRoot .vd-nodate{color:var(--text-dim,#5b6577)}#docsRoot .vd-m{margin:8px 0;padding:8px 10px;border-radius:8px;font-size:13px;border:1px solid var(--border,#d8dde6)}#docsRoot .vd-m.err{color:var(--danger-ink,#a11d2b)}#docsRoot .vd-m.ok{color:var(--ok-ink,#136c3a)}';
+function field(label, id, inner){ return '<div class="field" style="margin:0;"><label for="' + id + '">' + label + '</label>' + inner + '</div>'; }
+function render(){
+  var root = document.getElementById('docsRoot'); if(!root) return;
+  if(!document.getElementById('docsStyle')){ var st = document.createElement('style'); st.id = 'docsStyle'; st.textContent = CSS; document.head.appendChild(st); }
+  if(!ST.loaded && !ST.loading) load();
+  var vs = vehs(), vn = function(id){ var v = vs.filter(function(x){ return x.id === id; })[0]; return v ? vname(v) : '–'; };
+  var h = '<div class="vd-card"><h2>Papers &amp; Recalls</h2><p class="vd-sub">Dokumen yang punya masa berlaku (pajak, STNK, SIM, asuransi, garansi, uji emisi, KIR) dan recall/TSB per kendaraan. Seperti pelacakan masa berlaku sertifikat di penerbangan: kendaraan boleh laik teknis, tetapi dokumennya juga harus berlaku. Nomor dokumen ditampilkan tersamar, tidak dikirim ke Polaris One, dan tidak dimasukkan ke kalender.</p>';
+  h += '<div class="vd-row"><button type="button" onclick="VDOCS.newForm()"' + (vs.length ? '' : ' disabled') + '>+ Tambah dokumen / recall</button><button type="button" class="ghost" onclick="VDOCS.exportICS()">Export calendar (.ics)</button></div>';
+  if(ST.err) h += '<div class="vd-m err">' + esc(ST.err) + (ST.missing ? ' — jalankan migration_rev21.sql di Supabase.' : '') + '</div>';
+  var f = ST.form;
+  if(f){
+    h += '<div class="vd-card" style="margin-top:8px;"><div class="vd-row">' + field('Kendaraan', 'vdVeh', '<select id="vdVeh" onchange="VDOCS.setF(\'kendaraan_id\',this.value)">' + vs.map(function(v){ return '<option value="' + esc(v.id) + '"' + (f.kendaraan_id === v.id ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select>') + field('Jenis', 'vdJenis', '<select id="vdJenis" onchange="VDOCS.setF(\'jenis\',this.value)">' + Object.keys(JENIS).map(function(k){ return '<option value="' + k + '"' + (f.jenis === k ? ' selected' : '') + '>' + esc(JENIS[k].label) + '</option>'; }).join('') + '</select>') + field('Judul', 'vdJudul', '<input id="vdJudul" type="text" value="' + esc(f.judul) + '" oninput="VDOCS.setF(\'judul\',this.value)">') + '</div>';
+    h += '<div class="vd-row">' + field('Nomor (opsional, tersamar di layar)', 'vdNo', '<input id="vdNo" type="text" autocomplete="off" value="' + esc(f.nomor) + '" oninput="VDOCS.setF(\'nomor\',this.value)">') + field('Terbit', 'vdTerbit', '<input id="vdTerbit" type="date" value="' + esc(f.tanggal_terbit || '') + '" onchange="VDOCS.setF(\'tanggal_terbit\',this.value)">');
+    if(f.jenis === 'recall') h += field('Status recall', 'vdRec', '<select id="vdRec" onchange="VDOCS.setF(\'status_recall\',this.value)">' + Object.keys(RECALL).map(function(k){ return '<option value="' + k + '"' + (f.status_recall === k ? ' selected' : '') + '>' + RECALL[k] + '</option>'; }).join('') + '</select>') + field('Sumber (mis. situs resmi, bengkel)', 'vdSrc', '<input id="vdSrc" type="text" value="' + esc(f.sumber) + '" oninput="VDOCS.setF(\'sumber\',this.value)">');
+    else h += field('Berlaku sampai', 'vdExp', '<input id="vdExp" type="date" value="' + esc(f.berlaku_sampai || '') + '" onchange="VDOCS.setF(\'berlaku_sampai\',this.value)">');
+    h += '</div><div class="vd-row">' + field('Catatan', 'vdCat', '<input id="vdCat" type="text" value="' + esc(f.catatan) + '" oninput="VDOCS.setF(\'catatan\',this.value)" style="min-width:260px">') + '<button type="button" onclick="VDOCS.save()">Simpan</button><button type="button" class="ghost" onclick="VDOCS.cancel()">Batal</button></div></div>';
+  }
+  var rows = ST.rows.map(function(r){ return { r:r, st:statusOf(r) }; });
+  if(!rows.length) h += '<p class="vd-sub">Belum ada dokumen atau recall tercatat.</p>';
+  else h += '<div class="vd-w"><table><thead><tr><th>Kendaraan</th><th>Dokumen</th><th>Nomor</th><th>Berlaku sampai</th><th>Status</th><th></th></tr></thead><tbody>' + rows.map(function(x){ var r = x.r; return '<tr><td>' + esc(vn(r.kendaraan_id)) + '</td><td>' + esc(r.judul) + '<br><span class="vd-sub">' + esc((JENIS[r.jenis] || {}).label || r.jenis) + (r.sumber ? ' · ' + esc(r.sumber) : '') + '</span></td><td>' + (r.nomor ? (ST.reveal[r.id] ? esc(r.nomor) : esc(mask(r.nomor))) + ' <button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="VDOCS.toggleReveal(\'' + esc(r.id) + '\')">' + (ST.reveal[r.id] ? 'Sembunyikan' : 'Lihat') + '</button>' : '–') + '</td><td>' + (r.jenis === 'recall' ? '–' : fd(toD(r.berlaku_sampai))) + '</td><td><span class="vd-b vd-' + x.st.key + '">' + esc(x.st.label) + '</span></td><td><button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="VDOCS.edit(\'' + esc(r.id) + '\')">Ubah</button> ' + (r.jenis !== 'recall' ? '<button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="VDOCS.renew(\'' + esc(r.id) + '\')">Perpanjang</button> ' : '') + '<button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="VDOCS.remove(\'' + esc(r.id) + '\')">Hapus</button></td></tr>'; }).join('') + '</tbody></table></div>';
+  if(ST.msg) h += '<div class="vd-m ' + ST.msgT + '" role="status">' + esc(ST.msg) + '</div>';
+  root.innerHTML = h + '</div>';
+}
+function onShow(){ ST.loaded = false; load(true); render(); }
+window.VDOCS = { render:render, onShow:onShow, load:load, statusOf:statusOf, attention:attention, mask:mask, events:events, buildICS:buildICS, exportICS:exportICS, newForm:newForm, setF:setF, cancel:cancel, save:save, edit:edit, remove:remove, renew:renew, toggleReveal:toggleReveal, JENIS:JENIS, _st:ST };
+})();
+
+</script>
+<script id="ofqScript">
+/* Altair Auto — Antrean tulis offline (Rev 21, AP-16).
+   Membungkus sb.from(): saat perangkat offline (atau permintaan gagal karena jaringan), INSERT dan UPDATE-by-id pada tabel yang diizinkan disimpan di perangkat lalu dikirim ulang saat online.
+   Pencegah duplikat: tiap baris baru diberi id dari sisi klien dan dikirim dengan upsert(onConflict:id, ignoreDuplicates), jadi pengiriman ulang tidak membuat baris ganda.
+   Keterbatasan: data yang antre belum tampil di daftar sampai terkirim; nomor Work Order dibuat database setelah terkirim; update ke baris yang belum terkirim tidak dikoordinasikan.
+   Tidak menyimpan kunci/rahasia; hanya baris yang Anda catat. Dibatasi 200 operasi. */
+(function(){
+'use strict';
+if(window.OFFQ) return;
+var KEY = 'altair.offq.v1', MAX = 200;
+var ALLOW_INSERT = { work_order:1, job_card:1, inspection_session:1, inspection_item:1, defect_log:1, installed_component:1, part_order_plan:1, kendaraan_dokumen:1 };
+var ALLOW_UPDATE = { work_order:1, job_card:1, kendaraan:1, defect_log:1, inspection_session:1, inspection_item:1, part_order_plan:1 };
+var ST = { q:[], failed:[], busy:false, wrapped:null, last:'' };
+function uuid(){ try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(_){} return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }); }
+function load(){ try{ var o = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; ST.q = Array.isArray(o.q) ? o.q : []; ST.failed = Array.isArray(o.failed) ? o.failed : []; }catch(_){ ST.q = []; ST.failed = []; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({ q:ST.q, failed:ST.failed })); }catch(e){ ST.last = 'Penyimpanan perangkat penuh atau diblokir; catatan offline tidak dapat disimpan.'; } }
+function isNetErr(e){ var m = String((e && (e.message || e)) || ''); return !!m && !(e && e.code && !/fetch|network/i.test(m)) && /failed to fetch|networkerror|network request failed|load failed|fetch failed|err_internet|offline/i.test(m); }
+function offlineNow(){ try{ return navigator.onLine === false; }catch(_){ return false; } }
+function db(){ try{ return (typeof sb !== 'undefined') ? sb : null; }catch(_){ return null; } }
+
+function wrapBuilder(t, real){
+  var rec = { t:t, op:null, rows:null, patch:null, eq:[], single:false, other:false };
+  var api;
+  function exec(){
+    var ok = (rec.op === 'insert' && ALLOW_INSERT[t] && !rec.other) || (rec.op === 'update' && ALLOW_UPDATE[t] && rec.eq.length === 1 && rec.eq[0][0] === 'id' && !rec.other);
+    if(!ok) return Promise.resolve(real);
+    if(offlineNow()) return Promise.resolve(queueIt());
+    return Promise.resolve(real).then(function(r){ if(r && r.error && isNetErr(r.error)) return queueIt(); return r; }, function(e){ if(isNetErr(e)) return queueIt(); throw e; });
+  }
+  function queueIt(){
+    if(ST.q.length >= MAX) return { data:null, error:{ message:'Antrean offline penuh (' + MAX + '). Hubungkan ke internet dulu.' } };
+    if(rec.op === 'insert'){
+      var rows = (Array.isArray(rec.rows) ? rec.rows : [rec.rows]).map(function(r){ var x = Object.assign({}, r); if(!x.id) x.id = uuid(); return x; });
+      ST.q.push({ k:'insert', t:t, rows:rows, at:new Date().toISOString() }); save(); badge();
+      return { data:rec.single ? rows[0] : rows, error:null, status:201, offline:true };
+    }
+    ST.q.push({ k:'update', t:t, id:rec.eq[0][1], patch:rec.patch, at:new Date().toISOString() }); save(); badge();
+    return { data:null, error:null, status:204, offline:true };
+  }
+  api = new Proxy({}, { get:function(_, k){
+    if(k === 'then') return function(res, rej){ return exec().then(res, rej); };
+    if(k === 'insert') return function(rows, opt){ rec.op = 'insert'; rec.rows = rows; if(opt && (opt.onConflict || opt.ignoreDuplicates)) rec.other = true; real = real.insert.apply(real, arguments); return api; };
+    if(k === 'update') return function(patch){ rec.op = 'update'; rec.patch = patch; real = real.update.apply(real, arguments); return api; };
+    if(k === 'eq') return function(c, v){ rec.eq.push([c, v]); real = real.eq.apply(real, arguments); return api; };
+    if(k === 'single' || k === 'maybeSingle') return function(){ rec.single = true; real = real[k].apply(real, arguments); return api; };
+    if(k === 'upsert' || k === 'delete') return function(){ rec.other = true; rec.op = k; real = real[k].apply(real, arguments); return api; };
+    var v = real[k]; if(typeof v !== 'function') return v;
+    return function(){ var r = v.apply(real, arguments); if(r && typeof r === 'object' && typeof r.then === 'function'){ if(rec.op === 'update' || rec.op === 'insert'){ if(k !== 'select') rec.other = rec.other || (k !== 'order' && k !== 'limit'); } real = r; return api; } return r; };
+  } });
+  return api;
+}
+function wrapClient(){
+  var s = db(); if(!s || s.__oq) return; var orig = s.from;
+  if(typeof orig !== 'function') return;
+  try{ Object.defineProperty(s, 'from', { value:function(t){ return wrapBuilder(t, orig.call(s, t)); }, configurable:true, writable:true }); Object.defineProperty(s, '__oq', { value:orig, configurable:true }); ST.wrapped = s; }catch(_){}
+}
+function rawFrom(t){ var s = db(); return (s && s.__oq) ? s.__oq.call(s, t) : s.from(t); }
+
+async function flush(){
+  if(ST.busy || !ST.q.length || offlineNow() || !db()) return { n:0 }; ST.busy = true; var done = 0;
+  try{
+    while(ST.q.length){
+      var op = ST.q[0], r;
+      try{
+        if(op.k === 'insert') r = await rawFrom(op.t).upsert(op.rows, { onConflict:'id', ignoreDuplicates:true });
+        else r = await rawFrom(op.t).update(op.patch).eq('id', op.id);
+      }catch(e){ if(isNetErr(e)) break; r = { error:e }; }
+      if(r && r.error){ if(isNetErr(r.error)) break; ST.failed.push({ k:op.k, t:op.t, at:op.at, msg:String(r.error.message || r.error).slice(0, 160), rows:op.rows, id:op.id, patch:op.patch }); ST.q.shift(); save(); continue; }
+      ST.q.shift(); done++; save();
+    }
+  } finally { ST.busy = false; }
+  badge();
+  if(done){ try{ if(typeof loadWorkOrders === 'function') await loadWorkOrders(); if(typeof loadJobCards === 'function') await loadJobCards(); if(typeof loadVehicles === 'function') await loadVehicles(); }catch(_){} }
+  return { n:done };
+}
+function retryFailed(){ ST.failed.forEach(function(f){ ST.q.push(f.k === 'insert' ? { k:'insert', t:f.t, rows:f.rows, at:f.at } : { k:'update', t:f.t, id:f.id, patch:f.patch, at:f.at }); }); ST.failed = []; save(); badge(); return flush(); }
+function discardFailed(){ ST.failed = []; save(); badge(); }
+
+var CSS = '#offqBadge{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:9000;max-width:min(92vw,360px);background:var(--surface,#fff);color:var(--text,#1b2230);border:1px solid var(--border,#d8dde6);border-radius:12px;padding:8px 12px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.18)}#offqBadge b{font-size:13px}#offqBadge button{min-height:36px;padding:4px 10px;font-size:13px;margin:6px 6px 0 0}#offqBadge.bad{border-color:var(--danger-ink,#a11d2b)}';
+function badge(){
+  var el = document.getElementById('offqBadge'), n = ST.q.length, f = ST.failed.length;
+  if(!n && !f){ if(el) el.remove(); return; }
+  if(!document.getElementById('offqStyle')){ var s = document.createElement('style'); s.id = 'offqStyle'; s.textContent = CSS; document.head.appendChild(s); }
+  if(!el){ el = document.createElement('div'); el.id = 'offqBadge'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.className = f ? 'bad' : '';
+  el.innerHTML = (n ? '<b>' + n + ' catatan menunggu dikirim</b><br><span>Tersimpan di perangkat ini; dikirim otomatis saat online.</span>' : '') + (f ? '<div><b>' + f + ' gagal dikirim</b>: ' + String(ST.failed[0].msg || '').replace(/[<>&]/g, '') + '<br><button type="button" onclick="OFFQ.retryFailed()">Coba lagi</button><button type="button" class="ghost" onclick="OFFQ.discardFailed()">Buang</button></div>' : '') + (n && !offlineNow() ? '<br><button type="button" onclick="OFFQ.flush()">Kirim sekarang</button>' : '');
+}
+load();
+setInterval(function(){ try{ wrapClient(); if(ST.q.length && !offlineNow()) flush(); }catch(_){} }, 1500);
+window.addEventListener('online', function(){ try{ flush(); }catch(_){} });
+window.addEventListener('offline', function(){ badge(); });
+document.addEventListener('DOMContentLoaded', function(){ badge(); });
+window.OFFQ = { flush:flush, retryFailed:retryFailed, discardFailed:discardFailed, wrap:wrapClient, pending:function(){ return ST.q.length; }, failed:function(){ return ST.failed.slice(); }, _st:ST, _reload:load, ALLOW_INSERT:ALLOW_INSERT, ALLOW_UPDATE:ALLOW_UPDATE };
+})();
+
+</script>
+<script id="hstScript">
+/* Altair Auto — Impor riwayat servis lama (Rev 21, AP-19 / N-13).
+   Tempel atau pilih berkas CSV riwayat servis; aplikasi menampilkan PRATINJAU lebih dulu, lalu membuat Work Order SELESAI + 1 Task per baris.
+   Aman: tidak menimpa data, melewati duplikat (kendaraan + tanggal + kode tugas/judul + KM), baris yang tidak jelas ditandai dan dilewati, dan tidak ada yang tersimpan sebelum Anda menekan Impor.
+   Manfaat: riwayat penggantian terakhir membuat jadwal, status laik jalan, dan kebutuhan part jauh lebih akurat (tanpa riwayat, jadwal hanya perkiraan). */
+(function(){
+'use strict';
+if(window.HIST) return;
+var esc = function(s){ s = String(s == null ? '' : s); return (typeof escapeHtml === 'function') ? escapeHtml(s) : s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+function g(name){ try{ return (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+function db(){ try{ return (typeof sb !== 'undefined') ? sb : null; }catch(_){ return null; } }
+function vname(v){ return [v.merk, v.model, v.plat_nomor].filter(Boolean).join(' ') || v.id; }
+function norm(s){ return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+function plat(s){ return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+var ST = { text:'', rows:[], parsed:false, incl:false, msg:'', msgT:'', busy:false, vsel:'' };
+var HEAD = { tanggal:/^(tanggal|tgl|date)$/, kendaraan:/^(kendaraan|plat|plat nomor|nopol|vehicle)$/, km:/^(km|odometer|odo)$/, pekerjaan:/^(pekerjaan|servis|service|tugas|judul|task|item)$/, biaya_part:/^(biaya part|part|biaya parts|parts)$/, biaya_jasa:/^(biaya jasa|jasa|labor|biaya servis)$/, biaya:/^(biaya|total|harga|cost)$/, bengkel:/^(bengkel|workshop|tempat)$/, catatan:/^(catatan|notes?|keterangan)$/ };
+
+function parseCSV(text){
+  text = String(text || '').replace(/^﻿/, ''); var first = text.split(/\r?\n/)[0] || '', d = ','; var cnt = { ',':(first.match(/,/g) || []).length, ';':(first.match(/;/g) || []).length, '\t':(first.match(/\t/g) || []).length }; d = cnt[';'] > cnt[','] ? ';' : cnt['\t'] > cnt[','] ? '\t' : ',';
+  var rows = [], row = [], cur = '', q = false;
+  for(var i = 0; i < text.length; i++){ var c = text[i];
+    if(q){ if(c === '"'){ if(text[i + 1] === '"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+    else if(c === '"') q = true; else if(c === d){ row.push(cur); cur = ''; } else if(c === '\n' || c === '\r'){ if(c === '\r' && text[i + 1] === '\n') i++; row.push(cur); cur = ''; if(row.some(function(x){ return String(x).trim() !== ''; })) rows.push(row); row = []; } else cur += c; }
+  row.push(cur); if(row.some(function(x){ return String(x).trim() !== ''; })) rows.push(row);
+  return rows;
+}
+function num(x){ if(x == null) return null; var s = String(x).replace(/rp\.?/ig, '').replace(/\s/g, ''); if(s === '') return null; if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.'); else if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, ''); else s = s.replace(',', '.'); var n = Number(s); return isFinite(n) ? n : null; }
+function dateOf(x){ var s = String(x || '').trim(), m; if((m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s))) return fmt(+m[1], +m[2], +m[3]); if((m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/.exec(s))){ var y = +m[3]; if(y < 100) y += 2000; return fmt(y, +m[2], +m[1]); } return null; }
+function fmt(y, mo, d){ var dt = new Date(y, mo - 1, d); if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null; return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+function mapHeader(r0){ var map = {}; r0.forEach(function(h, i){ var n = norm(h); Object.keys(HEAD).forEach(function(k){ if(map[k] == null && HEAD[k].test(n)) map[k] = i; }); }); return map; }
+function findVehicle(txt){
+  var vs = g('vehicles') || []; var t = String(txt || '').trim(); if(!t) return vs.length === 1 ? vs[0] : (ST.vsel ? vs.filter(function(v){ return v.id === ST.vsel; })[0] : null) || null;
+  var p = plat(t); var byPlat = vs.filter(function(v){ return v.plat_nomor && plat(v.plat_nomor) === p; }); if(byPlat.length === 1) return byPlat[0];
+  var n = norm(t); var byName = vs.filter(function(v){ var nm = norm(v.merk + ' ' + v.model); return nm && (n === nm || n.indexOf(nm) >= 0 || nm.indexOf(n) >= 0); }); return byName.length === 1 ? byName[0] : null;
+}
+function findTask(v, nama){
+  var T = []; try{ T = getEffectiveMaintTemplates(v) || []; }catch(_){} var n = norm(nama); if(!n) return null;
+  var ex = T.filter(function(t){ return norm(t.nama) === n || String(t.id) === String(nama).trim(); }); if(ex.length === 1) return ex[0];
+  var cand = T.filter(function(t){ var tn = norm(t.nama); return tn && (n.indexOf(tn) >= 0 || tn.indexOf(n) >= 0); }); if(cand.length === 1) return cand[0];
+  /* kata kunci Indonesia umum */
+  var KW = [['oli mesin', 'oli_mesin'], ['engine oil', 'oli_mesin'], ['filter oli', 'filter_oli'], ['oil filter', 'filter_oli'], ['filter udara', 'filter_udara'], ['air filter', 'filter_udara'], ['kampas rem', 'kampas_rem'], ['brake pad', 'kampas_rem'], ['minyak rem', 'rem_cairan'], ['brake fluid', 'rem_cairan'], ['coolant', 'coolant'], ['air radiator', 'coolant'], ['busi', 'busi_ganti'], ['spark plug', 'busi_ganti'], ['aki', 'aki'], ['battery', 'aki'], ['timing', 'timing']];
+  for(var i = 0; i < KW.length; i++){ if(n.indexOf(KW[i][0]) >= 0){ var hit = T.filter(function(t){ return t.id === KW[i][1]; })[0]; if(hit) return hit; } }
+  return null;
+}
+function localDay(x){ if(!x) return ''; var s = String(x); if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; var d = new Date(s); return isNaN(d) ? s.slice(0, 10) : d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function existingKey(w){ return (w.kendaraan_id || '') + '|' + localDay(w.tanggal_selesai || w.tanggal_target) + '|' + (w.task_key || norm(w.judul)); }
+function analyze(text){
+  var R = parseCSV(text), out = { rows:[], err:'' }; if(R.length < 2){ out.err = 'Butuh baris judul kolom dan minimal satu baris data.'; return out; }
+  var H = mapHeader(R[0]); if(H.tanggal == null || H.pekerjaan == null){ out.err = 'Kolom wajib: tanggal dan pekerjaan. Kolom lain opsional: kendaraan (plat), km, biaya part, biaya jasa (atau biaya), bengkel, catatan.'; return out; }
+  var existing = {}; (g('workOrders') || []).forEach(function(w){ if(w.status !== 'batal') existing[existingKey(w)] = 1; }); var seen = {};
+  for(var i = 1; i < R.length && i <= 500; i++){
+    var r = R[i], get = function(k){ return H[k] == null ? '' : String(r[H[k]] == null ? '' : r[H[k]]).trim(); };
+    var it = { n:i + 1, tgl:dateOf(get('tanggal')), pekerjaan:get('pekerjaan'), km:num(get('km')), bengkel:get('bengkel') || null, catatan:get('catatan') || null, status:'ok', why:'' };
+    var v = findVehicle(get('kendaraan')); it.v = v; var part = num(get('biaya_part')), jasa = num(get('biaya_jasa')), tot = num(get('biaya'));
+    it.part = part; it.jasa = jasa; if(part == null && jasa == null && tot != null){ it.jasa = tot; it.note = 'biaya total dicatat sebagai jasa'; }
+    if(!it.tgl){ it.status = 'skip'; it.why = 'tanggal tidak terbaca'; }
+    else if(new Date(it.tgl + 'T00:00:00') > new Date(Date.now() + 864e5)){ it.status = 'skip'; it.why = 'tanggal di masa depan'; }
+    else if(!it.pekerjaan){ it.status = 'skip'; it.why = 'pekerjaan kosong'; }
+    else if(!v){ it.status = 'skip'; it.why = get('kendaraan') ? 'kendaraan “' + get('kendaraan') + '” tidak cocok / ambigu' : 'kendaraan tidak ditentukan (isi kolom kendaraan atau pilih di atas)'; }
+    else if(it.km != null && it.km < 0){ it.status = 'skip'; it.why = 'KM negatif'; }
+    else {
+      var t = findTask(v, it.pekerjaan); it.task = t || null; if(!t){ it.status = ST.incl ? 'ok' : 'skip'; it.why = t ? '' : (ST.incl ? 'tanpa kode tugas (tidak memengaruhi jadwal)' : 'pekerjaan tidak cocok dengan template tugas kendaraan ini'); if(!ST.incl) it.status = 'nomatch'; }
+      if(it.status === 'ok' || it.status === 'nomatch'){ var key = v.id + '|' + it.tgl + '|' + (t ? t.id : norm(it.pekerjaan)); if(existing[key]){ it.status = 'dup'; it.why = 'sudah ada di Work Order'; } else if(seen[key]){ it.status = 'dup'; it.why = 'baris ganda dalam berkas'; } else seen[key] = 1; }
+    }
+    out.rows.push(it);
+  }
+  if(R.length > 501) out.err = 'Hanya 500 baris pertama dianalisis.'; return out;
+}
+function run(){ var a = analyze(ST.text); ST.rows = a.rows; ST.parsed = !a.err || a.rows.length > 0; ST.msg = a.err; ST.msgT = a.err ? 'err' : ''; render(); return a; }
+async function importNow(){
+  var s = db(); if(!s){ ST.msg = 'Hubungkan database dulu (Settings → Connections).'; ST.msgT = 'err'; render(); return { error:'nodb' }; }
+  if(ST.busy) return { error:'busy' }; var todo = ST.rows.filter(function(r){ return r.status === 'ok'; }); if(!todo.length){ ST.msg = 'Tidak ada baris yang dapat diimpor.'; ST.msgT = 'err'; render(); return { n:0 }; }
+  ST.busy = true; var n = 0, fail = '';
+  try{
+    for(var i = 0; i < todo.length; i++){ var r = todo[i], v = r.v, tk = r.task ? r.task.id : null, tgl = r.tgl;
+      var wo = { kendaraan_id:v.id, judul:r.task ? r.task.nama : r.pekerjaan, deskripsi:r.pekerjaan !== (r.task && r.task.nama) ? r.pekerjaan : null, status:'selesai', prioritas:'normal', tanggal_target:tgl, tanggal_selesai:new Date(tgl + 'T00:00:00').toISOString(), km_saat_selesai:r.km, bengkel:r.bengkel, catatan:r.catatan, biaya_part:r.part, biaya_jasa:r.jasa, task_key:tk, progress:100, sumber_jenis:'manual', sumber_label:'Impor riwayat' };
+      var ins = window.USAGE_ADAPTER && USAGE_ADAPTER.insertTolerant ? await USAGE_ADAPTER.insertTolerant('work_order', wo) : await s.from('work_order').insert([wo]).select();
+      if(ins.error){ fail = ins.error.message || String(ins.error); break; } var nw = ins.data && ins.data[0]; if(!nw){ fail = 'Work Order tidak terbentuk'; break; }
+      var jc = { work_order_id:nw.id, task_key:tk, judul:wo.judul, jenis_pekerjaan:/\b(ganti|change|replace)\b/i.test(wo.judul) ? 'ganti_part' : 'lainnya', urutan:1, status:'selesai', progress:100, tanggal_aksi:tgl, biaya_part:r.part, biaya_jasa:r.jasa };
+      var j = window.USAGE_ADAPTER && USAGE_ADAPTER.insertTolerant ? await USAGE_ADAPTER.insertTolerant('job_card', jc) : await s.from('job_card').insert([jc]).select();
+      if(j.error && /check|jenis_pekerjaan|23514/i.test((j.error.code || '') + ' ' + (j.error.message || ''))){ jc.jenis_pekerjaan = 'lainnya'; j = window.USAGE_ADAPTER && USAGE_ADAPTER.insertTolerant ? await USAGE_ADAPTER.insertTolerant('job_card', jc) : await s.from('job_card').insert([jc]).select(); }
+      if(j.error){ await s.from('work_order').delete().eq('id', nw.id); fail = 'Task gagal: ' + (j.error.message || String(j.error)) + ' (Work Order baris ini dibatalkan)'; break; }
+      r.status = 'done'; n++; }
+  }catch(e){ fail = (e && e.message) || String(e); }
+  ST.busy = false; try{ if(typeof loadWorkOrders === 'function') await loadWorkOrders(); if(typeof loadJobCards === 'function') await loadJobCards(); }catch(_){}
+  ST.msg = n + ' baris diimpor sebagai Work Order selesai.' + (fail ? ' Berhenti: ' + fail : '') + ' Jadwal dan status laik jalan kini memakai riwayat ini.'; ST.msgT = fail ? 'err' : 'ok'; render(); return { n:n, fail:fail };
+}
+function onFile(inp){ var f = inp.files && inp.files[0]; if(!f) return; if(f.size > 1500000){ ST.msg = 'Berkas terlalu besar (maks 1,5 MB).'; ST.msgT = 'err'; render(); return; } var fr = new FileReader(); fr.onload = function(){ ST.text = String(fr.result || ''); run(); }; fr.readAsText(f); }
+var CSS = '#histRoot .hs-card{background:var(--surface,#fff);border:1px solid var(--border,#d8dde6);border-radius:12px;padding:14px;margin:14px 0}#histRoot h2{margin:0 0 4px;font-size:16px}#histRoot .hs-sub{margin:0 0 10px;color:var(--text-dim,#5b6577);font-size:13px}#histRoot textarea{width:100%;min-height:110px;font-size:16px;font-family:ui-monospace,Menlo,monospace}#histRoot .hs-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}#histRoot .hs-w{overflow-x:auto}#histRoot table{width:100%;border-collapse:collapse;font-size:13px}#histRoot th,#histRoot td{padding:5px 6px;border-bottom:1px solid var(--border,#d8dde6);text-align:left;vertical-align:top}#histRoot .hs-m{margin:8px 0;padding:8px 10px;border-radius:8px;font-size:13px;border:1px solid var(--border,#d8dde6)}#histRoot .hs-m.err{color:var(--danger-ink,#a11d2b)}#histRoot .hs-m.ok{color:var(--ok-ink,#136c3a)}#histRoot .hs-ok{color:var(--ok-ink,#136c3a)}#histRoot .hs-bad{color:var(--danger-ink,#a11d2b)}#histRoot .hs-mut{color:var(--text-dim,#5b6577)}';
+function render(){
+  var root = document.getElementById('histRoot'); if(!root) return;
+  if(!document.getElementById('histStyle')){ var s = document.createElement('style'); s.id = 'histStyle'; s.textContent = CSS; document.head.appendChild(s); }
+  var vs = g('vehicles') || [], c = { ok:0, dup:0, skip:0, nomatch:0, done:0 }; ST.rows.forEach(function(r){ c[r.status] = (c[r.status] || 0) + 1; });
+  var h = '<div class="hs-card"><h2>Import service history</h2><p class="hs-sub">Tempel isi CSV atau pilih berkas riwayat servis lama. Kolom wajib: <b>tanggal</b>, <b>pekerjaan</b>. Opsional: kendaraan (plat), km, biaya part, biaya jasa (atau biaya), bengkel, catatan. Pratinjau tampil lebih dulu; tidak ada yang tersimpan sebelum Anda menekan Impor. Duplikat dilewati, data lama tidak ditimpa.</p>';
+  h += '<div class="hs-row"><label for="hsVeh" style="margin:0;">Kendaraan bila kolom kendaraan kosong</label><select id="hsVeh" onchange="HIST.setVeh(this.value)" style="font-size:16px;min-height:40px;"><option value="">(otomatis bila hanya satu)</option>' + vs.map(function(v){ return '<option value="' + esc(v.id) + '"' + (ST.vsel === v.id ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select></div>';
+  h += '<textarea id="hsText" aria-label="Isi CSV" placeholder="tanggal;kendaraan;km;pekerjaan;biaya part;biaya jasa;bengkel&#10;2026-03-14;B1234XYZ;45000;Ganti oli mesin;350000;50000;Bengkel A" oninput="HIST.setText(this.value)">' + esc(ST.text) + '</textarea>';
+  h += '<div class="hs-row"><input type="file" accept=".csv,.txt,text/csv,text/plain" aria-label="Pilih berkas CSV" onchange="HIST.onFile(this)" style="font-size:16px;"><label style="margin:0;display:flex;gap:6px;align-items:center;font-weight:normal;"><input type="checkbox" id="hsIncl"' + (ST.incl ? ' checked' : '') + ' onchange="HIST.setIncl(this.checked)" style="width:auto;min-height:auto;">Impor juga yang tidak cocok template (tanpa kode tugas)</label><button type="button" onclick="HIST.run()">Periksa (pratinjau)</button></div>';
+  if(ST.parsed && ST.rows.length){
+    h += '<p class="hs-sub"><b class="hs-ok">' + c.ok + ' siap</b> · ' + (c.nomatch || 0) + ' tidak cocok template · ' + c.dup + ' duplikat · ' + c.skip + ' dilewati' + (c.done ? ' · ' + c.done + ' diimpor' : '') + '</p>';
+    h += '<div class="hs-w"><table><thead><tr><th>#</th><th>Tanggal</th><th>Kendaraan</th><th>Pekerjaan</th><th>KM</th><th>Biaya</th><th>Status</th></tr></thead><tbody>' + ST.rows.slice(0, 60).map(function(r){ var lab = r.status === 'ok' ? '<span class="hs-ok">siap' + (r.task ? ' · ' + esc(r.task.nama) : '') + (r.why ? ' · ' + esc(r.why) : '') + '</span>' : r.status === 'done' ? '<span class="hs-ok">diimpor</span>' : '<span class="' + (r.status === 'dup' ? 'hs-mut' : 'hs-bad') + '">' + esc(r.status === 'dup' ? 'duplikat: ' + r.why : r.why) + '</span>'; return '<tr><td>' + r.n + '</td><td>' + esc(r.tgl || '–') + '</td><td>' + esc(r.v ? vname(r.v) : '–') + '</td><td>' + esc(r.pekerjaan) + '</td><td>' + (r.km != null ? esc(Number(r.km).toLocaleString('id-ID')) : '–') + '</td><td>' + (((r.part || 0) + (r.jasa || 0)) ? 'Rp ' + ((r.part || 0) + (r.jasa || 0)).toLocaleString('id-ID') : '–') + '</td><td>' + lab + '</td></tr>'; }).join('') + '</tbody></table></div>' + (ST.rows.length > 60 ? '<p class="hs-sub">Menampilkan 60 baris pertama.</p>' : '');
+    h += '<div class="hs-row"><button type="button" onclick="HIST.importNow()"' + (c.ok && !ST.busy ? '' : ' disabled') + '>Impor ' + c.ok + ' baris</button></div>';
+  }
+  if(ST.msg) h += '<div class="hs-m ' + ST.msgT + '" role="status">' + esc(ST.msg) + '</div>';
+  root.innerHTML = h + '</div>';
+  var ta = document.getElementById('hsText'); if(ta && document.activeElement && document.activeElement.id === 'hsText'){ }
+}
+window.HIST = { render:render, onShow:render, parseCSV:parseCSV, analyze:analyze, run:run, importNow:importNow, onFile:onFile, num:num, dateOf:dateOf, setText:function(v){ ST.text = v; ST.parsed = false; }, setIncl:function(v){ ST.incl = !!v; if(ST.text) run(); else render(); }, setVeh:function(v){ ST.vsel = v; if(ST.text) run(); }, _st:ST };
 })();
 
 </script>
