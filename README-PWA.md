@@ -15,8 +15,6 @@ Susunan ini sama dengan repositori GitHub Anda: berkas aplikasi, manifest, servi
 | `apple-touch-icon-180.png` | Ikon iPhone/iPad (dirujuk `index.html`) |
 | `apple-touch-icon.png` | Salinan yang sama; iOS otomatis memintanya di `/apple-touch-icon.png` — wajib ikut diunggah |
 | `config.js` | **Opsional.** Isi `url` dan `key` Supabase agar setiap perangkat langsung terhubung tanpa mengisi "Connect to Database". Bawaannya kosong. Baca peringatan keamanan di dalamnya |
-| `404.html` | Halaman "tidak ditemukan" yang juga mengalihkan tautan nama lama (berguna di GitHub Pages) |
-| `autoprima.html`, `aldebaracura.html`, `aldebarancura.html`, `identifikasi-kendaraan.html` | Pengalih tautan nama lama ke `index.html` |
 | `opsional-host-lain/` | `_headers`, `_redirects`, `vercel.json` — hanya bila memakai Cloudflare Pages, Netlify, atau Vercel; salin isinya ke akar hosting itu. **GitHub Pages tidak memerlukannya.** |
 
 Di repositori Anda, `icon.svg`, `index.ts`, dan `manifest.json` lama tidak dipakai oleh `index.html` ini (yang dirujuk adalah `manifest.webmanifest` dan ikon PNG di atas); simpan atau hapus sesuai kebutuhan Anda.
@@ -42,7 +40,7 @@ Di repositori Anda, `icon.svg`, `index.ts`, dan `manifest.json` lama tidak dipak
 
 **GitHub Pages**
 1. Unggah semua berkas di folder ini ke akar repositori (sejajar, seperti `index.html` dan `sw.js` Anda sekarang), lalu Settings → Pages → Deploy from branch.
-2. `_headers` tidak didukung di sini; `sw.js` tetap bekerja, hanya cache bisa terasa lebih lama saat memperbarui. Tautan nama lama dengan huruf besar ditangani `404.html`.
+2. `_headers` tidak didukung di sini; `sw.js` tetap bekerja, hanya cache bisa terasa lebih lama saat memperbarui. Paket ini sengaja hanya berisi satu berkas HTML (`index.html`); tidak ada `404.html`.
 
 Aplikasi harus berada di akar atau subfolder dengan semua berkas sejajar; jalur manifest dan service worker bersifat relatif.
 
@@ -75,11 +73,11 @@ Aplikasi harus berada di akar atau subfolder dengan semua berkas sejajar; jalur 
 
 Nama aplikasi sekarang **Altair Auto**. Tautan yang masih memakai nama lama tetap bekerja:
 
-- **Hosting statis (semua jenis):** berkas pengalih `autoprima.html`, `aldebaracura.html`, `aldebarancura.html`, dan `identifikasi-kendaraan.html` mengarahkan ke `index.html` dengan query string dan fragmen (`?...#...`) tetap utuh.
+- **Hosting statis (semua jenis):** sejak Rev 14 tidak ada berkas pengalih HTML. Tautan nama lama yang dibuka di hosting tanpa pengalihan akan menampilkan halaman 404 bawaan hosting; pakai `index.html` atau `opsional-host-lain/` di bawah.
 - **Netlify / Cloudflare Pages:** `opsional-host-lain/_redirects` (301) untuk nama-nama itu, dengan atau tanpa `.html`, termasuk `AutoPrima` dan `AldebaranCura` berhuruf besar (hosting membedakan huruf besar-kecil).
 - **Vercel:** `opsional-host-lain/vercel.json` berisi pengalihan permanen yang sama.
 - **Service worker (`sw.js`):** pengunjung yang sudah memasang aplikasi dialihkan di perangkatnya sendiri walau server tidak punya berkas itu; cache bernama lama (`autoprima*`, `aldebaracura*`, `aldebarancura*`, `identifikasi*`) dihapus saat versi baru aktif.
-- **GitHub Pages:** `404.html` mengalihkan jalur lama (huruf besar/kecil apa pun) ke `index.html` dengan query dan fragmen utuh.
+- **GitHub Pages:** tanpa `404.html` tidak ada pengalihan di sisi server. Pengunjung yang sudah memasang aplikasi tetap dialihkan oleh `sw.js`. Bila sebelumnya Anda mengunggah `404.html` atau `autoprima.html`, `aldebaracura.html`, `aldebarancura.html`, `identifikasi-kendaraan.html`, hapus berkas itu dari repositori agar hanya `index.html` yang tersisa.
 - **PWA yang sudah terpasang:** `id`, `start_url`, dan `scope` tidak berubah, jadi ikon yang terpasang tetap dipakai; namanya ikut menjadi Altair Auto saat manifest diperbarui.
 - **Backup lama:** berkas backup bertanda `AldebaranCura` atau `AutoPrima` tetap bisa dipulihkan; backup baru bertanda `Altair Auto`.
 - **Fungsi Edge:** `altair-hub` dan `altair-hub-push`; alamat lama `cura-hub` tetap dilayani bila kode yang sama di-deploy juga dengan nama itu (lihat `polaris-hub/README.md`).
