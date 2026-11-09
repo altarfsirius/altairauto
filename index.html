@@ -458,7 +458,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 22 (8 Nov 2026)" aria-label="Versi 1.0, revisi 22"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 22</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 23 (9 Nov 2026)" aria-label="Versi 1.0, revisi 23"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 23</span></div>
   </div>
 </div>
 
@@ -7733,6 +7733,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-09</td><td>Rev 23: <strong>Penyimpanan perangkat</strong>. Form "Connect to Database" dan login tidak muncul lagi setelah pembaruan selama penyimpanan perangkat utuh (diuji: pembaruan berkas tidak menghapus koneksi maupun sesi). Penyimpanan persisten kini diminta pada setiap peluncuran; layar Connect dan Settings menampilkan mode (ikon Layar Utama atau tab Safari), status perlindungan, sejak kapan koneksi tersimpan, dan ada-tidaknya sesi login; peringatan jelas bila aplikasi dibuka dari tab Safari (penyimpanan terpisah dan bisa dibersihkan iOS). Tidak ada key atau token yang disimpan atau ditampilkan.</td></tr>
             <tr><td class="mono">2026-11-08</td><td>Rev 22: <strong>Rencana tiga tingkat dan BOM</strong>. <strong>Rencana</strong> (di Dashboard): tujuan Strategis (maks. 3 aktif per kendaraan, terukur, tinjauan tahunan), inisiatif Taktis (satu pemilik dan tenggat, batas inisiatif aktif, titik periksa per kuartal), dan Operasional (Work Order yang sudah ada dapat ditautkan ke inisiatif; tautan lokal), plus ringkasan rencana dibanding eksekusi. <strong>BOM</strong> (di Parts): EBOM (komponen kendaraan, kerangka nama komponen Ertiga dari buku servis) dan SBOM (part per Task, diturunkan dari template) dengan impor CSV berpratinjau; nomor part tidak pernah dibuat otomatis dan setiap baris berstatus belum terverifikasi sampai Anda memverifikasi; qty SBOM dipakai Timeline Parts dan PO. Semua lokal di Altair Auto: tidak membuat Project/Activity/Action, tidak menulis ke Work Order, tidak dikirim ke Polaris One. Butuh SQL langkah 45 (migration_rev22.sql), dijalankan pemilik setelah backup.</td></tr>
             <tr><td class="mono">2026-11-01</td><td>Rev 21: <strong>Modul lanjutan Activity Plan</strong>. <strong>Parts</strong>: timeline kebutuhan part dari paket perawatan (qty dan harga dengan sumbernya), rencana order, Purchase Order Draft/Ordered/Received, dan perbandingan kuotasi. <strong>Dashboard</strong>: tombol Create Work Order pada paket A/C/D-Check (terhubung ke Project), kartu Projects dan Papers &amp; Recalls, biaya dikalibrasi dari data Anda, dan aturan per tipe kendaraan. <strong>Inspection</strong>: checklist Pre-trip dan Post-trip per tipe. <strong>Settings</strong>: Report to Polaris One (menandai Activity/Action Automotive, tanpa biaya) dan Import service history. <strong>Document Center</strong>: Papers &amp; Recalls dengan ekspor kalender (.ics). <strong>Antrean offline</strong> untuk pencatatan. Perlu <code>migration_rev21.sql</code> (langkah 44).</td></tr>
             <tr><td class="mono">2026-11-01</td><td>Rev 20: <strong>Dashboard baru sebagai jendela awal</strong> (menu Home, paling atas). Isinya: status laik jalan per kendaraan, Quick Actions (Refuel, Add Tire Pressure, Pre-trip, Post-trip, Incident, Accident, Defect), Every-trip Checks, Next Activity Board dan Timeline paket A/C/D-Check dan per KM, perbandingan biaya perawatan dengan potensi kerugian (Estimasi, bisa diubah), serta alasan, regulasi, konsekuensi, dan risiko per kelompok part. Dashboard lama menjadi <strong>Analytics</strong> di Insight. Hanya membaca data; tanpa migrasi SQL.</td></tr>
@@ -21244,7 +21245,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:22,date:'2026-11-08'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:23,date:'2026-11-09'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -23182,6 +23183,66 @@ function bRender(){
 }
 function bOnShow(){ BS.loaded = false; bLoad(true); bRender(); }
 window.BOM = { render:bRender, onShow:bOnShow, load:bLoad, sbomFor:sbomFor, rowsOf:rowsOf, seedErtiga:seedErtiga, deriveSBOM:deriveSBOM, newForm:bNewForm, edit:bEdit, setF:bSetF, cancel:bCancel, save:bSave, verify:bVerify, remove:bRemove, installed:bInstalled, preview:bPreview, commit:bCommit, cancelImp:bCancelImp, copyCSV:bCopyCSV, toCSV:toCSV, parseCSV:parseCSV, setSec:bSetSec, setVeh:bSetVeh, _st:BS, ERTIGA:ERTIGA };
+})();
+
+</script>
+<script id="strScript">
+/* Altair Auto — Penyimpanan perangkat (Rev 23): diagnosis dan perlindungan agar Project URL, key, dan sesi login tidak hilang saat aplikasi diperbarui.
+   Fakta: pembaruan berkas di hosting TIDAK menghapus penyimpanan perangkat. Form "Connect to Database" dan login hanya muncul lagi bila penyimpanan perangkat
+   dihapus atau berganti (mis. dibuka dari tab Safari, ikon Layar Utama baru, alamat hosting berbeda, atau iOS membersihkan data situs).
+   Modul ini: (1) meminta penyimpanan persisten pada SETIAP peluncuran, (2) mencatat sejak kapan koneksi tersimpan, (3) menampilkan mode (Layar Utama atau Safari),
+   status perlindungan, dan ada-tidaknya sesi login, di layar Connect dan Settings. Tidak menyimpan atau menampilkan key, password, atau token. */
+(function(){
+'use strict';
+if(window.STOR) return;
+var SINCE = 'ik_connSince';
+var ST = { persisted:null, asked:false, standalone:false, ios:false };
+function ls(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){} }
+function isStandalone(){ try{ if(navigator.standalone === true) return true; return !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches); }catch(_){ return false; } }
+function isIOS(){ try{ var ua = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1); }catch(_){ return false; } }
+function hasConn(){ return !!(ls('ik_sbUrl') && ls('ik_sbKey')); }
+function hasSession(){ try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^sb-.+-auth-token$/.test(k) && localStorage.getItem(k)) return true; } }catch(_){} return false; }
+function ymdL(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function ask(){
+  ST.standalone = isStandalone(); ST.ios = isIOS();
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      var done = function(v){ ST.persisted = !!v; ST.asked = true; paint(); };
+      navigator.storage.persisted ? navigator.storage.persisted().then(function(p){ if(p) done(true); else navigator.storage.persist().then(done, function(){ done(false); }); }, function(){ navigator.storage.persist().then(done, function(){ done(false); }); }) : navigator.storage.persist().then(done, function(){ done(false); });
+    } else { ST.persisted = null; ST.asked = true; }
+  }catch(_){ ST.persisted = null; ST.asked = true; }
+  if(hasConn() && !ls(SINCE)) lsSet(SINCE, ymdL(new Date()));
+}
+function info(){
+  var since = ls(SINCE), mode = ST.standalone ? 'Ikon Layar Utama' : (ST.ios ? 'Tab Safari' : 'Peramban'), prot = ST.persisted === true ? 'Dilindungi' : ST.persisted === false ? 'Tidak dijamin' : 'Tidak diketahui';
+  return { mode:mode, standalone:ST.standalone, ios:ST.ios, persisted:ST.persisted, protectText:prot, since:since, connected:hasConn(), session:hasSession(), warn:ST.ios && !ST.standalone };
+}
+function html(compact){
+  var i = info(), h = '';
+  if(i.warn) h += '<p class="stor-warn" role="alert"><b>Anda membuka dari tab Safari, bukan dari ikon Layar Utama.</b> Penyimpanan tab Safari terpisah dari ikon Layar Utama dan dapat dibersihkan iOS (sekitar 7 hari tanpa dibuka). Itu penyebab form ini muncul lagi dan login diminta lagi. Buka aplikasi lewat ikon Layar Utama, isi sekali, lalu pakai ikon itu terus (tidak perlu menghapus atau memasang ulang ikon saat pembaruan).</p>';
+  else if(!compact && i.ios && i.standalone) h += '<p class="stor-ok">Dibuka dari ikon Layar Utama: penyimpanan perangkat dilindungi iOS. Pembaruan berkas tidak menghapus koneksi maupun login.</p>';
+  if(!compact) h += '<p class="stor-meta">Mode: <b>' + i.mode + '</b> · Perlindungan penyimpanan: <b>' + i.protectText + '</b> · Koneksi tersimpan sejak: <b>' + (i.since || (i.connected ? 'tidak tercatat' : 'belum ada')) + '</b> · Sesi login: <b>' + (i.session ? 'ada' : 'tidak ada') + '</b></p>';
+  return h;
+}
+function css(){ if(document.getElementById('storStyle') || !document.head) return; var s = document.createElement('style'); s.id = 'storStyle'; s.textContent = '.stor-warn{margin:8px 0;padding:8px 10px;border-radius:8px;border:1px solid var(--danger-ink,#a11d2b);color:var(--danger-ink,#a11d2b);font-size:13px;line-height:1.45}.stor-ok{margin:8px 0;color:var(--ok-ink,#1d6b3a);font-size:13px}.stor-meta{margin:8px 0;color:var(--text-dim,#5b6577);font-size:12px;line-height:1.5}'; document.head.appendChild(s); }
+function put(host, before, id, compact){
+  if(!host) return; var el = document.getElementById(id), h = html(compact);
+  if(!h){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement('div'); el.id = id; before && before.parentNode === host ? host.insertBefore(el, before) : host.appendChild(el); }
+  if(el.innerHTML !== h) el.innerHTML = h;
+}
+function paint(){
+  css();
+  try{
+    var gate = document.getElementById('agGate'), form = gate && gate.querySelector('form[data-form="config"]');
+    if(form && form.parentNode) put(form.parentNode, form, 'storGate', true); else { var e0 = document.getElementById('storGate'); if(e0) e0.remove(); }
+    var cm = document.getElementById('connMsg'); if(cm && cm.parentNode) put(cm.parentNode, cm, 'storSet', false);
+  }catch(_){}
+}
+function start(){ ask(); paint(); try{ new MutationObserver(function(){ paint(); }).observe(document.body, { childList:true, subtree:true }); }catch(_){} setInterval(function(){ if(hasConn() && !ls(SINCE)) lsSet(SINCE, ymdL(new Date())); }, 3000); }
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+window.STOR = { info:info, html:html, ask:ask, paint:paint, hasSession:hasSession, _st:ST };
 })();
 
 </script>
