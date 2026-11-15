@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
 <style>
   :root{
     --bg:#ffffff;
@@ -456,7 +456,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 24 (9 Nov 2026)" aria-label="Versi 1.0, revisi 24"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 24</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 27 (15 Nov 2026)" aria-label="Versi 1.0, revisi 27"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 27</span></div>
   </div>
 </div>
 
@@ -7731,6 +7731,9 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-15</td><td>Rev 27: <strong>Koneksi Notion</strong>. Settings &rarr; Connections kini punya panel Notion (Connect &amp; check, Mapping, Preview &amp; sync) untuk mengirim 34 database Altair Auto ke Notion, satu arah, lewat Edge Function. Project, Work Order, dan Job Card tidak ikut (milik Polaris One).</td></tr>
+            <tr><td class="mono">2026-11-15</td><td>Rev 26: <strong>Connections berbentuk panel kartu</strong>. Settings &rarr; Connections kini memakai kartu satu baris: ikon berwarna di kiri (lencana centang hijau bila terhubung), judul dan deskripsi di tengah, tombol Connect/Manage di kanan, seperti di Polaris One.</td></tr>
+            <tr><td class="mono">2026-11-15</td><td>Rev 25: <strong>Daftar tidak lagi terpotong di 1000 baris</strong>. Daftar yang melewati 1000 baris kini dimuat bertahap sampai habis (sebelumnya terpotong tanpa pesan). Pustaka Supabase dikunci ke versi 2.119.0 agar pembaruan pustaka tidak merusak aplikasi tiba-tiba.</td></tr>
             <tr><td class="mono">2026-11-09</td><td>Rev 24: <strong>Diagnosis layar Connect</strong>. Layar "Connect to Database" kini menampilkan satu baris diagnosis (versi/Rev yang berjalan, mode Layar Utama atau Safari, perlindungan penyimpanan, apakah URL/key masih ada di perangkat, apakah cermin IndexedDB ada, dan apakah sesi login ada) supaya penyebab form muncul lagi bisa dipastikan dari satu tangkapan layar. Tidak menampilkan key atau token.</td></tr>
             <tr><td class="mono">2026-11-09</td><td>Rev 23: <strong>Penyimpanan perangkat</strong>. Form "Connect to Database" dan login tidak muncul lagi setelah pembaruan selama penyimpanan perangkat utuh (diuji: pembaruan berkas tidak menghapus koneksi maupun sesi). Penyimpanan persisten kini diminta pada setiap peluncuran; layar Connect dan Settings menampilkan mode (ikon Layar Utama atau tab Safari), status perlindungan, sejak kapan koneksi tersimpan, dan ada-tidaknya sesi login; peringatan jelas bila aplikasi dibuka dari tab Safari (penyimpanan terpisah dan bisa dibersihkan iOS). Tidak ada key atau token yang disimpan atau ditampilkan.</td></tr>
             <tr><td class="mono">2026-11-08</td><td>Rev 22: <strong>Rencana tiga tingkat dan BOM</strong>. <strong>Rencana</strong> (di Dashboard): tujuan Strategis (maks. 3 aktif per kendaraan, terukur, tinjauan tahunan), inisiatif Taktis (satu pemilik dan tenggat, batas inisiatif aktif, titik periksa per kuartal), dan Operasional (Work Order yang sudah ada dapat ditautkan ke inisiatif; tautan lokal), plus ringkasan rencana dibanding eksekusi. <strong>BOM</strong> (di Parts): EBOM (komponen kendaraan, kerangka nama komponen Ertiga dari buku servis) dan SBOM (part per Task, diturunkan dari template) dengan impor CSV berpratinjau; nomor part tidak pernah dibuat otomatis dan setiap baris berstatus belum terverifikasi sampai Anda memverifikasi; qty SBOM dipakai Timeline Parts dan PO. Semua lokal di Altair Auto: tidak membuat Project/Activity/Action, tidak menulis ke Work Order, tidak dikirim ke Polaris One. Butuh SQL langkah 45 (migration_rev22.sql), dijalankan pemilik setelah backup.</td></tr>
@@ -20883,6 +20886,8 @@ var CONNS = [
     extra:function(){ var l = null; try{ l = window.AC6 && AC6.polaris && AC6.polaris.info && AC6.polaris.info(); }catch(e){} if(!l) return ''; return '<div class="cx-kv"><div><span>Link ID (bukan rahasia)</span><code>' + esc(l.id || '(belum dibuat — buat di bagian Manage)') + '</code></div><div><span>Alamat hub di project ini</span><code>' + esc(l.hub || '–') + '</code></div></div><div class="cx-row"><button type="button" class="ghost" data-cx="copy-link">Salin Link ID</button><button type="button" class="ghost" data-cx="copy-hub">Salin alamat hub</button></div>'; },
     forget:{ label:'Putuskan (Disconnect)', note:'Memutus tautan: Polaris One akan mendapat 401 sampai Anda menyambungkannya lagi. Data lokal tetap utuh. Perlu klik dua kali.', run:function(){ if(window.AC6 && AC6.polaris && AC6.polaris.disconnect) return AC6.polaris.disconnect(); } },
     stored:function(){ return null; } },
+  { id:'notion', custom:true, btn:'Setup', name:'Notion', mono:'N', cat:'Data', type:'Satu arah', status:function(){ return window.NOTION ? NOTION.status() : { k:'muted', t:'Belum diatur', on:false }; },
+    desc:'Kirim data Altair Auto ke database Notion Anda (satu arah, lewat Edge Function). Project, Work Order, dan Job Card tidak ikut: itu Activity & Action milik Polaris One.' },
   { id:'ai', btn:'Setup', name:'AI Global Research', mono:'AI', cat:'AI', type:'Opsional', status:function(){ return { k:'muted', t:'Opsional', on:false }; },
     desc:'Tombol “AI Auto-Analysis” di tiap tahap Problem Analysis (RCA, FEA, FMEA, PICA, Kaizen, Monitoring, PDCA).',
     caps:['Analisa otomatis tiap tahap Problem Analysis lewat Edge Function ai-problem-research','Hasil hanya usulan; keputusan tetap di tangan Anda'],
@@ -20912,10 +20917,13 @@ function css(){
   '.cx-tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--accent)}' +
   '.cx-badge{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--surface-2);font-size:12px;line-height:18px;text-align:center;color:var(--text)}' +
   '.cx-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.cx-bar input,.cx-bar select{font:inherit;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);min-width:0}.cx-bar input{flex:1;min-width:180px}' +
-  '.cx-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}' +
+  '.cx-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}' +
   '.cx-card{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:8px}' +
   '.cx-card.planned{border-style:dashed}.cx-card .cx-top{display:flex;gap:10px;align-items:center}.cx-card h3{margin:0;font-size:15px;line-height:1.25}.cx-card p{margin:0;font-size:13px;color:var(--text-dim);flex:1}' +
   '.cx-mono{flex:none;width:36px;height:36px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;letter-spacing:.3px}' +
+  '.cx-card{flex-direction:row;align-items:center;gap:14px;padding:14px}.cx-card .cx-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.cx-card .cx-body h3{font-size:16px;line-height:1.25}.cx-card .cx-src{font-size:12px;color:var(--text-dim);line-height:1.3}.cx-card .cx-body p{flex:none}' +
+  '.cx-tile{position:relative;flex:none;width:56px;height:56px;border-radius:16px;background:var(--cx-c,#0f6b8a);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:19px;letter-spacing:.3px}.cx-tile .cx-ok{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#1f8f4e;border:2px solid var(--surface);display:flex;align-items:center;justify-content:center}.cx-tile .cx-ok svg{width:12px;height:12px;display:block}' +
+  '.cx-card .cx-act{flex:none;margin-top:0}.cx-card .cx-act button{min-height:44px;padding:8px 14px}.cx-card.planned .cx-tile{opacity:.75}@media(max-width:380px){.cx-tile{width:48px;height:48px;font-size:17px}.cx-card{gap:10px;padding:12px}}' +
   '.cx-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.cx-card .cx-act{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:2px}' +
   '.cx-empty{padding:26px;text-align:center;color:var(--text-dim);border:1px dashed var(--border);border-radius:var(--radius)}' +
   '.cx-tbl{width:100%;border-collapse:collapse;font-size:13.5px}.cx-tbl th,.cx-tbl td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle}.cx-tbl th{font-size:12px;color:var(--text-dim);font-weight:600}' +
@@ -20968,13 +20976,18 @@ function moveBack(){
 /* ---------- tampilan ---------- */
 function pill(s){ return '<span class="status-pill ' + esc(s.k) + '"><span class="dot"></span>' + esc(s.t) + '</span>'; }
 function plannedPill(){ return '<span class="status-pill muted">Segera hadir</span>'; }
+var CX_COL = { notion:'#2b2b2b', database:'#0f6b8a', tuntas:'#6b3fa0', groundwork:'#b45309', polaris:'#0f7b63', ai:'#9d3d6b', altairordo:'#64748b', partscatalog:'#64748b' };
 function card(c){
   var s = c.planned ? null : c.status();
   var btn = c.planned
     ? '<button type="button" class="ghost" data-cx="open" data-id="' + c.id + '">Lihat rencana</button>'
     : (s.on ? '<button type="button" class="ghost" data-cx="open" data-id="' + c.id + '">Manage</button>' : '<button type="button" class="' + (c.btn ? 'ghost' : 'primary') + '" data-cx="open" data-id="' + c.id + '">' + (c.btn || 'Connect') + '</button>');
-  return '<div class="cx-card' + (c.planned ? ' planned' : '') + '" data-cx-card="' + c.id + '"><div class="cx-top"><div class="cx-mono" aria-hidden="true">' + esc(c.mono) + '</div><h3>' + esc(c.name) + '</h3></div>' +
-    '<p>' + esc(c.desc) + '</p><div class="cx-act"><div class="cx-meta">' + (c.planned ? plannedPill() : pill(s)) + '</div>' + btn + '</div></div>';
+  var ok = !c.planned && s && s.on;
+  var okb = ok ? '<span class="cx-ok" role="img" aria-label="Terhubung" title="Terhubung"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.6 2.6 5-5.4" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : '';
+  var col = CX_COL[c.id] || '#0f6b8a';
+  return '<div class="cx-card' + (c.planned ? ' planned' : '') + '" data-cx-card="' + c.id + '"><div class="cx-tile" style="--cx-c:' + col + '" aria-hidden="' + (ok ? 'false' : 'true') + '">' + esc(c.mono) + okb + '</div>' +
+    '<div class="cx-body"><h3>' + esc(c.name) + '</h3><div class="cx-src">' + esc((c.type || '') + (c.cat ? ' · ' + c.cat : '')) + (c.planned ? ' · Segera hadir' : '') + '</div><p>' + esc(c.desc) + '</p></div>' +
+    '<div class="cx-act">' + btn + '</div></div>';
 }
 function match(c){
   if(ST.cat !== 'all' && c.cat !== ST.cat) return false;
@@ -21023,7 +21036,7 @@ function renderHub(){
 /* ---------- jendela Manage ---------- */
 function list(a){ return '<ul class="cx-ul">' + a.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
 function openModal(id){
-  var c = byId(id); if(!c) return; closeModal(true);
+  var c = byId(id); if(!c) return; if(c.custom && window.NOTION){ window.NOTION.open(); return; } closeModal(true);
   ST.open = id; ST.lastFocus = D.activeElement; lfSel = '[data-cx="open"][data-id="' + id + '"]';
   var ov = D.createElement('div'); ov.className = 'cx-pm'; ov.id = 'cxModal';
   var s = c.planned ? null : c.status();
@@ -21244,7 +21257,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:24,date:'2026-11-09'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:27,date:'2026-11-15'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -23251,6 +23264,314 @@ function paint(){
 function start(){ ask(); paint(); try{ new MutationObserver(function(){ paint(); }).observe(document.body, { childList:true, subtree:true }); }catch(_){} setInterval(function(){ if(hasConn() && !ls(SINCE)) lsSet(SINCE, ymdL(new Date())); }, 3000); }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 window.STOR = { info:info, html:html, ask:ask, paint:paint, hasSession:hasSession, _st:ST };
+})();
+
+</script>
+<script id="pgnScript">
+/* Altair Auto — Pembacaan daftar bertahap (Rev 25).
+   Masalah: Supabase membatasi satu permintaan SELECT sampai 1000 baris. Daftar yang melewati batas itu terpotong tanpa pesan galat.
+   Solusi: membungkus sb.from(): SELECT biasa (tanpa single/limit/range/head) diperiksa. Bila halaman pertama penuh (>= 1000 baris), halaman berikutnya
+   diambil dengan range() sampai habis, lalu digabung. Hasil yang kurang dari 1000 baris dikembalikan apa adanya (perilaku lama tidak berubah).
+   Halaman penuh tanpa order() diulang dengan order('id') agar urutan stabil antarhalaman. Batas aman: 100 halaman (100.000 baris).
+   Tidak menyimpan kunci/rahasia. Bila server memakai batas baris lebih kecil dari 1000 (pengaturan proyek), batas itu tidak terdeteksi. */
+(function(){
+'use strict';
+if(window.PGN) return;
+var PAGE = 1000, MAXP = 100;
+var ST = { pages:0, extra:0, multi:0, capped:0, last:'' };
+function db(){ try{ return (typeof sb !== 'undefined') ? sb : null; }catch(_){ return null; } }
+
+function wrapBuilder(real){
+  var rec = { sel:false, off:false, ordered:false, op:null };
+  var api;
+  async function run(){
+    var first = await real;
+    if(!rec.sel || rec.off || !first || first.error || !Array.isArray(first.data) || first.data.length < PAGE) return first;
+    ST.multi++;
+    var all = first.data.slice(), from = PAGE, pages = 1, res = first;
+    if(!rec.ordered){
+      try{ real = real.order('id', { ascending:true }); }catch(_){}
+      var again = await real;
+      if(again && again.error){ ST.last = 'Urutan id gagal; memakai halaman pertama apa adanya.'; return first; }
+      if(again && Array.isArray(again.data)){ all = again.data.slice(); res = again; }
+    }
+    while(pages < MAXP){
+      var r = await real.range(from, from + PAGE - 1);
+      ST.pages++; ST.extra++; pages++;
+      if(r && r.error){ ST.last = String(r.error.message || r.error).slice(0, 160); return r; }
+      var d = (r && Array.isArray(r.data)) ? r.data : [];
+      all = all.concat(d);
+      if(d.length < PAGE) { res = Object.assign({}, res, { data:all }); return res; }
+      from += PAGE;
+    }
+    ST.capped++; ST.last = 'Batas ' + MAXP + ' halaman tercapai; sisa data tidak dimuat.';
+    try{ console.warn('PGN: ' + ST.last); }catch(_){}
+    return Object.assign({}, res, { data:all });
+  }
+  api = new Proxy({}, { get:function(_, k){
+    if(k === 'then') return function(res, rej){ return run().then(res, rej); };
+    if(k === 'catch') return function(rej){ return run().catch(rej); };
+    if(k === 'finally') return function(f){ return run().finally(f); };
+    var v = real[k];
+    if(typeof v !== 'function') return v;
+    return function(){
+      if(k === 'select'){ if(!rec.op) rec.sel = true; var o = arguments[1]; if(o && o.head) rec.off = true; }
+      else if(k === 'insert' || k === 'update' || k === 'upsert' || k === 'delete'){ rec.op = k; rec.sel = false; }
+      else if(k === 'single' || k === 'maybeSingle' || k === 'limit' || k === 'range' || k === 'csv' || k === 'explain') rec.off = true;
+      else if(k === 'order') rec.ordered = true;
+      var r = v.apply(real, arguments);
+      if(r && typeof r === 'object' && typeof r.then === 'function') real = r;
+      return api;
+    };
+  } });
+  return api;
+}
+function wrapClient(c){
+  var s = (c && typeof c.from === 'function') ? c : db(); if(!s || typeof s.from !== 'function') return;
+  if(s.from.__pg || s.__pgw) return;
+  var orig = s.from;
+  var nf = function(t){ var b = orig.apply(s, arguments); try{ return wrapBuilder(b); }catch(_){ return b; } };
+  nf.__pg = true; nf.__orig = orig;
+  try{ Object.defineProperty(s, 'from', { value:nf, configurable:true, writable:true }); Object.defineProperty(s, '__pgw', { value:true, configurable:true }); }catch(_){}
+}
+function hookCreate(){
+  try{
+    var L = window.supabase; if(!L || typeof L.createClient !== 'function' || L.createClient.__pg) return;
+    var oc = L.createClient; var nc = function(){ var c = oc.apply(this, arguments); try{ wrapClient(c); }catch(_){} return c; }; nc.__pg = true;
+    L.createClient = nc;
+  }catch(_){}
+}
+hookCreate();
+setInterval(function(){ try{ hookCreate(); wrapClient(); }catch(_){} }, 1500);
+window.PGN = { wrap:wrapClient, stats:function(){ return { pages:ST.pages, extra:ST.extra, multi:ST.multi, capped:ST.capped, last:ST.last }; }, PAGE:PAGE, MAXP:MAXP };
+})();
+
+</script>
+<script id="ntScript">
+window.NOTION_DATA={"groups":{"kendaraan":"Kendaraan & dokumen","perawatan":"Perawatan & inspeksi","part":"Part & pengadaan","rencana":"Rencana & biaya","analisis":"Analisis masalah","listrik":"Kelistrikan","sumber":"Sumber daya & tata kelola","paket":"Paket service"},"dbs":[{"id":"kendaraan","name":"Kendaraan","group":"kendaraan","order":1,"cols":[{"c":"kategori","l":"Kategori","t":"select"},{"c":"merk","l":"Merk","t":"select"},{"c":"model","l":"Model","t":"text"},{"c":"type","l":"Type","t":"text"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"tahun","l":"Tahun","t":"number"},{"c":"no_rangka","l":"No rangka","t":"text"},{"c":"no_mesin","l":"No mesin","t":"text"},{"c":"plat_nomor","l":"Plat nomor","t":"text"},{"c":"km_saat_ini","l":"KM saat ini","t":"number"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"asumsi_inflasi_tahunan","l":"Asumsi inflasi tahunan","t":"number"},{"c":"nomor_kendaraan","l":"Nomor kendaraan","t":"text"},{"c":"powertrain","l":"Powertrain","t":"select"},{"c":"transmisi","l":"Transmisi","t":"select"},{"c":"tanggal_km_awal","l":"Tanggal km awal","t":"date"},{"c":"profil_pemakaian","l":"Profil pemakaian","t":"select"}]},{"id":"kendaraan_dokumen","name":"Dokumen Kendaraan","group":"kendaraan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"judul","l":"Judul","t":"text"},{"c":"nomor","l":"Nomor","t":"text"},{"c":"tanggal_terbit","l":"Tanggal terbit","t":"date"},{"c":"berlaku_sampai","l":"Berlaku sampai","t":"date"},{"c":"status_recall","l":"Status recall","t":"select"},{"c":"sumber","l":"Sumber","t":"select"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"oem_document","name":"Dokumen OEM","group":"kendaraan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"judul","l":"Judul","t":"text"},{"c":"url","l":"URL","t":"url"},{"c":"nama_file","l":"Nama file","t":"text"},{"c":"ukuran_file","l":"Ukuran file","t":"number"},{"c":"tipe_file","l":"Tipe file","t":"select"},{"c":"nomor_dokumen","l":"Nomor dokumen","t":"text"},{"c":"tanggal_dokumen","l":"Tanggal dokumen","t":"date"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"engineering_spec","name":"Spesifikasi Teknis","group":"kendaraan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"oli_mesin_kapasitas","l":"Oli mesin kapasitas","t":"text"},{"c":"oli_mesin_jenis","l":"Oli mesin jenis","t":"text"},{"c":"tekanan_ban_depan","l":"Tekanan ban depan","t":"text"},{"c":"tekanan_ban_belakang","l":"Tekanan ban belakang","t":"text"},{"c":"ukuran_ban","l":"Ukuran ban","t":"text"},{"c":"torsi_baut_roda","l":"Torsi baut roda","t":"text"},{"c":"tipe_aki","l":"Tipe aki","t":"text"},{"c":"kapasitas_coolant","l":"Kapasitas coolant","t":"text"},{"c":"kapasitas_tangki_bensin","l":"Kapasitas tangki bensin","t":"text"},{"c":"busi","l":"Busi","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"ukuran_ban_depan","l":"Ukuran ban depan","t":"text"},{"c":"ukuran_ban_belakang","l":"Ukuran ban belakang","t":"text"}]},{"id":"spec_sheet_item","name":"Spec Sheet","group":"kendaraan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"detail","l":"Detail","t":"text"},{"c":"keterangan","l":"Keterangan","t":"text"},{"c":"urutan","l":"Urutan","t":"number"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"nomor_ss","l":"Nomor ss","t":"text"}]},{"id":"inspection_session","name":"Inspeksi","group":"perawatan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"tanggal","l":"Tanggal","t":"date"},{"c":"km_saat_inspeksi","l":"Km saat inspeksi","t":"number"},{"c":"hasil_umum","l":"Hasil umum","t":"select"},{"c":"catatan_umum","l":"Catatan umum","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"jenis_inspeksi","l":"Jenis inspeksi","t":"select"},{"c":"volt_engine_off","l":"Volt engine off","t":"number"},{"c":"volt_engine_on","l":"Volt engine on","t":"number"},{"c":"temperature","l":"Temperature","t":"number"},{"c":"konsumsi_bbm_avg","l":"Konsumsi bbm avg","t":"number"},{"c":"deskripsi_kejadian","l":"Deskripsi kejadian","t":"text"},{"c":"appraisal_kondisi_skor","l":"Appraisal kondisi skor","t":"number"},{"c":"appraisal_nilai_pasar","l":"Appraisal nilai pasar","t":"number"},{"c":"appraisal_rekomendasi","l":"Appraisal rekomendasi","t":"text"},{"c":"appraisal_penilai","l":"Appraisal penilai","t":"text"},{"c":"nomor_inspeksi","l":"Nomor inspeksi","t":"text"}]},{"id":"installed_component","name":"Komponen Terpasang","group":"perawatan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"nama_komponen","l":"Nama komponen","t":"text"},{"c":"merk","l":"Merk","t":"select"},{"c":"spesifikasi","l":"Spesifikasi","t":"text"},{"c":"tanggal_pasang","l":"Tanggal pasang","t":"date"},{"c":"km_saat_pasang","l":"Km saat pasang","t":"number"},{"c":"status","l":"Status","t":"select"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"reliability_status","l":"Reliability status","t":"select"},{"c":"reliability_catatan","l":"Reliability catatan","t":"text"},{"c":"defect_log_id","l":"Defect log ID","t":"text"},{"c":"job_card_id","l":"Job card ID","t":"text"},{"c":"part_nomor","l":"Nomor part","t":"text"},{"c":"nomor_ic","l":"Nomor ic","t":"text"},{"c":"task_key","l":"Task key","t":"text"}]},{"id":"defect_log","name":"Temuan Defect","group":"perawatan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"tanggal_ditemukan","l":"Tanggal ditemukan","t":"date"},{"c":"gejala","l":"Gejala","t":"text"},{"c":"tingkat_keparahan","l":"Tingkat keparahan","t":"select"},{"c":"status","l":"Status","t":"select"},{"c":"analisis","l":"Analisis","t":"text"},{"c":"tindakan","l":"Tindakan","t":"text"},{"c":"work_order_id","l":"Work order ID","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"nomor_defect","l":"Nomor defect","t":"text"}]},{"id":"technical_record","name":"Catatan Teknis","group":"perawatan","order":2,"cols":[{"c":"work_order_id","l":"Work order ID","t":"text"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"keterangan","l":"Keterangan","t":"text"},{"c":"url","l":"URL","t":"url"},{"c":"nama_file","l":"Nama file","t":"text"},{"c":"ukuran_file","l":"Ukuran file","t":"number"},{"c":"tipe_file","l":"Tipe file","t":"select"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"nomor_tr","l":"Nomor tr","t":"text"}]},{"id":"plan_schedule","name":"Jadwal Rencana","group":"perawatan","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"plan_key","l":"Plan key","t":"text"},{"c":"original_due_date","l":"Original due date","t":"date"},{"c":"scheduled_date","l":"Scheduled date","t":"date"},{"c":"reason","l":"Reason","t":"text"},{"c":"work_order_id","l":"Work order ID","t":"text"},{"c":"version","l":"Version","t":"number"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"part_library","name":"Part Library","group":"part","order":2,"cols":[{"c":"nama","l":"Nama","t":"text"},{"c":"part_nomor","l":"Nomor part","t":"text"},{"c":"kode_alt","l":"Kode alt","t":"text"},{"c":"merk","l":"Merk","t":"select"},{"c":"kelompok","l":"Kelompok","t":"select"},{"c":"kelas","l":"Kelas","t":"select"},{"c":"berlaku_kategori","l":"Berlaku kategori","t":"select"},{"c":"berlaku_powertrain","l":"Berlaku powertrain","t":"text"},{"c":"berlaku_transmisi","l":"Berlaku transmisi","t":"text"},{"c":"merk_kendaraan","l":"Merk kendaraan","t":"text"},{"c":"model_kendaraan","l":"Model kendaraan","t":"text"},{"c":"tahun_dari","l":"Tahun dari","t":"number"},{"c":"tahun_sampai","l":"Tahun sampai","t":"number"},{"c":"spesifikasi","l":"Spesifikasi","t":"text"},{"c":"instruksi","l":"Instruksi","t":"text"},{"c":"umur_km","l":"Umur km","t":"number"},{"c":"umur_bulan","l":"Umur bulan","t":"number"},{"c":"basis_umur","l":"Basis umur","t":"select"},{"c":"harga_perkiraan","l":"Harga perkiraan","t":"number"},{"c":"pemasok","l":"Pemasok","t":"text"},{"c":"sumber_tipe","l":"Sumber tipe","t":"select"},{"c":"sumber_url","l":"Sumber url","t":"url"},{"c":"gambar_url","l":"Gambar url","t":"url"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"grup_katalog","l":"Grup katalog","t":"text"},{"c":"blok_katalog","l":"Blok katalog","t":"text"},{"c":"ref_katalog","l":"Ref katalog","t":"text"},{"c":"qty_unit","l":"Qty unit","t":"number"}]},{"id":"part_order_plan","name":"Rencana Order Part","group":"part","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"part_library_id","l":"Part library ID","t":"text"},{"c":"nama_part","l":"Nama part","t":"text"},{"c":"part_nomor","l":"Nomor part","t":"text"},{"c":"jumlah","l":"Jumlah","t":"number"},{"c":"alasan","l":"Alasan","t":"text"},{"c":"sumber_ref","l":"Sumber ref","t":"text"},{"c":"tanggal_dibutuhkan","l":"Tanggal dibutuhkan","t":"date"},{"c":"status","l":"Status","t":"select"},{"c":"pemasok","l":"Pemasok","t":"text"},{"c":"estimasi_harga","l":"Estimasi harga","t":"number"},{"c":"harga_aktual","l":"Harga aktual","t":"number"},{"c":"tanggal_order","l":"Tanggal order","t":"date"},{"c":"tanggal_terima","l":"Tanggal terima","t":"date"},{"c":"work_order_id","l":"Work order ID","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"po_nomor","l":"Nomor PO","t":"text"},{"c":"satuan","l":"Satuan","t":"select"},{"c":"harga_satuan","l":"Harga satuan","t":"number"},{"c":"sumber_harga","l":"Sumber harga","t":"text"},{"c":"lead_hari","l":"Lead hari","t":"number"}]},{"id":"bom_item","name":"BOM","group":"part","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"grup","l":"Grup","t":"text"},{"c":"nama","l":"Nama","t":"text"},{"c":"nomor_part","l":"Nomor part","t":"text"},{"c":"qty","l":"Qty","t":"number"},{"c":"satuan","l":"Satuan","t":"select"},{"c":"task_key","l":"Task key","t":"text"},{"c":"sumber","l":"Sumber","t":"select"},{"c":"verifikasi","l":"Verifikasi","t":"select"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"kuotasi","name":"Kuotasi","group":"part","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"kelompok","l":"Kelompok","t":"select"},{"c":"pemasok","l":"Pemasok","t":"text"},{"c":"harga","l":"Harga","t":"number"},{"c":"lead_hari","l":"Lead hari","t":"number"},{"c":"garansi","l":"Garansi","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"dipilih","l":"Dipilih","t":"checkbox"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"purchase_appraisal","name":"Penilaian Pembelian","group":"part","order":1,"cols":[{"c":"nomor_appraisal","l":"Nomor appraisal","t":"text"},{"c":"tanggal","l":"Tanggal","t":"date"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"merk","l":"Merk","t":"select"},{"c":"model","l":"Model","t":"text"},{"c":"type","l":"Type","t":"text"},{"c":"tahun","l":"Tahun","t":"number"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"powertrain","l":"Powertrain","t":"select"},{"c":"transmisi","l":"Transmisi","t":"select"},{"c":"km","l":"KM","t":"number"},{"c":"plat_nomor","l":"Plat nomor","t":"text"},{"c":"no_rangka","l":"No rangka","t":"text"},{"c":"no_mesin","l":"No mesin","t":"text"},{"c":"harga_penawaran","l":"Harga penawaran","t":"number"},{"c":"harga_pasar_acuan","l":"Harga pasar acuan","t":"number"},{"c":"sumber_iklan","l":"Sumber iklan","t":"text"},{"c":"penilai","l":"Penilai","t":"text"},{"c":"catatan_umum","l":"Catatan umum","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"purchase_appraisal_item","name":"Item Penilaian","group":"part","order":2,"cols":[{"c":"appraisal_id","l":"Penilaian Pembelian","t":"rel","to":"purchase_appraisal"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"nama_item","l":"Nama item","t":"text"},{"c":"status","l":"Status","t":"select"},{"c":"estimasi_biaya","l":"Estimasi biaya","t":"number"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"}]},{"id":"rencana_strategis","name":"Rencana Strategis","group":"rencana","order":1,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"tujuan","l":"Tujuan","t":"text"},{"c":"keputusan","l":"Keputusan","t":"text"},{"c":"target_tanggal","l":"Target tanggal","t":"date"},{"c":"batas_biaya","l":"Batas biaya","t":"number"},{"c":"umur_target_tahun","l":"Umur target tahun","t":"number"},{"c":"tidak_dikerjakan","l":"Tidak dikerjakan","t":"text"},{"c":"status","l":"Status","t":"select"},{"c":"tinjau_terakhir","l":"Tinjau terakhir","t":"date"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"rencana_taktis","name":"Rencana Taktis","group":"rencana","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"strategis_id","l":"Rencana Strategis","t":"rel","to":"rencana_strategis"},{"c":"judul","l":"Judul","t":"text"},{"c":"pemilik","l":"Pemilik","t":"text"},{"c":"tenggat","l":"Tenggat","t":"date"},{"c":"anggaran","l":"Anggaran","t":"number"},{"c":"status","l":"Status","t":"select"},{"c":"titik_periksa_terakhir","l":"Titik periksa terakhir","t":"date"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"cost_budget_item","name":"Anggaran Biaya","group":"rencana","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"frekuensi","l":"Frekuensi","t":"select"},{"c":"jumlah","l":"Jumlah","t":"number"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"nomor_cb","l":"Nomor cb","t":"text"}]},{"id":"touring_event","name":"Event Touring","group":"rencana","order":2,"cols":[{"c":"nomor_event","l":"Nomor event","t":"text"},{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"nama_event","l":"Nama event","t":"text"},{"c":"tanggal_rencana","l":"Tanggal rencana","t":"date"},{"c":"estimasi_jarak_pp","l":"Estimasi jarak pp","t":"number"},{"c":"km_awal","l":"Km awal","t":"number"},{"c":"km_target_kembali","l":"Km target kembali","t":"number"},{"c":"jumlah_tugas_direkomendasikan","l":"Jumlah tugas direkomendasikan","t":"number"},{"c":"jumlah_tugas_dipilih","l":"Jumlah tugas dipilih","t":"number"},{"c":"work_order_id","l":"Work order ID","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"}]},{"id":"problem_case","name":"Problem Case","group":"analisis","order":1,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"judul","l":"Judul","t":"text"},{"c":"deskripsi","l":"Deskripsi","t":"text"},{"c":"defect_log_id","l":"Defect log ID","t":"text"},{"c":"prioritas","l":"Prioritas","t":"select"},{"c":"dilaporkan_oleh","l":"Dilaporkan oleh","t":"text"},{"c":"tanggal_dilaporkan","l":"Tanggal dilaporkan","t":"date"},{"c":"status","l":"Status","t":"select"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"nomor_pc","l":"Nomor pc","t":"text"}]},{"id":"rca_analysis","name":"RCA","group":"analisis","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"defect_log_id","l":"Defect log ID","t":"text"},{"c":"installed_component_id","l":"Installed component ID","t":"text"},{"c":"judul","l":"Judul","t":"text"},{"c":"kategori_fishbone","l":"Kategori fishbone","t":"select"},{"c":"why1","l":"Why1","t":"text"},{"c":"akar_masalah","l":"Akar masalah","t":"text"},{"c":"tindakan_korektif","l":"Tindakan korektif","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"severity","l":"Severity","t":"number"},{"c":"occurrence","l":"Occurrence","t":"number"},{"c":"detection","l":"Detection","t":"number"},{"c":"problem_case_id","l":"Problem Case","t":"rel","to":"problem_case"},{"c":"apa","l":"Apa","t":"text"},{"c":"dimana","l":"Dimana","t":"text"},{"c":"kapan","l":"Kapan","t":"text"},{"c":"siapa","l":"Siapa","t":"text"},{"c":"bagaimana","l":"Bagaimana","t":"text"},{"c":"nomor_rca","l":"Nomor rca","t":"text"}]},{"id":"fea_item","name":"FEA","group":"analisis","order":2,"cols":[{"c":"problem_case_id","l":"Problem Case","t":"rel","to":"problem_case"},{"c":"rca_analysis_id","l":"Rca analysis ID","t":"text"},{"c":"identifikasi","l":"Identifikasi","t":"text"},{"c":"efek_kegagalan","l":"Efek kegagalan","t":"text"},{"c":"dampak","l":"Dampak","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"nomor_fea","l":"Nomor fea","t":"text"}]},{"id":"fmea_risk","name":"FMEA","group":"analisis","order":2,"cols":[{"c":"kategori","l":"Kategori","t":"select"},{"c":"komponen","l":"Komponen","t":"text"},{"c":"mode_kegagalan","l":"Mode kegagalan","t":"text"},{"c":"efek","l":"Efek","t":"text"},{"c":"severity","l":"Severity","t":"number"},{"c":"occurrence","l":"Occurrence","t":"number"},{"c":"detection","l":"Detection","t":"number"},{"c":"tindakan_pencegahan","l":"Tindakan pencegahan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"problem_case_id","l":"Problem Case","t":"rel","to":"problem_case"},{"c":"fea_item_id","l":"Fea item ID","t":"text"},{"c":"nomor_fmea","l":"Nomor fmea","t":"text"}]},{"id":"pica_item","name":"PICA","group":"analisis","order":2,"cols":[{"c":"problem_case_id","l":"Problem Case","t":"rel","to":"problem_case"},{"c":"fmea_risk_id","l":"Fmea risk ID","t":"text"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"tindakan","l":"Tindakan","t":"text"},{"c":"penanggung_jawab","l":"Penanggung jawab","t":"text"},{"c":"target_selesai","l":"Target selesai","t":"date"},{"c":"estimasi_biaya","l":"Estimasi biaya","t":"number"},{"c":"status","l":"Status","t":"select"},{"c":"status_verifikasi","l":"Status verifikasi","t":"select"},{"c":"catatan_verifikasi","l":"Catatan verifikasi","t":"text"},{"c":"work_order_id","l":"Work order ID","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"nomor_pica","l":"Nomor pica","t":"text"}]},{"id":"kaizen_item","name":"Kaizen","group":"analisis","order":2,"cols":[{"c":"problem_case_id","l":"Problem Case","t":"rel","to":"problem_case"},{"c":"pica_item_id","l":"Pica item ID","t":"text"},{"c":"judul","l":"Judul","t":"text"},{"c":"sebelum","l":"Sebelum","t":"text"},{"c":"sesudah","l":"Sesudah","t":"text"},{"c":"manfaat","l":"Manfaat","t":"text"},{"c":"tanggal","l":"Tanggal","t":"date"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"nomor_kaizen","l":"Nomor kaizen","t":"text"}]},{"id":"pdca_cycle","name":"PDCA","group":"analisis","order":2,"cols":[{"c":"problem_case_id","l":"Problem Case","t":"rel","to":"problem_case"},{"c":"siklus_ke","l":"Siklus ke","t":"number"},{"c":"plan","l":"Plan","t":"text"},{"c":"do_text","l":"Do text","t":"text"},{"c":"check_text","l":"Check text","t":"text"},{"c":"act","l":"Act","t":"text"},{"c":"status","l":"Status","t":"select"},{"c":"tanggal_mulai","l":"Tanggal mulai","t":"date"},{"c":"tanggal_selesai","l":"Tanggal selesai","t":"date"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"nomor_pdca","l":"Nomor pdca","t":"text"}]},{"id":"monitoring_parameter","name":"Monitoring","group":"analisis","order":2,"cols":[{"c":"problem_case_id","l":"Problem Case","t":"rel","to":"problem_case"},{"c":"kaizen_item_id","l":"Kaizen item ID","t":"text"},{"c":"parameter","l":"Parameter","t":"text"},{"c":"target_nilai","l":"Target nilai","t":"text"},{"c":"frekuensi_cek","l":"Frekuensi cek","t":"text"},{"c":"penanggung_jawab","l":"Penanggung jawab","t":"text"},{"c":"status","l":"Status","t":"select"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"nomor_monitoring","l":"Nomor monitoring","t":"text"}]},{"id":"electrical_capacity","name":"Kapasitas Listrik","group":"listrik","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"kapasitas_alternator_a","l":"Kapasitas alternator a","t":"number"},{"c":"kapasitas_aki_ah","l":"Kapasitas aki ah","t":"number"},{"c":"kapasitas_sekring_utama_a","l":"Kapasitas sekring utama a","t":"number"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"electrical_load_item","name":"Beban Listrik","group":"listrik","order":2,"cols":[{"c":"kendaraan_id","l":"Kendaraan","t":"rel","to":"kendaraan"},{"c":"nama_komponen","l":"Nama komponen","t":"text"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"voltase","l":"Voltase","t":"number"},{"c":"arus_a","l":"Arus a","t":"number"},{"c":"daya_w","l":"Daya w","t":"number"},{"c":"sirkuit_sekring","l":"Sirkuit sekring","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"nomor_el","l":"Nomor el","t":"text"}]},{"id":"tool","name":"Alat (Tool)","group":"sumber","order":2,"cols":[{"c":"nama","l":"Nama","t":"text"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"kondisi","l":"Kondisi","t":"select"},{"c":"lokasi","l":"Lokasi","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"nomor_tool","l":"Nomor tool","t":"text"}]},{"id":"workshop_resource","name":"Bengkel & Vendor","group":"sumber","order":2,"cols":[{"c":"nama","l":"Nama","t":"text"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"kontak","l":"Kontak","t":"text"},{"c":"alamat","l":"Alamat","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"},{"c":"nomor_wr","l":"Nomor wr","t":"text"}]},{"id":"governance_document","name":"Dokumen Tata Kelola","group":"sumber","order":2,"cols":[{"c":"nomor_governance","l":"Nomor governance","t":"text"},{"c":"kode","l":"Kode","t":"text"},{"c":"judul","l":"Judul","t":"text"},{"c":"kategori","l":"Kategori","t":"select"},{"c":"fungsi","l":"Fungsi","t":"text"},{"c":"versi","l":"Versi","t":"select"},{"c":"status","l":"Status","t":"select"},{"c":"terkait_tahap","l":"Terkait tahap","t":"text"},{"c":"acuan_klausul","l":"Acuan klausul","t":"text"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"},{"c":"updated_at","l":"Diubah","t":"date"}]},{"id":"service_package","name":"Paket Service","group":"paket","order":2,"cols":[{"c":"kode","l":"Kode","t":"text"},{"c":"nama","l":"Nama","t":"text"},{"c":"jenis","l":"Jenis","t":"select"},{"c":"kumulatif","l":"Kumulatif","t":"checkbox"},{"c":"urutan","l":"Urutan","t":"number"},{"c":"berlaku_kategori","l":"Berlaku kategori","t":"multi"},{"c":"berlaku_powertrain","l":"Berlaku powertrain","t":"multi"},{"c":"berlaku_transmisi","l":"Berlaku transmisi","t":"multi"},{"c":"merk_kendaraan","l":"Merk kendaraan","t":"text"},{"c":"model_kendaraan","l":"Model kendaraan","t":"text"},{"c":"interval_km","l":"Interval km","t":"number"},{"c":"offset_km","l":"Offset km","t":"number"},{"c":"horizon_km","l":"Horizon km","t":"number"},{"c":"sumber","l":"Sumber","t":"select"},{"c":"verifikasi","l":"Verifikasi","t":"select"},{"c":"catatan","l":"Catatan","t":"text"},{"c":"created_at","l":"Dibuat","t":"date"}]}]};
+/* Altair Auto — Koneksi Notion (Rev 27). Sinkron SATU ARAH Altair Auto -> Notion lewat Edge Function notion-sync.
+   Panel: Connect & check | Mapping | Preview & sync. Tidak ada token/rahasia di browser: NOTION_TOKEN hanya secret Edge Function.
+   Pengaturan (ID database Notion, pemetaan, mode) disimpan di tabel notion_config; ID database Notion bukan rahasia.
+   Database yang dikecualikan (Project, Project item, Work Order, Job Card) tidak ada di daftar: itu Activity & Action milik Polaris One. */
+(function(){
+'use strict';
+if(window.NOTION) return;
+var D = document, DATA = window.NOTION_DATA || { groups:{}, dbs:[] };
+var COMPAT = { text:['rich_text','title'], select:['select','rich_text'], number:['number'], date:['date'], checkbox:['checkbox'], multi:['multi_select'], url:['url','rich_text'], rel:['relation'] };
+var GKEYS = Object.keys(DATA.groups);
+var DBS = DATA.dbs.slice().sort(function(a, b){ return (GKEYS.indexOf(a.group) - GKEYS.indexOf(b.group)) || (DATA.dbs.indexOf(a) - DATA.dbs.indexOf(b)); });
+var ST = { loaded:false, loading:false, err:'', cfg:{}, sel:DBS.length ? DBS[0].id : null, tab:'connect', open:false, res:{}, busy:'', msg:'', msgT:'', prog:'', lastFocus:null, ping:null, timer:null, auto:false };
+function $(i){ return D.getElementById(i); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+function db(){ try{ return (typeof sb !== 'undefined') ? sb : null; }catch(_){ return null; } }
+function def(id){ for(var i = 0; i < DBS.length; i++) if(DBS[i].id === id) return DBS[i]; return null; }
+function cfgOf(id){ return (ST.cfg['db:' + id] || {}); }
+function settings(){ var s = ST.cfg.settings || {}; return { mode:s.mode === 'auto' ? 'auto' : 'manual', every:[5, 15, 30, 60].indexOf(Number(s.every)) >= 0 ? Number(s.every) : 5 }; }
+function connectedCount(){ var n = 0; DBS.forEach(function(d){ var c = cfgOf(d.id); if(c.notion_id && c.checked_ok) n++; }); return n; }
+function extractId(t){
+  t = String(t || ''); var m = t.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i); if(m) return m[0].replace(/-/g, '').toLowerCase();
+  m = t.match(/(?:^|[^0-9a-f])([0-9a-f]{32})(?![0-9a-f])/i); return m ? m[1].toLowerCase() : '';
+}
+
+/* ---------- data ---------- */
+async function load(){
+  var s = db(); if(!s || ST.loading) return; ST.loading = true; ST.err = '';
+  try{
+    var r = await s.from('notion_config').select('*');
+    if(r.error){ ST.err = /notion_config|relation|does not exist|schema cache/i.test(r.error.message || '') ? 'Tabel notion_config belum ada. Jalankan SQL langkah 46 (migration_rev27.sql) di Supabase SQL Editor.' : String(r.error.message || r.error); }
+    else { ST.cfg = {}; (r.data || []).forEach(function(x){ ST.cfg[x.key] = x.value || {}; }); ST.loaded = true; }
+  }catch(e){ ST.err = String((e && e.message) || e); }
+  ST.loading = false; armTimer(); refresh();
+}
+async function save(key, val){
+  ST.cfg[key] = val; var s = db(); if(!s) return { error:'Database belum terhubung.' };
+  var r = await s.from('notion_config').upsert({ key:key, value:val, updated_at:new Date().toISOString() }, { onConflict:'key' });
+  if(r && r.error){ ST.msg = 'Gagal menyimpan: ' + (r.error.message || r.error); ST.msgT = 'err'; }
+  return r || {};
+}
+async function invoke(body){
+  var s = db(); if(!s || !s.functions) return { ok:false, error:'Database belum terhubung.' };
+  var r; try{ r = await s.functions.invoke('notion-sync', { body:body }); }catch(e){ return { ok:false, error:String((e && e.message) || e) }; }
+  if(r.error){
+    var m = r.error.message || 'Gagal memanggil fungsi', st = r.error.context && r.error.context.status;
+    try{ if(r.error.context && r.error.context.json){ var j = await r.error.context.json(); if(j && j.error) m = j.error; } }catch(_){}
+    if(st === 404 || /failed to send|not found|relay/i.test(m)) m = 'Edge Function notion-sync belum dipasang di Supabase (lihat panduan pemasangan).';
+    return { ok:false, error:m };
+  }
+  return r.data || { ok:false, error:'Respons kosong' };
+}
+function say(m, t){ ST.msg = m; ST.msgT = t || ''; paintMsg(); }
+
+/* ---------- aksi ---------- */
+async function doPing(){ ST.busy = 'ping'; paint(); var r = await invoke({ action:'ping' }); ST.ping = r; ST.busy = ''; paint(); return r; }
+async function doCheck(){
+  var d = def(ST.sel), inp = $('ntId'), id = extractId(inp ? inp.value : cfgOf(d.id).notion_id);
+  if(!id){ say('ID database Notion tidak valid. Tempel tautan atau ID database (32 karakter).', 'err'); return; }
+  ST.busy = 'check'; say('Memeriksa…'); var c = Object.assign({}, cfgOf(d.id), { notion_id:id });
+  var r = await invoke({ action:'check', db:d.id, notionId:id, mapping:c.mapping || {} });
+  ST.res[d.id] = ST.res[d.id] || {}; ST.res[d.id].check = r; c.checked_ok = !!r.ok; c.checked_at = new Date().toISOString(); await save('db:' + d.id, c);
+  ST.busy = ''; say(r.ok ? 'Terhubung. Struktur database Notion sesuai.' : (r.error || (r.problems || []).join('; ') || 'Pemeriksaan gagal.'), r.ok ? 'ok' : 'err'); paint(); try{ window.CXH && CXH.refresh(); }catch(_){}
+}
+async function doPreview(id){
+  var d = def(id || ST.sel), c = cfgOf(d.id); if(!c.notion_id){ say('Isi dan periksa ID database Notion dulu (tab Connect & check).', 'err'); return null; }
+  ST.busy = 'preview'; say('Menghitung perubahan…'); var r = await invoke({ action:'preview', db:d.id, notionId:c.notion_id, mapping:c.mapping || {} });
+  ST.res[d.id] = ST.res[d.id] || {}; ST.res[d.id].preview = r; ST.busy = ''; say(r.ok ? '' : (r.error || 'Preview gagal.'), r.ok ? '' : 'err'); paint(); return r;
+}
+async function syncOne(id, quiet){
+  var d = def(id), c = cfgOf(id); if(!c.notion_id) return { ok:false, error:'ID database Notion belum diisi.' };
+  var tot = { created:0, updated:0, failed:0, relMissing:0 }, guard = 0, r;
+  do{
+    r = await invoke({ action:'sync', db:id, notionId:c.notion_id, mapping:c.mapping || {}, limit:25 });
+    if(!r.ok) return r; tot.created += r.created; tot.updated += r.updated; tot.failed += r.failed; tot.relMissing += (r.relMissing || 0);
+    ST.prog = d.name + ': ' + (tot.created + tot.updated) + ' diproses' + (r.remaining ? ', sisa ' + r.remaining : '') + '…'; if(!quiet) paintProg();
+    if(r.failed && !r.created && !r.updated){ tot.errors = r.errors; break; }
+  } while(r.remaining > 0 && ++guard < 400);
+  tot.ok = true; tot.remaining = r.remaining || 0; tot.errors = tot.errors || r.errors; return tot;
+}
+async function doSync(all, quiet){
+  if(ST.busy === 'sync') return; ST.busy = 'sync'; if(!quiet) say('Sinkron berjalan…');
+  var list = all ? DBS.filter(function(d){ var c = cfgOf(d.id); return c.notion_id && c.checked_ok; }).sort(function(a, b){ return a.order - b.order; }) : [def(ST.sel)], sum = [];
+  if(!list.length){ ST.busy = ''; say('Belum ada database Notion yang terhubung.', 'err'); return; }
+  for(var i = 0; i < list.length; i++){ var r = await syncOne(list[i].id, quiet); sum.push({ d:list[i], r:r }); if(!r.ok && !quiet) break; }
+  var bad = sum.filter(function(x){ return !x.r.ok || x.r.failed; }), made = sum.reduce(function(n, x){ return n + ((x.r.created || 0) + (x.r.updated || 0)); }, 0);
+  ST.prog = ''; ST.busy = ''; ST.lastSync = new Date().toISOString();
+  if(!quiet) say(bad.length ? ('Selesai dengan masalah: ' + bad.map(function(x){ return x.d.name + ' — ' + (x.r.error || (x.r.failed + ' gagal' + (x.r.errors && x.r.errors[0] ? ' (' + x.r.errors[0] + ')' : ''))); }).join('; ')) : ('Selesai. ' + made + ' baris dikirim ke Notion.'), bad.length ? 'err' : 'ok');
+  await load(); paint();
+}
+function armTimer(){
+  if(ST.timer){ clearInterval(ST.timer); ST.timer = null; }
+  var s = settings(); if(s.mode !== 'auto' || !connectedCount()) return;
+  ST.timer = setInterval(function(){ try{ if(D.visibilityState === 'visible' && !ST.busy) doSync(true, true); }catch(_){} }, s.every * 60000);
+}
+
+/* ---------- tampilan ---------- */
+function css(){
+  if($('ntCss')) return; var s = D.createElement('style'); s.id = 'ntCss';
+  s.textContent = '' +
+  '.nt-ov{position:fixed;inset:0;z-index:9100;background:rgba(10,18,26,.55);display:flex;align-items:flex-end;justify-content:center}' +
+  '.nt-sheet{background:var(--bg);color:var(--text);width:min(760px,100%);max-height:94vh;border-radius:24px 24px 0 0;display:flex;flex-direction:column;outline:none;box-shadow:0 -10px 50px rgba(0,0,0,.3)}' +
+  '@media(min-width:700px){.nt-ov{align-items:center}.nt-sheet{border-radius:20px;max-height:90vh}}' +
+  '.nt-h,.nt-f{flex:none}.nt-h{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}.nt-h h2{margin:0;font-size:22px}' +
+  '.nt-x{min-width:44px;min-height:44px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:20px;cursor:pointer}' +
+  '.nt-strip{flex:none;display:flex;gap:10px;overflow-x:auto;padding:14px 16px;background:var(--surface-2,#f4f6f9);border-bottom:1px solid var(--border);scroll-snap-type:x proximity}' +
+  '.nt-chip{flex:none;display:flex;gap:10px;align-items:center;text-align:left;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--text);padding:8px 12px;cursor:pointer;scroll-snap-align:start;min-height:56px;font:inherit}' +
+  '.nt-chip[aria-pressed=true]{background:var(--surface);border-color:var(--accent);box-shadow:0 1px 6px rgba(0,0,0,.12)}' +
+  '.nt-t{position:relative;flex:none;width:40px;height:40px;border-radius:11px;background:#2b2b2b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}' +
+  '.nt-chip b{display:block;font-size:15px;white-space:nowrap}.nt-chip span.s{display:block;font-size:12px;color:var(--text-dim);white-space:nowrap}' +
+  '.nt-dot{position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:#1f8f4e;border:2px solid var(--surface)}' +
+  '.nt-body{flex:1 1 auto;min-height:0;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}' +
+  '.nt-hero{background:linear-gradient(180deg,#e8f0fb,#f4f8fd);border-radius:22px;padding:26px 12px;display:flex;align-items:center;justify-content:center;gap:16px}' +
+  '.nt-big{position:relative;width:72px;height:72px;border-radius:20px;background:#2b2b2b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:32px}.nt-big.l{background:#fff;overflow:hidden}.nt-big.l img{width:100%;height:100%;object-fit:cover}' +
+  '.nt-big .ck{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;background:#1f8f4e;border:3px solid #eef4fb;display:flex;align-items:center;justify-content:center}.nt-big .ck svg{width:14px;height:14px}' +
+  '.nt-line{width:90px;border-top:6px dotted #9db7d6}' +
+  '.nt-body h3{margin:0;font-size:20px}.nt-body p{margin:0;color:var(--text-dim);font-size:15px;line-height:1.45}' +
+  '.nt-seg{display:flex;gap:10px;flex-wrap:wrap}.nt-seg button{min-height:48px;padding:10px 18px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;font-size:16px;cursor:pointer}.nt-seg button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}' +
+  '.nt-card{border:1px solid var(--border);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}.nt-card h4{margin:0;font-size:18px}' +
+  '.nt-card label{font-size:14px;color:var(--text);display:block;margin-bottom:4px}.nt-card input,.nt-card select{width:100%;min-height:46px;font:inherit;font-size:16px;padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);box-sizing:border-box}' +
+  '.nt-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.2fr);gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--border)}.nt-row:first-of-type{border-top:0}.nt-row .a{font-size:14px;word-break:break-word}.nt-row .a small{display:block;color:var(--text-dim);font-size:12px}.nt-row .ar{color:var(--text-dim)}' +
+  '.nt-ok{color:#1f7a45}.nt-er{color:var(--danger-ink,#a11d2b)}.nt-msg{font-size:14px;min-height:20px}.nt-msg.err{color:var(--danger-ink,#a11d2b)}.nt-msg.ok{color:#1f7a45}' +
+  '.nt-f{display:flex;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border)}.nt-f button,.nt-card button{min-height:46px;padding:8px 18px;font:inherit;font-size:16px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}.nt-card button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}' +
+  '.nt-card button:disabled{opacity:.55}.nt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.nt-kv div{background:var(--surface-2,#f4f6f9);border-radius:12px;padding:10px;text-align:center}.nt-kv b{display:block;font-size:22px}.nt-kv span{font-size:12px;color:var(--text-dim)}' +
+  'html.nt-lock{overflow:hidden}';
+  D.head.appendChild(s);
+}
+var CHECK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.6 2.6 5-5.4" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function strip(){
+  return DBS.map(function(d){ var c = cfgOf(d.id), on = c.notion_id && c.checked_ok;
+    return '<button type="button" class="nt-chip" data-nt="sel" data-id="' + d.id + '" aria-pressed="' + (d.id === ST.sel) + '"><span class="nt-t" aria-hidden="true">' + esc(d.name.charAt(0)) + (on ? '<i class="nt-dot" title="Terhubung"></i>' : '') + '</span><span><b>' + esc(d.name) + '</b><span class="s">' + esc(DATA.groups[d.group] || '') + (on ? ' · terhubung' : '') + '</span></span></button>'; }).join('');
+}
+function logoSrc(){ var i = D.querySelector('img.brand-logo'); return i ? i.getAttribute('src') : ''; }
+function hero(){
+  var d = def(ST.sel), c = cfgOf(d.id), on = c.notion_id && c.checked_ok, lg = logoSrc();
+  return '<div class="nt-hero"><div class="nt-big" aria-hidden="true">N' + (on ? '<span class="ck">' + CHECK_SVG + '</span>' : '') + '</div><div class="nt-line" aria-hidden="true"></div><div class="nt-big l" aria-hidden="true">' + (lg ? '<img alt="" src="' + esc(lg) + '">' : 'A') + '</div></div>';
+}
+function tabConnect(d){
+  var c = cfgOf(d.id), r = (ST.res[d.id] || {}).check, pg = ST.ping;
+  var h = '<div class="nt-card"><h4>Connect & check</h4>' +
+    '<div><label for="ntId">ID atau tautan database Notion: ' + esc(d.name) + '</label><input id="ntId" type="text" inputmode="url" autocomplete="off" placeholder="Tempel tautan database Notion" value="' + esc(c.notion_id || '') + '"></div>' +
+    '<div class="nt-seg"><button type="button" class="primary" data-nt="check"' + (ST.busy ? ' disabled' : '') + '>Check connection</button><button type="button" data-nt="ping"' + (ST.busy ? ' disabled' : '') + '>Cek token server</button></div>' +
+    (pg ? '<div class="nt-msg ' + (pg.ok ? 'ok' : 'err') + '">' + (pg.ok ? 'Token Notion terpasang di server.' : esc(pg.error || 'Token belum diatur.')) + '</div>' : '');
+  if(r){ h += '<div class="nt-msg ' + (r.ok ? 'ok' : 'err') + '">' + (r.ok ? 'Database "' + esc(r.title || d.name) + '" terhubung. ' : '') + ((r.problems || []).length ? esc(r.problems.join('; ')) : '') + (r.error ? esc(r.error) : '') + '</div>';
+    if(r.resolve){ var okN = r.resolve.filter(function(x){ return x.ok && x.notion; }).length, bad = r.resolve.filter(function(x){ return !x.ok; }); h += '<p>' + okN + ' dari ' + r.resolve.length + ' kolom cocok dengan properti Notion.' + (bad.length ? ' ' + bad.length + ' kolom belum cocok (atur di tab Mapping atau tambahkan propertinya).' : '') + '</p>'; } }
+  h += '<p>Database Notion harus punya properti <b>Altair ID</b> (Text) dan satu properti Title. Struktur lengkap ada di PDF “Struktur database Notion Altair Auto”.</p></div>';
+  return h;
+}
+function tabMapping(d){
+  var r = (ST.res[d.id] || {}).check; if(!r || !r.props) return '<div class="nt-card"><h4>Mapping</h4><p>Jalankan <b>Connect & check</b> dulu agar daftar properti Notion terbaca.</p></div>';
+  var c = cfgOf(d.id), map = c.mapping || {}, res = {}; (r.resolve || []).forEach(function(x){ res[x.c] = x; });
+  var rows = d.cols.map(function(col){
+    var cur = Object.prototype.hasOwnProperty.call(map, col.c) ? map[col.c] : undefined, x = res[col.c] || {};
+    var opts = r.props.filter(function(p){ return COMPAT[col.t].indexOf(p.type) >= 0; });
+    var auto = (cur === undefined && x.notion) ? x.notion : '';
+    var h = '<option value=""' + (cur === undefined ? ' selected' : '') + '>' + (auto ? 'Automatic: ' + esc(auto) : '(tidak ditemukan)') + '</option>' +
+      opts.map(function(p){ return '<option value="' + esc(p.name) + '"' + (cur === p.name ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') +
+      '<option value="__skip"' + (cur === null ? ' selected' : '') + '>Do not sync</option>';
+    return '<div class="nt-row"><div class="a">' + esc(col.l) + '<small>' + esc(col.t === 'rel' ? 'relasi' : col.t) + '</small></div><div class="ar" aria-hidden="true">&rArr;</div><select data-nt="map" data-col="' + col.c + '" aria-label="Properti Notion untuk ' + esc(col.l) + '">' + h + '</select></div>';
+  }).join('');
+  return '<div class="nt-card"><h4>Mapping</h4><p>Dicocokkan lewat nama. Ubah baris mana pun untuk memilih properti Notion lain, atau “Do not sync”.</p>' + rows + '</div>';
+}
+function tabSync(d){
+  var s = settings(), pv = (ST.res[d.id] || {}).preview, c = cfgOf(d.id), lr = c.last_result;
+  var h = '<div class="nt-card"><h4>How it syncs</h4><div><label for="ntMode">Mode</label><select id="ntMode" data-nt="mode"><option value="manual"' + (s.mode === 'manual' ? ' selected' : '') + '>Manual only</option><option value="auto"' + (s.mode === 'auto' ? ' selected' : '') + '>Manual and automatic</option></select></div>' +
+    '<div><label for="ntEvery">Every</label><select id="ntEvery" data-nt="every">' + [5, 15, 30, 60].map(function(m){ return '<option value="' + m + '"' + (s.every === m ? ' selected' : '') + '>' + m + ' minutes</option>'; }).join('') + '</select></div>' +
+    '<p>Mode berlaku untuk semua database. Otomatis hanya berjalan selama Altair Auto terbuka. Arah: Altair Auto → Notion; perubahan di Notion tidak menimpa data Altair Auto, dan halaman Notion tidak pernah dihapus.</p></div>';
+  h += '<div class="nt-card"><h4>Preview & sync: ' + esc(d.name) + '</h4>' +
+    (pv && pv.ok ? '<div class="nt-kv"><div><b>' + pv.new + '</b><span>baru</span></div><div><b>' + pv.changed + '</b><span>berubah</span></div><div><b>' + pv.unchanged + '</b><span>tetap</span></div></div>' + ((pv.unmapped && pv.unmapped.length) ? '<p>Belum dipetakan: ' + esc(pv.unmapped.join(', ')) + '</p>' : '') : '') +
+    (lr ? '<p>Sinkron terakhir: ' + esc(String(c.last_sync_at || '').slice(0, 16).replace('T', ' ')) + ' — ' + (lr.created || 0) + ' dibuat, ' + (lr.updated || 0) + ' diubah' + (lr.failed ? ', ' + lr.failed + ' gagal' : '') + '.</p>' : '') +
+    '<div class="nt-seg"><button type="button" data-nt="preview"' + (ST.busy ? ' disabled' : '') + '>Preview</button><button type="button" class="primary" data-nt="sync"' + (ST.busy ? ' disabled' : '') + '>Sync this database</button><button type="button" data-nt="syncall"' + (ST.busy ? ' disabled' : '') + '>Sync all connected</button></div><div class="nt-msg" id="ntProg">' + esc(ST.prog) + '</div></div>';
+  return h;
+}
+function body(){
+  var d = def(ST.sel); if(!d) return '';
+  if(ST.err) return '<div class="nt-card"><h4>Belum siap</h4><p>' + esc(ST.err) + '</p></div>';
+  if(!db()) return '<div class="nt-card"><h4>Belum siap</h4><p>Hubungkan database (Supabase) dulu di Settings → Connections.</p></div>';
+  return hero() + '<h3>Own database, own mapping</h3><p>Satu database Notion untuk ' + esc(d.name) + '. Dicocokkan lewat nama kolom; Anda bisa mengubah baris mana pun. Memakai Edge Function dan token Notion di server, bukan di HP ini.</p>' +
+    '<div class="nt-seg" role="group" aria-label="Langkah">' + [['connect', 'Connect & check'], ['mapping', 'Mapping'], ['sync', 'Preview & sync']].map(function(t){ return '<button type="button" data-nt="tab" data-id="' + t[0] + '" aria-pressed="' + (ST.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="nt-msg ' + esc(ST.msgT) + '" id="ntMsg" role="status">' + esc(ST.msg) + '</div>' +
+    (ST.tab === 'connect' ? tabConnect(d) : ST.tab === 'mapping' ? tabMapping(d) : tabSync(d));
+}
+function paintMsg(){ var m = $('ntMsg'); if(m){ m.className = 'nt-msg ' + ST.msgT; m.textContent = ST.msg; } }
+function paintProg(){ var p = $('ntProg'); if(p) p.textContent = ST.prog; }
+function paint(){
+  var ov = $('ntOv'); if(!ov) return; var b = $('ntBody'), st = $('ntStrip'); if(!b || !st) return;
+  var y = b.scrollTop, sx = st.scrollLeft; st.innerHTML = strip(); b.innerHTML = body(); b.scrollTop = y; st.scrollLeft = sx;
+}
+function refresh(){ if(ST.open) paint(); try{ window.CXH && CXH.refresh(); }catch(_){} }
+function open(){
+  css(); close(true); ST.lastFocus = D.activeElement; ST.open = true; ST.msg = ''; ST.msgT = '';
+  var ov = D.createElement('div'); ov.className = 'nt-ov'; ov.id = 'ntOv';
+  ov.innerHTML = '<div class="nt-sheet" role="dialog" aria-modal="true" aria-labelledby="ntTitle" tabindex="-1"><div class="nt-h"><h2 id="ntTitle">Notion</h2><button type="button" class="nt-x" data-nt="close" aria-label="Tutup">&times;</button></div><div class="nt-strip" id="ntStrip" role="group" aria-label="Database"></div><div class="nt-body" id="ntBody"></div><div class="nt-f"><button type="button" data-nt="close">Close</button></div></div>';
+  D.body.appendChild(ov); D.documentElement.classList.add('nt-lock'); paint();
+  var dlg = ov.querySelector('.nt-sheet'); try{ dlg.focus(); }catch(_){}
+  if(!ST.loaded && !ST.loading) load();
+}
+function close(silent){
+  var ov = $('ntOv'); if(ov) ov.remove(); D.documentElement.classList.remove('nt-lock'); var lf = ST.lastFocus; ST.open = false; ST.lastFocus = null;
+  if(!silent){ try{ window.CXH && CXH.render(); }catch(_){} try{ if(lf && lf.isConnected) lf.focus(); }catch(_){} }
+}
+function onClick(e){
+  var b = e.target.closest ? e.target.closest('[data-nt]') : null; if(!b){ var ov = $('ntOv'); if(ov && e.target === ov) close(); return; }
+  var a = b.getAttribute('data-nt'), id = b.getAttribute('data-id');
+  if(a === 'close') close(); else if(a === 'sel'){ ST.sel = id; ST.msg = ''; ST.msgT = ''; paint(); } else if(a === 'tab'){ ST.tab = id; ST.msg = ''; ST.msgT = ''; paint(); }
+  else if(a === 'check') doCheck(); else if(a === 'ping') doPing(); else if(a === 'preview') doPreview(); else if(a === 'sync') doSync(false); else if(a === 'syncall') doSync(true);
+}
+async function onChange(e){
+  var t = e.target; if(!t.getAttribute) return; var a = t.getAttribute('data-nt');
+  if(a === 'map'){
+    var d = def(ST.sel), c = Object.assign({}, cfgOf(d.id)), m = Object.assign({}, c.mapping || {}), col = t.getAttribute('data-col'), v = t.value;
+    if(v === '') delete m[col]; else if(v === '__skip') m[col] = null; else m[col] = v; c.mapping = m; await save('db:' + d.id, c); say('Pemetaan disimpan. Preview menunjukkan kolom yang belum cocok.', 'ok');
+  } else if(a === 'mode' || a === 'every'){
+    var s = settings(); if(a === 'mode') s.mode = t.value; else s.every = Number(t.value); await save('settings', s); armTimer(); say('Pengaturan sinkron disimpan.', 'ok');
+  }
+}
+D.addEventListener('click', onClick); D.addEventListener('change', onChange);
+D.addEventListener('keydown', function(e){ if(e.key === 'Escape' && ST.open) close(); });
+setInterval(function(){ try{ if(!ST.loaded && !ST.loading && !ST.err && db()) load(); }catch(_){} }, 3000);
+function status(){
+  if(ST.err && /notion_config/.test(ST.err)) return { k:'muted', t:'Belum diatur', on:false };
+  var n = connectedCount(); return n ? { k:'ok', t:n + ' database terhubung', on:true } : { k:'muted', t:'Belum diatur', on:false };
+}
+window.NOTION = { open:open, close:close, status:status, load:load, state:ST, extractId:extractId, DBS:DBS, doSync:doSync };
 })();
 
 </script>
