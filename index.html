@@ -458,7 +458,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 27 (15 Nov 2026)" aria-label="Versi 1.0, revisi 27"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 27</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 28 (16 Nov 2026)" aria-label="Versi 1.0, revisi 28"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 28</span></div>
   </div>
 </div>
 
@@ -7733,6 +7733,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-16</td><td>Rev 28: <strong>Koneksi database lebih tahan hilang</strong>. Koneksi (Project URL + Publishable key) kini disalin ke tiga tempat (localStorage, IndexedDB, Cache Storage) dan dipulihkan otomatis dari salah satunya. Bila semua hilang tetapi sesi login masih ada, kolom Project URL terisi otomatis dari sesi; hanya Publishable key yang perlu diketik. Baris diagnosis di layar Connect diperluas.</td></tr>
             <tr><td class="mono">2026-11-15</td><td>Rev 27: <strong>Koneksi Notion</strong>. Settings &rarr; Connections kini punya panel Notion (Connect &amp; check, Mapping, Preview &amp; sync) untuk mengirim 34 database Altair Auto ke Notion, satu arah, lewat Edge Function. Project, Work Order, dan Job Card tidak ikut (milik Polaris One).</td></tr>
             <tr><td class="mono">2026-11-15</td><td>Rev 26: <strong>Connections berbentuk panel kartu</strong>. Settings &rarr; Connections kini memakai kartu satu baris: ikon berwarna di kiri (lencana centang hijau bila terhubung), judul dan deskripsi di tengah, tombol Connect/Manage di kanan, seperti di Polaris One.</td></tr>
             <tr><td class="mono">2026-11-15</td><td>Rev 25: <strong>Daftar tidak lagi terpotong di 1000 baris</strong>. Daftar yang melewati 1000 baris kini dimuat bertahap sampai habis (sebelumnya terpotong tanpa pesan). Pustaka Supabase dikunci ke versi 2.119.0 agar pembaruan pustaka tidak merusak aplikasi tiba-tiba.</td></tr>
@@ -8257,28 +8258,43 @@ function cfgDecode(b64){
 function cfgFromLink(){
   const m = /[#&?]cfg=([A-Za-z0-9_-]+)/.exec(location.hash || ''); return m ? cfgDecode(m[1]) : null;
 }
+var CONN_LS2 = 'altair_auto.conn.v2', CONN_CACHE = 'aa-conn', CONN_REQ = '/__altair_conn__';
 function connMirrorSave(url, key){
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function(){}); }catch(e){}
+  try{ localStorage.setItem(CONN_LS2, JSON.stringify({ u:url, k:key, t:Date.now() })); }catch(e){}
   try{
     const rq = indexedDB.open('altair-auto-conn', 1);
     rq.onupgradeneeded = function(){ rq.result.createObjectStore('kv'); };
     rq.onsuccess = function(){ try{ const tx = rq.result.transaction('kv', 'readwrite'); tx.objectStore('kv').put({ url:url, key:key }, 'conn'); tx.oncomplete = function(){ rq.result.close(); }; }catch(e){} };
   }catch(e){}
+  try{ if(window.caches) caches.open(CONN_CACHE).then(function(c){ return c.put(location.origin + CONN_REQ, new Response(JSON.stringify({ url:url, key:key }), { headers:{ 'content-type':'application/json' } })); }).catch(function(){}); }catch(e){}
 }
 function connMirrorClear(){
+  try{ localStorage.removeItem(CONN_LS2); }catch(e){}
   try{
     const rq = indexedDB.open('altair-auto-conn', 1);
     rq.onupgradeneeded = function(){ rq.result.createObjectStore('kv'); };
     rq.onsuccess = function(){ try{ const tx = rq.result.transaction('kv', 'readwrite'); tx.objectStore('kv').delete('conn'); tx.oncomplete = function(){ rq.result.close(); }; }catch(e){} };
   }catch(e){}
+  try{ if(window.caches) caches.open(CONN_CACHE).then(function(c){ return c.delete(location.origin + CONN_REQ); }).catch(function(){}); }catch(e){}
 }
+/* Pemulihan berlapis: salinan localStorage kedua -> IndexedDB -> Cache Storage. Mengembalikan koneksi pertama yang valid (URL + Publishable key saja). */
 function connMirrorRestore(cb){
+  try{ const j = JSON.parse(localStorage.getItem(CONN_LS2) || 'null'); const v = j && cfgValid(j.u, j.k); if(v){ cb(v); return; } }catch(e){}
+  const viaCache = function(){
+    try{ if(!window.caches){ cb(null); return; } caches.open(CONN_CACHE).then(function(c){ return c.match(location.origin + CONN_REQ); }).then(function(r){ return r ? r.json() : null; }).then(function(j){ cb(j ? cfgValid(j.url, j.key) : null); }).catch(function(){ cb(null); }); }catch(e){ cb(null); }
+  };
   try{
     const rq = indexedDB.open('altair-auto-conn', 1);
     rq.onupgradeneeded = function(){ rq.result.createObjectStore('kv'); };
-    rq.onerror = function(){ cb(null); };
-    rq.onsuccess = function(){ try{ const g = rq.result.transaction('kv', 'readonly').objectStore('kv').get('conn'); g.onsuccess = function(){ rq.result.close(); const v = g.result; cb(v ? cfgValid(v.url, v.key) : null); }; g.onerror = function(){ cb(null); }; }catch(e){ cb(null); } };
-  }catch(e){ cb(null); }
+    rq.onerror = function(){ viaCache(); };
+    rq.onsuccess = function(){ try{ const g = rq.result.transaction('kv', 'readonly').objectStore('kv').get('conn'); g.onsuccess = function(){ rq.result.close(); const v = g.result ? cfgValid(g.result.url, g.result.key) : null; if(v) cb(v); else viaCache(); }; g.onerror = function(){ viaCache(); }; }catch(e){ viaCache(); } };
+  }catch(e){ viaCache(); }
+}
+/* Petunjuk URL dari sesi login yang masih ada: nama kunci sb-<ref>-auth-token memuat ref proyek (bukan rahasia). Key TIDAK dapat diturunkan. */
+function connHintUrl(){
+  try{ for(let i = 0; i < localStorage.length; i++){ const m = /^sb-([a-z0-9]{10,30})-auth-token$/.exec(localStorage.key(i) || ''); if(m) return 'https://' + m[1] + '.supabase.co'; } }catch(e){}
+  return '';
 }
 function copyConfigLink(){
   let u = '', k = ''; try{ u = localStorage.getItem('ik_sbUrl') || ''; k = localStorage.getItem('ik_sbKey') || ''; }catch(e){}
@@ -14589,7 +14605,7 @@ async function confirmDelete(){
 }
 
 tryRestoreConnection();
-(function(){ let has = false; try{ has = !!(localStorage.getItem('ik_sbUrl') && localStorage.getItem('ik_sbKey')); }catch(e){} if(has || !(document.getElementById('sbUrl') && !document.getElementById('sbUrl').value.trim())) return; connMirrorRestore(function(c){ if(!c) return; try{ localStorage.setItem('ik_sbUrl', c.url); localStorage.setItem('ik_sbKey', c.key); }catch(e){} tryRestoreConnection(); try{ if(window.AG && AG.resolve) AG.resolve(); }catch(e){} }); })();
+(function(){ let has = false; try{ has = !!(localStorage.getItem('ik_sbUrl') && localStorage.getItem('ik_sbKey')); }catch(e){} if(has){ try{ const u0 = localStorage.getItem('ik_sbUrl'), k0 = localStorage.getItem('ik_sbKey'); if(cfgValid(u0, k0)) connMirrorSave(u0.trim().replace(/\/+$/, ''), k0.trim()); }catch(e){} return; } if(!(document.getElementById('sbUrl') && !document.getElementById('sbUrl').value.trim())) return; connMirrorRestore(function(c){ if(!c) return; try{ localStorage.setItem('ik_sbUrl', c.url); localStorage.setItem('ik_sbKey', c.key); }catch(e){} connMirrorSave(c.url, c.key); tryRestoreConnection(); try{ if(window.AG && AG.resolve) AG.resolve(); }catch(e){} }); })();
 </script>
 <script>
 /* =====================================================================
@@ -20437,7 +20453,7 @@ function view(){
   const m = ST.mode; let body = '';
   if(m === 'boot') body = '<h2 id="agTitle">Memulai…</h2><div class="ag-spin" aria-hidden="true"></div><p class="ag-hint" style="text-align:center">Memeriksa sesi Anda.</p>';
   else if(m === 'config') body = `<h2 id="agTitle">Connect to Database</h2><p class="ag-hint">Masukkan Project URL dan Publishable key Supabase Anda, atau tempel <strong>tautan penyiapan</strong> di kolom Project URL. Cukup sekali per perangkat; nilai disimpan hanya di perangkat ini. Di iPhone/iPad, buka aplikasi dari ikon Layar Utama (bukan tab Safari) agar penyimpanan tidak dihapus iOS.</p>${msgHtml()}
-    <form data-form="config" novalidate><label for="agUrl">Project URL</label><input id="agUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://xxxx.supabase.co atau tautan penyiapan" value="${esc(val('agUrl'))}">
+    <form data-form="config" novalidate><label for="agUrl">Project URL</label><input id="agUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://xxxx.supabase.co atau tautan penyiapan" value="${esc(val('agUrl') || connHintUrl())}">
     <label for="agKey">Publishable key</label><input id="agKey" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sb_publishable_…">
     <button class="ag-btn" type="submit" ${dis}>Connect</button></form>${ST.canBack ? '<div class="ag-row"><button type="button" class="ag-link" data-act="to-login">Back to Login</button></div>' : ''}`;
   else if(m === 'login') body = `<h2 id="agTitle">Login</h2><p class="ag-hint">Masuk untuk memakai Altair Auto.</p>${demo}${msgHtml()}
@@ -21259,7 +21275,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:27,date:'2026-11-15'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:28,date:'2026-11-16'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -23210,7 +23226,7 @@ window.BOM = { render:bRender, onShow:bOnShow, load:bLoad, sbomFor:sbomFor, rows
 'use strict';
 if(window.STOR) return;
 var SINCE = 'ik_connSince';
-var ST = { persisted:null, asked:false, standalone:false, ios:false, mirror:null };
+var ST = { persisted:null, asked:false, standalone:false, ios:false, mirror:null, cacheCopy:null };
 function ls(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){} }
 function isStandalone(){ try{ if(navigator.standalone === true) return true; return !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches); }catch(_){ return false; } }
@@ -23218,7 +23234,8 @@ function isIOS(){ try{ var ua = navigator.userAgent || ''; return /iPhone|iPad|i
 function hasConn(){ return !!(ls('ik_sbUrl') && ls('ik_sbKey')); }
 function hasSession(){ try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^sb-.+-auth-token$/.test(k) && localStorage.getItem(k)) return true; } }catch(_){} return false; }
 function ymdL(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-function mirrorCheck(){
+function cacheCheck(){ try{ if(!window.caches){ ST.cacheCopy = null; return; } caches.open('aa-conn').then(function(c){ return c.match(location.origin + '/__altair_conn__'); }).then(function(r){ ST.cacheCopy = !!r; paint(); }).catch(function(){ ST.cacheCopy = null; }); }catch(_){ ST.cacheCopy = null; } }
+function mirrorCheck(){ cacheCheck();
   try{ var rq = indexedDB.open('altair-auto-conn', 1); rq.onupgradeneeded = function(){ rq.result.createObjectStore('kv'); }; rq.onerror = function(){ ST.mirror = null; paint(); };
     rq.onsuccess = function(){ try{ var g = rq.result.transaction('kv', 'readonly').objectStore('kv').get('conn'); g.onsuccess = function(){ ST.mirror = !!(g.result && g.result.url); try{ rq.result.close(); }catch(_){} paint(); }; g.onerror = function(){ ST.mirror = null; paint(); }; }catch(_){ ST.mirror = null; } };
   }catch(_){ ST.mirror = null; }
@@ -23238,13 +23255,13 @@ function build(){ try{ var b = window.ALTAIR_BUILD || {}; return 'v' + (b.versio
 function yn(v){ return v === true ? 'ya' : v === false ? 'tidak' : 'tidak diketahui'; }
 function info(){
   var since = ls(SINCE), mode = ST.standalone ? 'Ikon Layar Utama' : (ST.ios ? 'Tab Safari' : 'Peramban'), prot = ST.persisted === true ? 'Dilindungi' : ST.persisted === false ? 'Tidak dijamin' : 'Tidak diketahui';
-  return { build:build(), mirror:ST.mirror, mode:mode, standalone:ST.standalone, ios:ST.ios, persisted:ST.persisted, protectText:prot, since:since, connected:hasConn(), session:hasSession(), warn:ST.ios && !ST.standalone };
+  return { build:build(), mirror:ST.mirror, mode:mode, standalone:ST.standalone, ios:ST.ios, persisted:ST.persisted, protectText:prot, since:since, connected:hasConn(), session:hasSession(), ls2:(function(){ try{ return !!localStorage.getItem('altair_auto.conn.v2'); }catch(_){ return false; } })(), cache:ST.cacheCopy, nkeys:(function(){ try{ return localStorage.length; }catch(_){ return -1; } })(), trace:!!since, warn:ST.ios && !ST.standalone };
 }
 function html(compact){
   var i = info(), h = '';
   if(i.warn) h += '<p class="stor-warn" role="alert"><b>Anda membuka dari tab Safari, bukan dari ikon Layar Utama.</b> Penyimpanan tab Safari terpisah dari ikon Layar Utama dan dapat dibersihkan iOS (sekitar 7 hari tanpa dibuka). Itu penyebab form ini muncul lagi dan login diminta lagi. Buka aplikasi lewat ikon Layar Utama, isi sekali, lalu pakai ikon itu terus (tidak perlu menghapus atau memasang ulang ikon saat pembaruan).</p>';
   else if(!compact && i.ios && i.standalone) h += '<p class="stor-ok">Dibuka dari ikon Layar Utama: penyimpanan perangkat dilindungi iOS. Pembaruan berkas tidak menghapus koneksi maupun login.</p>';
-  if(compact) h += '<p class="stor-meta" id="storGateMeta">' + i.build + ' · Mode: <b>' + i.mode + '</b> · Perlindungan: <b>' + i.protectText + '</b> · Koneksi di perangkat: <b>' + yn(i.connected) + '</b> · Cermin IndexedDB: <b>' + yn(i.mirror) + '</b> · Sesi login: <b>' + (i.session ? 'ada' : 'tidak ada') + '</b></p>';
+  if(compact) h += '<p class="stor-meta" id="storGateMeta">' + i.build + ' · Mode: <b>' + i.mode + '</b> · Perlindungan: <b>' + i.protectText + '</b> · Koneksi di perangkat: <b>' + yn(i.connected) + '</b> · Cermin IndexedDB: <b>' + yn(i.mirror) + '</b> · Salinan lain (LS2/Cache): <b>' + yn(i.ls2) + '/' + yn(i.cache) + '</b> · Jejak waktu koneksi: <b>' + yn(i.trace) + '</b> · Kunci tersimpan: <b>' + i.nkeys + '</b> · Sesi login: <b>' + (i.session ? 'ada' : 'tidak ada') + '</b></p>';
   if(!compact) h += '<p class="stor-meta">' + i.build + ' · Mode: <b>' + i.mode + '</b> · Perlindungan penyimpanan: <b>' + i.protectText + '</b> · Koneksi tersimpan sejak: <b>' + (i.since || (i.connected ? 'tidak tercatat' : 'belum ada')) + '</b> · Sesi login: <b>' + (i.session ? 'ada' : 'tidak ada') + '</b></p>';
   return h;
 }
