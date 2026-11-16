@@ -458,7 +458,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 28 (16 Nov 2026)" aria-label="Versi 1.0, revisi 28"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 28</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 29 (16 Nov 2026)" aria-label="Versi 1.0, revisi 29"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 29</span></div>
   </div>
 </div>
 
@@ -7733,6 +7733,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-16</td><td>Rev 29: <strong>Kesehatan Kelistrikan &amp; Suhu</strong> di halaman Inspection. Tegangan mesin mati/hidup, temperatur, dan KM/L rata-rata dibaca sebagai tren terhadap kebiasaan tiap kendaraan (median + sebaran, dipisah per jenis inspeksi), dengan arah pemeriksaan aki vs pengisian. Ambang Estimasi, dapat diubah; ADV150 memakai batas lebih rendah. Hanya menandai, tidak menulis data.</td></tr>
             <tr><td class="mono">2026-11-16</td><td>Rev 28: <strong>Koneksi database lebih tahan hilang</strong>. Koneksi (Project URL + Publishable key) kini disalin ke tiga tempat (localStorage, IndexedDB, Cache Storage) dan dipulihkan otomatis dari salah satunya. Bila semua hilang tetapi sesi login masih ada, kolom Project URL terisi otomatis dari sesi; hanya Publishable key yang perlu diketik. Baris diagnosis di layar Connect diperluas.</td></tr>
             <tr><td class="mono">2026-11-15</td><td>Rev 27: <strong>Koneksi Notion</strong>. Settings &rarr; Connections kini punya panel Notion (Connect &amp; check, Mapping, Preview &amp; sync) untuk mengirim 34 database Altair Auto ke Notion, satu arah, lewat Edge Function. Project, Work Order, dan Job Card tidak ikut (milik Polaris One).</td></tr>
             <tr><td class="mono">2026-11-15</td><td>Rev 26: <strong>Connections berbentuk panel kartu</strong>. Settings &rarr; Connections kini memakai kartu satu baris: ikon berwarna di kiri (lencana centang hijau bila terhubung), judul dan deskripsi di tengah, tombol Connect/Manage di kanan, seperti di Polaris One.</td></tr>
@@ -21275,7 +21276,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:28,date:'2026-11-16'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:29,date:'2026-11-16'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -23591,6 +23592,160 @@ function status(){
   var n = connectedCount(); return n ? { k:'ok', t:n + ' database terhubung', on:true } : { k:'muted', t:'Belum diatur', on:false };
 }
 window.NOTION = { open:open, close:close, status:status, load:load, state:ST, extractId:extractId, DBS:DBS, doSync:doSync };
+})();
+
+</script>
+<script id="elhScript">
+/* Altair Auto — Kesehatan Kelistrikan & Suhu (Rev 29)
+   Hanya MEMBACA data inspeksi (inspection_session): tegangan mesin mati/hidup, temperatur, konsumsi BBM rata-rata.
+   Tidak menulis ke database, tidak membuat Activity/Action (itu milik Polaris One). Semua ambang berlabel ESTIMASI, bukan angka pabrikan.
+   Baseline = median pembacaan sebelumnya milik kendaraan itu sendiri, dipisah per jenis inspeksi (sebelum berangkat / setelah tiba). */
+(function(){
+'use strict';
+if(window.ELH) return;
+var esc = function(s){ s = String(s == null ? '' : s); return s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+function g(name){ try{ return (typeof window[name] !== 'undefined') ? window[name] : (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+var LSK = 'ik_elh_cfg';
+/* Urutan prioritas pemakaian: ADV150, Ertiga, Picanto, lainnya. */
+var ORDER = ['honda_adv150_abs_2019', 'suzuki_ertiga_manual_2020', 'kia_picanto_2014_id'];
+/* Bawaan per kelas. Motor/ADV sengaja LEBIH RENDAH: aki motor kecil jarang berada di 12,4 V. Semua berlabel Estimasi. */
+var DEF = {
+  motor: { off_warn:11.9, off_check:11.6, on_warn:12.8, on_check:12.5, on_high:15.0, on_high_check:15.5, drop_warn:0.3, drop_check:0.6, temp_warn:8, temp_check:15, fuel_warn:15, fuel_check:25, min_n:5 },
+  mobil: { off_warn:12.2, off_check:12.0, on_warn:13.2, on_check:12.8, on_high:15.0, on_high_check:15.5, drop_warn:0.3, drop_check:0.6, temp_warn:8, temp_check:15, fuel_warn:15, fuel_check:25, min_n:5 }
+};
+var FIELDS = [
+  ['off_warn', 'Tegangan mati: Perhatian bila ≤ (V)'], ['off_check', 'Tegangan mati: Cek bila ≤ (V)'],
+  ['on_warn', 'Tegangan hidup: Perhatian bila ≤ (V)'], ['on_check', 'Tegangan hidup: Cek bila ≤ (V)'], ['on_high', 'Tegangan hidup: Perhatian bila ≥ (V)'],
+  ['drop_warn', 'Turun dari baseline: Perhatian (V)'], ['drop_check', 'Turun dari baseline: Cek (V)'],
+  ['temp_warn', 'Suhu naik dari baseline: Perhatian (°C)'], ['temp_check', 'Suhu naik dari baseline: Cek (°C)'],
+  ['fuel_warn', 'KM/L turun dari baseline: Perhatian (%)'], ['fuel_check', 'KM/L turun dari baseline: Cek (%)'], ['min_n', 'Minimal data untuk baseline']
+];
+var RANGE = { voff:[5, 20], von:[5, 20], temp:[-20, 200], fuel:[0.5, 200] };
+var LVL = [{ k:'ok', t:'Normal', i:'✓' }, { k:'warn', t:'Perhatian', i:'▲' }, { k:'check', t:'Cek', i:'⚠' }];
+function num(x){ if(x == null || x === '') return null; var n = Number(x); return isFinite(n) ? n : null; }
+function median(a){ var s = a.slice().sort(function(x, y){ return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+function slope(ys){ var n = ys.length, sx = 0, sy = 0, sxy = 0, sxx = 0, i; for(i = 0; i < n; i++){ sx += i; sy += ys[i]; sxy += i * ys[i]; sxx += i * i; } var d = n * sxx - sx * sx; return d ? (n * sxy - sx * sy) / d : 0; }
+function r2(x){ return Math.round(x * 100) / 100; }
+function fmt(x, d){ return x == null ? '—' : Number(x).toFixed(d == null ? 1 : d).replace('.', ','); }
+function kelas(profId, v){ var k = String((v && v.kategori) || '').toLowerCase(); if(profId === 'honda_adv150_abs_2019') return 'motor'; if(k.indexOf('motor') >= 0) return 'motor'; return 'mobil'; }
+function loadCfg(){ try{ return JSON.parse(localStorage.getItem(LSK) || '{}') || {}; }catch(_){ return {}; } }
+function saveCfg(o){ try{ localStorage.setItem(LSK, JSON.stringify(o)); }catch(_){} }
+function cfgFor(profKey, cls, all){ var base = DEF[cls] || DEF.mobil, over = (all || loadCfg())[profKey] || {}, out = {}; Object.keys(base).forEach(function(k){ var n = num(over[k]); out[k] = n == null ? base[k] : n; }); out.min_n = Math.max(2, Math.round(out.min_n)); return out; }
+function group(jenis){ return jenis === 'before_departure' ? 'pre' : (jenis === 'after_arrival' ? 'post' : 'lain'); }
+/* Evaluasi satu deret (kronologis, lama -> baru). m = { kind:'volt_off'|'volt_on'|'temp'|'fuel', unit } */
+function evalSeries(vals, m, c){
+  var n = vals.length; var out = { n:n, latest:null, base:null, level:0, reasons:[], kurang:false, spark:vals.slice(-12), slope:null };
+  if(!n){ out.kurang = true; return out; }
+  var latest = vals[n - 1]; out.latest = latest;
+  var prior = vals.slice(0, n - 1).slice(-10).map(function(x){ return x.v; });
+  if(prior.length >= c.min_n){ out.base = median(prior); var md = median(prior.map(function(x){ return Math.abs(x - out.base); })); out.spread = 1.4826 * md; var ps = prior.slice().sort(function(x, y){ return x - y; }); out.lo = ps[Math.floor((ps.length - 1) * 0.1)]; out.hi = ps[Math.ceil((ps.length - 1) * 0.9)]; } else out.kurang = true;
+  var lv = 0, why = [], up = function(l, t){ if(l > lv) lv = l; why.push(t); };
+  if(m.kind === 'volt_off'){
+    if(latest.v <= c.off_check) up(2, 'tegangan ' + fmt(latest.v) + ' V ≤ batas Cek ' + fmt(c.off_check) + ' V'); else if(latest.v <= c.off_warn) up(1, 'tegangan ' + fmt(latest.v) + ' V ≤ batas Perhatian ' + fmt(c.off_warn) + ' V');
+  } else if(m.kind === 'volt_on'){
+    if(latest.v <= c.on_check) up(2, 'tegangan ' + fmt(latest.v) + ' V ≤ batas Cek ' + fmt(c.on_check) + ' V'); else if(latest.v <= c.on_warn) up(1, 'tegangan ' + fmt(latest.v) + ' V ≤ batas Perhatian ' + fmt(c.on_warn) + ' V');
+    if(latest.v >= c.on_high_check) up(2, 'tegangan ' + fmt(latest.v) + ' V ≥ ' + fmt(c.on_high_check) + ' V (terlalu tinggi)'); else if(latest.v >= c.on_high) up(1, 'tegangan ' + fmt(latest.v) + ' V ≥ ' + fmt(c.on_high) + ' V (tinggi)');
+  }
+  if(out.base != null){
+    if(m.kind === 'volt_off' || m.kind === 'volt_on' || m.kind === 'delta'){
+      var drop = out.base - latest.v, dw = Math.max(c.drop_warn, 2.5 * (out.spread || 0)), dc = Math.max(c.drop_check, 4 * (out.spread || 0));
+      if(drop >= dc) up(2, 'turun ' + fmt(drop, 2) + ' V dari kebiasaan (median ' + fmt(out.base, 2) + ' V)'); else if(drop >= dw) up(1, 'turun ' + fmt(drop, 2) + ' V dari kebiasaan (median ' + fmt(out.base, 2) + ' V)');
+    } else if(m.kind === 'temp'){
+      var rise = latest.v - out.base, tw = Math.max(c.temp_warn, 2.5 * (out.spread || 0)), tc = Math.max(c.temp_check, 4 * (out.spread || 0));
+      if(rise >= tc) up(2, 'naik ' + fmt(rise) + ' °C dari kebiasaan (median ' + fmt(out.base) + ' °C)'); else if(rise >= tw) up(1, 'naik ' + fmt(rise) + ' °C dari kebiasaan (median ' + fmt(out.base) + ' °C)');
+    } else if(m.kind === 'fuel'){
+      var pct = (out.base - latest.v) / out.base * 100;
+      if(pct >= c.fuel_check) up(2, 'turun ' + fmt(pct, 0) + '% dari kebiasaan (median ' + fmt(out.base) + ' km/L)'); else if(pct >= c.fuel_warn) up(1, 'turun ' + fmt(pct, 0) + '% dari kebiasaan (median ' + fmt(out.base) + ' km/L)');
+    }
+  }
+  if(n >= 5){
+    var w = vals.slice(-8).map(function(x){ return x.v; }), s = slope(w), tot = s * (w.length - 1); out.slope = s;
+    if((m.kind === 'volt_off' || m.kind === 'volt_on' || m.kind === 'delta') && s <= -0.03 && tot <= -0.2) up(1, 'menurun bertahap (' + fmt(tot, 2) + ' V dalam ' + w.length + ' pengukuran)');
+    if(m.kind === 'temp' && s >= 1 && tot >= 4) up(1, 'naik bertahap (+' + fmt(tot) + ' °C dalam ' + w.length + ' pengukuran)');
+    if(m.kind === 'fuel' && out.base && (-tot / out.base * 100) >= 15 && s < 0) up(1, 'menurun bertahap (' + fmt(-tot / out.base * 100, 0) + '% dalam ' + w.length + ' pengukuran)');
+  }
+  out.level = lv; out.reasons = why; return out;
+}
+function seriesFrom(sessions, grp, pick, rng){
+  var a = sessions.filter(function(s){ return group(s.jenis_inspeksi) === grp; }).map(function(s){ return { d:String(s.tanggal || s.created_at || '').slice(0, 10), v:pick(s), id:s.id }; })
+    .filter(function(x){ return x.v != null && x.d && (!rng || (x.v >= rng[0] && x.v <= rng[1])); });
+  a.sort(function(x, y){ return x.d < y.d ? -1 : x.d > y.d ? 1 : 0; }); return a;
+}
+function analyze(sessions, cfg){
+  var res = {};
+  ['pre', 'post'].forEach(function(grp){
+    var m = {
+      voff:[{ kind:'volt_off' }, seriesFrom(sessions, grp, function(s){ return num(s.volt_engine_off); }, RANGE.voff)],
+      von:[{ kind:'volt_on' }, seriesFrom(sessions, grp, function(s){ return num(s.volt_engine_on); }, RANGE.von)],
+      delta:[{ kind:'delta' }, seriesFrom(sessions, grp, function(s){ var a = num(s.volt_engine_off), b = num(s.volt_engine_on); return (a != null && b != null && a >= RANGE.voff[0] && b <= RANGE.von[1]) ? r2(b - a) : null; }, [-5, 10])],
+      temp:[{ kind:'temp' }, seriesFrom(sessions, grp, function(s){ return num(s.temperature); }, RANGE.temp)],
+      fuel:[{ kind:'fuel' }, seriesFrom(sessions, grp, function(s){ return num(s.konsumsi_bbm_avg); }, RANGE.fuel)]
+    };
+    res[grp] = {}; Object.keys(m).forEach(function(k){ res[grp][k] = evalSeries(m[k][1], m[k][0], cfg); });
+  });
+  var worst = 0, kurang = true, any = false;
+  Object.keys(res).forEach(function(grp){ Object.keys(res[grp]).forEach(function(k){ var r = res[grp][k]; if(r.n){ any = true; if(r.level > worst) worst = r.level; if(!r.kurang) kurang = false; } }); });
+  /* Ringkasan diagnosis: pisahkan aki (tegangan mati) vs pengisian (tegangan hidup) */
+  var lvOff = 0, lvOn = 0; ['pre', 'post'].forEach(function(grp){ lvOff = Math.max(lvOff, res[grp].voff.level); lvOn = Math.max(lvOn, res[grp].von.level); });
+  var hint = '';
+  if(lvOff > 0 && lvOn === 0) hint = 'Tegangan istirahat rendah/menurun sedangkan pengisian masih baik: curigai aki (usia, sulfasi, terminal kotor). Konfirmasi dengan uji beban atau pengukur kondisi aki.';
+  else if(lvOn > 0 && lvOff === 0) hint = 'Tegangan istirahat masih baik tetapi tegangan saat mesin hidup menyimpang: curigai sistem pengisian (alternator/spul, regulator/kiprok, konektor, kabel massa).';
+  else if(lvOn > 0 && lvOff > 0) hint = 'Aki dan pengisian sama-sama menyimpang: periksa pengisian lebih dulu (aki lemah bisa akibat pengisian buruk), lalu aki.';
+  return { res:res, worst:worst, any:any, kurang:kurang, hint:hint };
+}
+function profKeyOf(v){ try{ var pf = g('profileFor'); var p = pf ? pf(v) : null; return p ? p.id : (v && v.id) || 'x'; }catch(_){ return (v && v.id) || 'x'; } }
+function vname(v){ return [v.merk, v.model, v.tahun].filter(Boolean).join(' ') || v.plat_nomor || v.id; }
+function spark(vals){
+  if(vals.length < 2) return '';
+  var W = 84, H = 22, xs = vals.map(function(x){ return x.v; }), mn = Math.min.apply(null, xs), mx = Math.max.apply(null, xs), rg = (mx - mn) || 1;
+  var pts = vals.map(function(x, i){ return (i * (W - 4) / (vals.length - 1) + 2).toFixed(1) + ',' + (H - 3 - (x.v - mn) / rg * (H - 6)).toFixed(1); });
+  var last = pts[pts.length - 1].split(',');
+  return '<svg class="elh-sp" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Tren ' + vals.length + ' pengukuran terakhir"><polyline fill="none" stroke="var(--viz-seq)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="' + pts.join(' ') + '"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="3" fill="var(--viz-seq)" stroke="var(--surface)" stroke-width="2"/></svg>';
+}
+var NAMA = { voff:['Tegangan mesin mati', 'V', 2], von:['Tegangan mesin hidup', 'V', 2], delta:['Selisih hidup − mati', 'V', 2], temp:['Temperatur', '°C', 1], fuel:['KM/L rata-rata (isian inspeksi)', 'km/L', 1] };
+var GRP = { pre:'Sebelum berangkat', post:'Setelah tiba' };
+function badge(l, kurang){ var L = LVL[l]; return '<span class="elh-b elh-' + L.k + '">' + L.i + ' ' + L.t + '</span>' + (kurang ? ' <span class="elh-n">baseline belum ada</span>' : ''); }
+function rows(a){
+  var h = '';
+  ['pre', 'post'].forEach(function(grp){ Object.keys(NAMA).forEach(function(k){ var r = a.res[grp][k]; if(!r.n) return; var nm = NAMA[k];
+    h += '<tr><td><strong>' + esc(nm[0]) + '</strong><div class="elh-n">' + GRP[grp] + ' · ' + r.n + ' data</div></td><td>' + fmt(r.latest.v, nm[2]) + ' ' + nm[1] + '<div class="elh-n">' + esc(r.latest.d) + '</div></td><td>' + (r.base == null ? '<span class="elh-n">butuh ' + '≥ data</span>' : fmt(r.base, nm[2]) + ' ' + nm[1] + (r.lo != null ? '<div class="elh-n">kisaran biasa ' + fmt(r.lo, nm[2]) + '–' + fmt(r.hi, nm[2]) + '</div>' : '')) + '</td><td>' + spark(r.spark) + '</td><td>' + badge(r.level, r.kurang && r.level === 0) + (r.reasons.length ? '<div class="elh-n">' + r.reasons.map(esc).join('; ') + '</div>' : '') + '</td></tr>'; }); });
+  return h;
+}
+var CSS = '.elh-b{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid var(--border)}.elh-ok{background:var(--ok-bg);color:var(--ok-ink)}.elh-warn{background:var(--warn-bg);color:var(--warn-ink)}.elh-check{background:var(--danger-bg);color:var(--danger-ink)}.elh-n{font-size:12px;color:var(--text-dim);font-weight:400}.elh-sp{display:block}.elh-sum{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.elh-sum span{font-size:12.5px}.elh-note{font-size:12.5px;color:var(--text-dim);margin:8px 0}.elh-cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:8px}.elh-cfg label{font-size:12px;color:var(--text-dim);display:block}.elh-cfg input{width:100%;box-sizing:border-box}';
+function summaryFor(sessionsAll, v, allCfg){
+  var pk = profKeyOf(v), c = cfgFor(pk, kelas(pk, v), allCfg), ss = sessionsAll.filter(function(s){ return s.kendaraan_id === v.id; });
+  return { v:v, pk:pk, c:c, a:analyze(ss, c), n:ss.length };
+}
+function orderVeh(V){ return V.slice().sort(function(x, y){ var ix = ORDER.indexOf(profKeyOf(x)), iy = ORDER.indexOf(profKeyOf(y)); ix = ix < 0 ? 99 : ix; iy = iy < 0 ? 99 : iy; return ix - iy; }); }
+function html(st){
+  st = st || {}; var V = st.vehicles || g('vehicles') || [], S = st.sessions || g('inspectionSessions') || [], cur = st.vehicleId !== undefined ? st.vehicleId : g('programVehicleId'), allCfg = st.cfg || loadCfg();
+  var h = '<div class="card-head"><h2>Kesehatan Kelistrikan &amp; Suhu</h2><span class="count">dari data inspeksi</span></div>';
+  h += '<p class="elh-note">Dibaca dari tegangan mesin mati/hidup, temperatur, dan KM/L yang Anda isi saat inspeksi. Kebiasaan tiap kendaraan (median dan sebaran pengukuran sebelumnya) menjadi baseline, dipisah per jenis inspeksi; kendaraan yang tegangannya memang rendah tidak ditandai lemah setiap hari, hanya bila menyimpang dari kebiasaannya sendiri. Ambang bersifat <strong>Estimasi</strong>, bukan angka pabrikan; selalu cocokkan dengan buku manual. Aplikasi ini hanya menandai, tidak membuat tugas otomatis.</p>';
+  if(!V.length) return h + '<p class="elh-n">Belum ada kendaraan.</p>';
+  var sums = orderVeh(V).map(function(v){ return summaryFor(S, v, allCfg); });
+  h += '<div class="elh-sum">' + sums.map(function(x){ return '<span>' + esc(vname(x.v)) + ': ' + (x.a.any ? badge(x.a.worst) : '<span class="elh-n">belum ada data</span>') + '</span>'; }).join('') + '</div>';
+  var me = sums.filter(function(x){ return x.v.id === cur; })[0]; if(!me) return h + '<p class="elh-n">Pilih kendaraan untuk melihat rincian.</p>';
+  if(!me.a.any) return h + '<p class="elh-n">Belum ada pengukuran tegangan/temperatur untuk kendaraan ini. Isi di form Start New Inspection Session.</p>';
+  h += '<div class="table-scroll"><table class="reftable"><thead><tr><th>Ukuran</th><th>Terakhir</th><th>Kebiasaan (median)</th><th>Tren</th><th>Status</th></tr></thead><tbody>' + rows(me.a) + '</tbody></table></div>';
+  if(me.a.hint) h += '<p class="elh-note"><strong>Arah pemeriksaan:</strong> ' + esc(me.a.hint) + '</p>';
+  if(me.a.kurang) h += '<p class="elh-note">Baseline butuh minimal ' + me.c.min_n + ' pengukuran sebelumnya per jenis inspeksi; sampai itu, hanya batas bawah mutlak yang dipakai.</p>';
+  h += '<p class="elh-note">Catatan ukur: tegangan segera setelah dipakai biasanya terbaca lebih tinggi dari tegangan istirahat sebenarnya, karena itu tegangan "Setelah tiba" dan "Sebelum berangkat" dibaca terpisah. Ukur di titik dan kondisi yang sama (terminal aki, beban listrik mati) agar tren berarti.</p>';
+  h += '<details><summary>Ambang untuk ' + esc(vname(me.v)) + ' (Estimasi, dapat diubah)</summary><div class="elh-cfg" id="elhCfg">' + FIELDS.map(function(f){ return '<div><label for="elh_' + f[0] + '">' + esc(f[1]) + '</label><input id="elh_' + f[0] + '" data-k="' + f[0] + '" type="number" step="0.1" value="' + me.c[f[0]] + '"></div>'; }).join('') + '</div><div class="row-actions" style="margin-top:8px"><button type="button" class="ghost" onclick="ELH.saveFor(\'' + esc(me.pk) + '\')">Simpan ambang</button> <button type="button" class="ghost" onclick="ELH.resetFor(\'' + esc(me.pk) + '\')">Kembalikan bawaan</button></div></details>';
+  return h;
+}
+function mount(){
+  var host = document.getElementById('elhCard'); if(host) return host;
+  var t = document.getElementById('isListBody'); var card = t && t.closest ? t.closest('.card') : null; if(!card) return null;
+  if(!document.getElementById('elhStyle')){ var st = document.createElement('style'); st.id = 'elhStyle'; st.textContent = CSS; document.head.appendChild(st); }
+  host = document.createElement('div'); host.className = 'card'; host.id = 'elhCard'; card.parentNode.insertBefore(host, card.nextSibling); return host;
+}
+function render(){ try{ var h = mount(); if(h) h.innerHTML = html(); }catch(e){ try{ console.warn('ELH', e.message); }catch(_){} } }
+function saveFor(pk){ var all = loadCfg(), o = {}; Array.prototype.forEach.call(document.querySelectorAll('#elhCfg input'), function(i){ var n = num(i.value); if(n != null) o[i.getAttribute('data-k')] = n; }); all[pk] = o; saveCfg(all); render(); }
+function resetFor(pk){ var all = loadCfg(); delete all[pk]; saveCfg(all); render(); }
+function hook(){ var o = window.renderInspeksiPage; if(typeof o !== 'function' || o.__elh) return false; var w = function(){ var r = o.apply(this, arguments); render(); return r; }; w.__elh = 1; window.renderInspeksiPage = w; return true; }
+window.ELH = { analyze:analyze, evalSeries:evalSeries, cfgFor:cfgFor, defaults:DEF, html:html, render:render, saveFor:saveFor, resetFor:resetFor, _hook:hook, _order:ORDER };
+function boot(){ if(!hook()) setTimeout(boot, 300); else render(); }
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 
 </script>
