@@ -458,7 +458,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 32 (18 Nov 2026)" aria-label="Versi 1.0, revisi 32"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 32</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 33 (18 Nov 2026)" aria-label="Versi 1.0, revisi 33"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 33</span></div>
   </div>
 </div>
 
@@ -7724,6 +7724,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-18</td><td>Rev 33: <strong>Vehicles tampil lebih cepat dan penuh grafik interaktif</strong>. Data inti (kendaraan, Work Order, kerusakan, inspeksi) dimuat lebih dulu dan disalin di perangkat sehingga halaman langsung terisi saat dibuka, lalu diganti data server; permintaan lain dimuat bertahap. Widget baru: board Work Order, donat (status, prioritas, tingkat kerusakan, hasil inspeksi), kolom bertumpuk biaya dengan legenda yang bisa dimatikan, batang biaya per kendaraan dan pekerjaan per jenis, linimasa servis dan kejadian, serta peta aktivitas 26 minggu. Semua grafik punya hover/ketuk dan klik menuju menu terkait; rentang 3/6/12 bulan di kepala kartu. Hanya membaca data.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 32: <strong>Dashboard dipindahkan ke Vehicles</strong>. Menu Dashboard dihapus; halaman awal kini Vehicles. Di bawah papan kendaraan ada <strong>Ringkasan Kendaraan</strong> berbentuk widget (kartu angka berwarna, jadwal perawatan, kalender, tipe pekerjaan, status laik jalan, kerusakan, kelistrikan &amp; BBM, keandalan MTBF/MTTR, biaya) dengan menu <strong>Kelola Widget</strong> (tampil/sembunyi, cari, kembalikan bawaan; tersimpan di perangkat). Tiga grafik Vehicle Insight yang kurang informatif diganti. Kartu duplikat (Timeline, Cost, Why It Matters, Projects, Papers) tidak dibawa; isinya tetap ada di Program, Insight, Library, Project, dan Documents. <strong>Perbaikan KM</strong>: status laik jalan dan jadwal kunjungan kini memakai odometer gabungan, bukan KM registrasi.</td></tr>
             <tr><td class="mono">2026-11-17</td><td>Rev 31: <strong>Kartu kelistrikan diuji dengan data cadangan nyata</strong>. Dua alarm palsu diperbaiki: Ertiga 12,2&ndash;12,3 V tidak lagi "Perhatian" (batas mobil diturunkan) dan kendaraan listrik (tanpa alternator) tidak dinilai pada tegangan mesin hidup serta memakai batas rendah.</td></tr>
             <tr><td class="mono">2026-11-17</td><td>Rev 30: <strong>Form inspeksi lebih ringkas</strong>. Bagian tegangan/suhu/KM/L terlipat (ingat pilihan buka/tutup), tombol "Isi dari pengukuran terakhir" (hanya kolom kosong, bertanda putus-putus, bisa dikosongkan), dan pengingat ukur tiap 7 hari (muncul saat aplikasi dibuka, bukan notifikasi dorong; interval dapat diubah).</td></tr>
@@ -8180,40 +8181,44 @@ function copyEdgeFunctionCode(){
   navigator.clipboard.writeText(document.getElementById('edgeFunctionCode').textContent).catch(()=>{});
 }
 
+/* Rev 33: salinan data inti di perangkat supaya Vehicles langsung tampil saat dibuka; selalu diganti data server begitu tiba */
+const SNAP_KEY = 'ik_snap_v1';
+function snapSave(){
+  try{
+    if(!vehicles || !vehicles.length) return;
+    const url = localStorage.getItem('ik_sbUrl') || '';
+    const slim = a => (a || []).map(x => { const y = Object.assign({}, x); delete y.last_synced_snapshot; delete y.field_times; return y; });
+    const j = JSON.stringify({ t:Date.now(), u:url, v:vehicles, w:slim(workOrders), d:defectLogs, s:inspectionSessions, i:inspectionItems });
+    if(j.length > 1500000) return;
+    localStorage.setItem(SNAP_KEY, j);
+  }catch(e){}
+}
+function snapLoad(){
+  try{
+    if(vehicles && vehicles.length) return;
+    const o = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null');
+    if(!o || !o.v || o.u !== (localStorage.getItem('ik_sbUrl') || '')) return;
+    vehicles = o.v; workOrders = o.w || []; defectLogs = o.d || []; inspectionSessions = o.s || []; inspectionItems = o.i || [];
+    window.__fromSnap = o.t; renderBoard();
+  }catch(e){}
+}
+window.__snapSave = snapSave;
 function initClient(url, key){
   try{
     sb = window.supabase.createClient(url, key);
     setStatus(true, 'Terhubung ke database');
+    /* Rev 33: data inti untuk halaman Vehicles dimuat lebih dulu; sisanya bertahap supaya ~35 permintaan tidak berebut jaringan HP */
+    window.__vehLoaded = false; try{ snapLoad(); }catch(_){ }
+    try{ if(!vehicles.length){ const be = document.getElementById('boardEl'); if(be) be.innerHTML = '<div class="board-empty" style="flex:1;">Memuat kendaraan…</div>'; } }catch(_){ }
     loadVehicles();
     loadWorkOrders();
-    loadJobCards();
-    loadOemDocuments();
-    loadInstalledComponents();
-    loadTools();
-    loadTechnicalRecords();
-    loadWorkshopResources();
-    loadEngineeringSpecs();
-    loadSpecSheet();
     loadDefectLogs();
-    loadFmeaRisks();
-    loadRcaAnalyses();
-    loadProblemCases();
-    loadFeaItems();
-    loadPicaItems();
-    loadKaizenItems();
-    loadMonitoringParameters();
-    loadPdcaCycles();
-    loadElectricalCapacities();
-    loadElectricalLoadItems();
-    loadCostBudgetItems();
-    loadInspectionItems();
     loadInspectionSessions();
-    loadPartsCatalogRef();
-    loadManualReference();
-    loadAppraisals();
-    loadAppraisalItems();
-    loadGovernanceDocuments();
-    loadTouringEvents();
+    loadInspectionItems();
+    loadJobCards();
+    const __later = [() => loadOemDocuments(), () => loadInstalledComponents(), () => loadTools(), () => loadTechnicalRecords(), () => loadWorkshopResources(), () => loadEngineeringSpecs(), () => loadSpecSheet(), () => loadFmeaRisks(), () => loadRcaAnalyses(), () => loadProblemCases(), () => loadFeaItems(), () => loadPicaItems(), () => loadKaizenItems(), () => loadMonitoringParameters(), () => loadPdcaCycles(), () => loadElectricalCapacities(), () => loadElectricalLoadItems(), () => loadCostBudgetItems(), () => loadPartsCatalogRef(), () => loadManualReference(), () => loadAppraisals(), () => loadAppraisalItems(), () => loadGovernanceDocuments(), () => loadTouringEvents()];
+    let __li = 0;
+    (function __next(){ __later.slice(__li, __li + 4).forEach(f => { try{ const r = f(); if(r && r.catch) r.catch(() => {}); }catch(e){} }); __li += 4; if(__li < __later.length) setTimeout(__next, 250); })();
   }catch(e){
     setStatus(false, 'Gagal terhubung');
     showMsg('connMsg','err','URL atau key tidak valid.');
@@ -8230,6 +8235,7 @@ function saveConnection(){
   document.getElementById('setupBox').removeAttribute('open');
 }
 function clearConnection(){
+  try{ localStorage.removeItem(SNAP_KEY); window.__fromSnap = 0; window.__vehLoaded = false; }catch(e){}
   try{ localStorage.removeItem('ik_sbUrl'); localStorage.removeItem('ik_sbKey'); localStorage.removeItem('ik_cfgApplied'); }catch(e){}
   connMirrorClear();
   document.getElementById('sbKey').value = '';
@@ -8412,6 +8418,7 @@ async function loadVehicles(){
   if(!sb) return;
   const boardEl = document.getElementById('boardEl');
   const { data, error } = await sb.from('kendaraan').select('*').order('created_at', { ascending:false });
+  window.__vehLoaded = true;
   if(error){
     boardEl.innerHTML = '<div class="board-empty" style="flex:1;">Gagal memuat data: ' + escapeHtml(dbErrorMessage(error)) + '</div>';
     return;
@@ -21272,7 +21279,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:32,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:33,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -23855,7 +23862,8 @@ add('status', 'Kendaraan', 'Status Laik Jalan', 'm', function(c){
   if(!c.C || !c.C.per.length) return none(); var n = { ok:0, attn:0, nogo:0, nodata:0 }; c.C.per.forEach(function(p){ n[p.st.lvl] = (n[p.st.lvl] || 0) + 1; });
   return '<div class="vw-kpis">' + kpi(n.ok, 'Laik', 'ok') + kpi(n.attn, 'Perhatian', 'warn') + kpi(n.nogo, 'Tidak disarankan', 'bad') + '</div><ul class="vw-list">' + c.C.per.map(function(p){ var L = LV[p.st.lvl] || LV.nodata; return row(esc(vname(p.v)) + (p.st.why.length ? '<div class="vw-sub">' + esc(p.st.why[0]) + '</div>' : ''), pill(L[0], L[1])); }).join('') + '</ul><p class="vw-note">Indikator dari data tercatat, bukan sertifikasi.</p>';
 }, true);
-add('odo', 'Kendaraan', 'Odometer Terakhir', 's', function(c){ return '<ul class="vw-list">' + c.vs.map(function(v){ var k = kmOf(v); return row(esc(vname(v)), k == null ? 'belum ada' : fkm(k) + ' km'); }).join('') + '</ul><p class="vw-note">Dari empat sumber (registrasi, BBM, inspeksi, Work Order).</p>'; }, true);
+add('odo', 'Kendaraan', 'Odometer Terakhir', 's', function(c){ return '<ul class="vw-list">' + c.vs.map(function(v){ var k = kmOf(v); return row(esc(vname(v)), k == null ? 'belum ada' : fkm(k) + ' km'); }).join('') + '</ul><p class="vw-note">Dari empat sumber (registrasi, BBM, inspeksi, Work Order).</p>'; }, false);
+
 add('papers', 'Kendaraan', 'Dokumen & Recall', 's', function(c){
   if(!window.VDOCS) return none('Modul dokumen belum termuat.'); try{ if(!VDOCS._st.loaded && !VDOCS._st.loading && !ST.docsAsked){ ST.docsAsked = true; VDOCS.load().then(function(){ render(); }); } }catch(_){}
   var A = []; try{ A = VDOCS.attention(c.now).filter(function(x){ return c.ids[x.r.kendaraan_id] && x.r.jenis !== 'recall'; }); }catch(_){}
@@ -23867,7 +23875,8 @@ add('trips', 'Inspeksi', 'Pre-trip & Post-trip Terakhir', 'm', function(c){
   var last = function(vid, j){ var xs = (g('inspectionSessions') || []).filter(function(s){ return s.kendaraan_id === vid && s.jenis_inspeksi === j && toD(s.tanggal); }).map(function(s){ return toD(s.tanggal); }).sort(function(a, b){ return b - a; }); return xs[0] || null; };
   var ago = function(d){ if(!d) return pill('belum ada', 'na'); var n = Math.floor((c.now - d) / DAY); return pill(n <= 0 ? 'hari ini' : n + ' hari lalu', n > 14 ? 'warn' : 'ok'); };
   return '<ul class="vw-list">' + c.vs.map(function(v){ return row(esc(vname(v)) + '<div class="vw-sub">Pre-trip ' + ago(last(v.id, 'before_departure')) + ' · Post-trip ' + ago(last(v.id, 'after_arrival')) + '</div>', ''); }).join('') + '</ul>';
-}, true);
+}, false);
+
 add('submissions', 'Inspeksi', 'Inspeksi per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.sess.forEach(function(s){ var d = toD(s.tanggal); if(!d) return; var k = ymd(d); m.forEach(function(x){ if(x.k === k) x.v++; }); }); var tot = m.reduce(function(a, b){ return a + b.v; }, 0); return tot ? bars(m) : none('Belum ada inspeksi 6 bulan terakhir.'); }, false);
 add('findings', 'Inspeksi', 'Temuan Non-Baik (30 hari)', 's', function(c){
   var from = new Date(c.now.getTime() - 30 * DAY), sid = {}; c.sess.forEach(function(s){ var d = toD(s.tanggal); if(d && d >= from) sid[s.id] = s; });
@@ -23881,9 +23890,11 @@ add('defects', 'Kerusakan', 'Laporan Kerusakan Terbuka', 'm', function(c){
   var op = c.defects.filter(function(d){ return d.status !== 'selesai'; }), sv = function(k){ return op.filter(function(d){ return d.tingkat_keparahan === k; }).length; };
   return '<div class="vw-kpis">' + kpi(op.length, 'Terbuka', op.length ? 'warn' : 'ok') + kpi(sv('berat') + sv('darurat'), 'Berat/Darurat', (sv('berat') + sv('darurat')) ? 'bad' : 'ok') + '</div>' + (op.length ? '<ul class="vw-list">' + op.slice(0, 4).map(function(d){ var v = c.V.filter(function(x){ return x.id === d.kendaraan_id; })[0]; return row(esc(d.gejala || d.nomor_defect || 'Kerusakan') + '<div class="vw-sub">' + esc(v ? vname(v) : '') + '</div>', pill(d.tingkat_keparahan || '-', /berat|darurat/.test(d.tingkat_keparahan || '') ? 'bad' : 'warn')); }).join('') + '</ul>' : '<p class="vw-note">Tidak ada laporan terbuka.</p>');
 }, true);
-add('wo', 'Servis', 'Work Order Aktif', 's', function(c){ var n = function(s){ return c.wos.filter(function(w){ return w.status === s; }).length; }; return '<div class="vw-kpis">' + kpi(n('open'), 'Open') + kpi(n('proses'), 'Proses') + kpi(n('tunda'), 'Tunda', n('tunda') ? 'warn' : '') + '</div><p class="vw-note"><button type="button" class="ghost" onclick="showPanel(\'workorder\')">Buka Work Order ›</button></p>'; }, true);
+add('wo', 'Servis', 'Work Order Aktif', 's', function(c){ var n = function(s){ return c.wos.filter(function(w){ return w.status === s; }).length; }; return '<div class="vw-kpis">' + kpi(n('open'), 'Open') + kpi(n('proses'), 'Proses') + kpi(n('tunda'), 'Tunda', n('tunda') ? 'warn' : '') + '</div><p class="vw-note"><button type="button" class="ghost" onclick="showPanel(\'workorder\')">Buka Work Order ›</button></p>'; }, false);
+
 add('reminders', 'Servis', 'Pengingat Servis', 's', function(c){ if(!c.C) return none(); var od = c.C.items.filter(function(i){ return i.overdue; }).length, so = c.C.items.filter(function(i){ return i.state === 'soon'; }).length; return '<div class="vw-kpis">' + kpi(od, 'Terlambat', od ? 'bad' : 'ok') + kpi(so, 'Segera', so ? 'warn' : 'ok') + '</div><p class="vw-note">Terlambat hanya terdeteksi bila ada riwayat perawatan terakhir.</p>'; }, true);
-add('spent', 'Biaya', 'Biaya 12 Bulan', 'm', function(c){ if(!c.C) return none(); var k = c.C.cost; return '<div class="vw-kpis">' + kpi(fRp(k.spent), 'Perawatan (aktual)') + kpi(fRp(k.planned), '90 hari ke depan (Estimasi)') + kpi(fRp(k.fuel), 'BBM') + '</div><p class="vw-note">' + k.n + ' Work Order selesai, di luar BBM. Estimasi memakai asumsi bawaan, bukan prediksi.</p>'; }, true);
+add('spent', 'Biaya', 'Biaya 12 Bulan', 'm', function(c){ if(!c.C) return none(); var k = c.C.cost; return '<div class="vw-kpis">' + kpi(fRp(k.spent), 'Perawatan (aktual)') + kpi(fRp(k.planned), '90 hari ke depan (Estimasi)') + kpi(fRp(k.fuel), 'BBM') + '</div><p class="vw-note">' + k.n + ' Work Order selesai, di luar BBM. Estimasi memakai asumsi bawaan, bukan prediksi.</p>'; }, false);
+
 add('monthly', 'Biaya', 'Biaya Perawatan per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.wos.forEach(function(w){ if(w.status !== 'selesai' || w.task_key === 'quick_bbm') return; var d = toD(w.tanggal_selesai); if(!d) return; var k = ymd(d), v = (Number(w.biaya_part) || 0) + (Number(w.biaya_jasa) || 0); m.forEach(function(x){ if(x.k === k) x.v += v; }); }); var tot = m.reduce(function(a, b){ return a + b.v; }, 0); return tot ? bars(m, function(v, short){ return short ? (v >= 1e6 ? (v / 1e6).toFixed(1).replace('.', ',') + 'jt' : Math.round(v / 1e3) + 'rb') : fRp(v); }) : none('Belum ada biaya selesai 6 bulan terakhir.'); }, false);
 add('exposure', 'Biaya', 'Risiko Jika Ditunda (Estimasi)', 's', function(c){ if(!c.C) return none(); var k = c.C.cost; return '<div class="vw-kpis">' + kpi(fRp(k.expo), 'Eksposur terburuk', k.expo ? 'warn' : 'ok') + kpi(k.nExpo, 'Kelompok part', '') + '</div><p class="vw-note">Hanya dihitung untuk item terlambat atau segera.</p>'; }, false);
 add('elec', 'Kelistrikan & BBM', 'Kesehatan Kelistrikan', 'm', function(c){
@@ -24020,10 +24031,150 @@ add('fuelqa', 'BBM & Jarak', 'Isian BBM Perlu Diperiksa', 'l', function(c){
   return '<p class="vw-note" style="margin-top:0">' + list.length + ' isian tampak janggal dan tidak dihitung di widget BBM. Periksa titik desimal (mis. 9,8 L terketik 98 L) dan jumlah Rp.</p><ul class="vw-list">' + list.slice(0, 8).map(function(x){ return row('<strong>' + esc(x.f.d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })) + '</strong> · ' + esc(vname(x.f.v)) + '<div class="vw-sub">' + esc(String(x.f.w.judul || 'Fuel Purchase')) + ' · ' + esc(x.why) + '</div>', pill('Periksa', 'warn')); }).join('') + '</ul>' + (list.length > 8 ? '<p class="vw-note">dan ' + (list.length - 8) + ' lainnya.</p>' : '') + '<p class="vw-note"><button type="button" class="ghost" onclick="showPanel(\'workorder\')">Buka Work Order ›</button></p>';
 }, true);
 function fuelDataAll(c){ var cc = { V:c.V, vs:c.vs, wos:c.wos, now:new Date(c.now.getFullYear() + 20, 0, 1) }; return fuelData(cc); }
-var ORDER = ['kpistrip', 'quick', 'status', 'calendar', 'reminders', 'schedule', 'types', 'wo', 'defects', 'elec', 'trips', 'odo', 'spent', 'monthly', 'exposure', 'fuelqa', 'fuelkpi', 'kmlscore', 'kmltrend', 'fuelliters', 'fuelspend', 'priceunit', 'distance', 'co2', 'costtrend', 'accidents', 'compliance', 'relkpi', 'breakdown', 'emergency', 'pmcomp', 'spares', 'submissions', 'findings', 'measure', 'volt', 'fuel', 'papers', 'recent'];
+/* ---------- Rev 33: grafik interaktif (donat, batang, kolom bertumpuk, linimasa, peta panas, board) ---------- */
+var LSR = 'ik_vsum_range', LSV = 'ik_vsum_v';
+ST.range = 6; try{ var rr = Number(localStorage.getItem(LSR)); if(rr === 3 || rr === 6 || rr === 12) ST.range = rr; }catch(_){}
+ST.hide = {};
+var VC = { open:'var(--viz-1)', proses:'var(--viz-4)', tunda:'var(--viz-2)', selesai:'var(--viz-3)', batal:'var(--viz-dim)', bad:'var(--danger)', warn:'var(--viz-4)', ok:'var(--viz-3)', info:'var(--viz-1)', dim:'var(--viz-dim)', c1:'var(--viz-1)', c2:'var(--viz-2)', c3:'var(--viz-3)', c4:'var(--viz-4)' };
+var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+var GO = { wo:'workorder', defect:'kerusakan', insp:'inspeksi', cost:'biaya', plan:'planboard' };
+function ta(t){ return ' data-tip="' + esc(t) + '"'; }
+function goA(k){ return k ? ' data-go="' + k + '" tabindex="0" role="button"' : ''; }
+function dshort(d){ return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2); }
+function noDash(s){ return s; }
+/* donat: parts = [{l, v, c, go}] */
+function donut(parts, big, small){
+  parts = parts.filter(function(p){ return p.v > 0; }); var tot = parts.reduce(function(a, p){ return a + p.v; }, 0); if(!tot) return null;
+  var R = 40, C2 = 2 * Math.PI * R, off = 0, s = '<svg class="vw-svg vz-donut" viewBox="0 0 120 120" role="img" aria-label="' + esc((small || 'Grafik donat') + ': ' + parts.map(function(p){ return p.l + ' ' + p.v; }).join(', ')) + '"><circle cx="60" cy="60" r="' + R + '" fill="none" stroke="var(--surface-2)" stroke-width="16"/>';
+  parts.forEach(function(p){ var len = C2 * p.v / tot, gap = parts.length > 1 ? 1.5 : 0; s += '<circle class="vz-seg" cx="60" cy="60" r="' + R + '" fill="none" stroke="' + p.c + '" stroke-width="16" stroke-dasharray="' + Math.max(0.1, len - gap).toFixed(2) + ' ' + (C2 - Math.max(0.1, len - gap)).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 60 60)"' + ta(p.l + ': ' + p.v + ' (' + Math.round(p.v / tot * 100) + '%)') + goA(p.go) + '/>'; off += len; });
+  s += '<text x="60" y="61" text-anchor="middle" font-size="22" font-weight="700" fill="var(--text)">' + esc(big == null ? tot : big) + '</text><text x="60" y="76" text-anchor="middle" font-size="9" fill="var(--text-dim)">' + esc(small || '') + '</text></svg>';
+  var leg = '<ul class="vz-leg">' + parts.map(function(p){ return '<li' + goA(p.go) + ta(p.l + ': ' + p.v + ' (' + Math.round(p.v / tot * 100) + '%)') + '><i style="background:' + p.c + '"></i><span>' + esc(p.l) + '</span><b>' + p.v + '</b></li>'; }).join('') + '</ul>';
+  return '<div class="vz-dwrap">' + s + leg + '</div>';
+}
+/* batang horizontal: rows = [{l, v, c, go, tip, sub}] */
+function hbar(rows, fmt){
+  rows = rows.filter(function(r){ return r.v > 0; }); if(!rows.length) return null; var mx = Math.max.apply(null, rows.map(function(r){ return r.v; })); fmt = fmt || function(x){ return fkm(x); };
+  return '<div class="vz-hb">' + rows.map(function(r){ return '<div class="vz-hr"' + goA(r.go) + ta(r.tip || (r.l + ': ' + fmt(r.v))) + '><span class="vz-hl">' + esc(r.l) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span><span class="vz-ht"><span class="vz-hf" style="width:' + Math.max(3, r.v / mx * 100).toFixed(1) + '%;background:' + (r.c || VC.c1) + '"></span></span><b class="vz-hv">' + esc(fmt(r.v)) + '</b></div>'; }).join('') + '</div>';
+}
+/* kolom bertumpuk: months = [{k,l,s:{key:val}}], series = [{key,l,c}] */
+function stacked(id, months, series, fmt){
+  fmt = fmt || fRp; var hid = ST.hide[id] || {}, act = series.filter(function(s){ return !hid[s.key]; });
+  var W2 = 420, H = 190, pl = 46, pr = 8, pt = 12, pb = 24, iw = W2 - pl - pr, ih = H - pt - pb;
+  var tots = months.map(function(m){ return act.reduce(function(a, s){ return a + (m.s[s.key] || 0); }, 0); }), mx = Math.max.apply(null, tots.concat([1]));
+  var step = Math.pow(10, Math.floor(Math.log10(mx))), nice = [1, 2, 2.5, 5, 10].map(function(f){ return f * step; }).filter(function(x){ return x >= mx; })[0] || mx; mx = nice;
+  var s = '<svg class="vw-svg" viewBox="0 0 ' + W2 + ' ' + H + '" role="img" aria-label="Biaya per bulan, kolom bertumpuk">';
+  [0, 0.5, 1].forEach(function(f){ var y = pt + ih - ih * f; s += '<line x1="' + pl + '" x2="' + (W2 - pr) + '" y1="' + y + '" y2="' + y + '" stroke="var(--border)" stroke-width="1"/><text x="' + (pl - 5) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9.5" fill="var(--text-dim)">' + esc(f ? fRp(mx * f).replace('Rp ', '') : '0') + '</text>'; });
+  var slot = iw / months.length, bw = Math.min(46, slot - 10);
+  months.forEach(function(m, i){ var x = pl + i * slot + (slot - bw) / 2, y = pt + ih, tip = m.l + ' — total ' + fmt(tots[i]) + '\n' + act.map(function(sr){ return sr.l + ': ' + fmt(m.s[sr.key] || 0); }).join('\n');
+    act.forEach(function(sr, j){ var v = m.s[sr.key] || 0; if(!v) return; var h = Math.max(1, v / mx * ih); y -= h; s += '<rect class="vz-bar" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(0, h - 2).toFixed(1) + '" rx="' + (j === act.length - 1 ? 4 : 1) + '" fill="' + sr.c + '"/>'; });
+    s += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle" font-size="10" fill="var(--text-dim)">' + esc(m.l) + '</text><rect x="' + (pl + i * slot).toFixed(1) + '" y="' + pt + '" width="' + slot.toFixed(1) + '" height="' + (ih + 18) + '" fill="transparent" class="vz-hit"' + ta(tip) + goA('cost') + '/>'; });
+  s += '</svg><div class="vz-lg2">' + series.map(function(sr){ return '<button type="button" class="vz-lgb' + (hid[sr.key] ? ' off' : '') + '" data-lg="' + id + ':' + sr.key + '" aria-pressed="' + (hid[sr.key] ? 'false' : 'true') + '"><i style="background:' + sr.c + '"></i>' + esc(sr.l) + '</button>'; }).join('') + '</div>';
+  return s;
+}
+function nMonths(c, n){ return monthsBack(n, c.now).map(function(m){ return { k:m.k, l:m.l, s:{} }; }); }
+function addTo(ms, d, key, val){ if(!d || !val) return; var k = ymd(d); for(var i = 0; i < ms.length; i++) if(ms[i].k === k){ ms[i].s[key] = (ms[i].s[key] || 0) + val; return; } }
+function vn(c, id){ var v = c.V.filter(function(x){ return x.id === id; })[0]; return v ? vname(v) : ''; }
+var TASKL = { quick_bbm:'Isi BBM', quick_angin:'Cek angin ban', oli_mesin:'Ganti oli mesin', busi_ganti:'Ganti busi', aki:'Aki', adv150_aki_check:'Cek aki' };
+function taskLabel(w){ var k = w.task_key; if(!k) return 'Servis lain'; return TASKL[k] || String(k).replace(/_/g, ' ').replace(/^./, function(x){ return x.toUpperCase(); }); }
+function inRange(d, c){ return d && d >= new Date(c.now.getFullYear(), c.now.getMonth() - ST.range + 1, 1); }
+/* ---- widget visual ---- */
+add('woboard', 'Servis', 'Board Work Order', 'f', function(c){
+  var cols = [['open', 'Open'], ['proses', 'Proses'], ['tunda', 'Tunda'], ['selesai', 'Selesai (30 hari)']], lim = 4, cut = new Date(c.now.getTime() - 30 * DAY), tot = 0;
+  var h = '<div class="vz-board">' + cols.map(function(co){ var a = c.wos.filter(function(w){ if(w.status !== co[0]) return false; if(co[0] !== 'selesai') return true; var t = toD(w.tanggal_selesai); return t && t >= cut; });
+      a.sort(function(x, y){ return String(co[0] === 'selesai' ? y.tanggal_selesai : x.tanggal_target || '9').localeCompare(String(co[0] === 'selesai' ? x.tanggal_selesai : y.tanggal_target || '9')); }); tot += a.length;
+      return '<div class="vz-col" style="--cc:' + VC[co[0]] + '"><div class="vz-ch"><span>' + co[1] + '</span><b>' + a.length + '</b></div>' + (a.length ? a.slice(0, lim).map(function(w){ var t = toD(w.tanggal_target), late = co[0] !== 'selesai' && t && t < c.now, pr = w.prioritas;
+        return '<div class="vz-card" data-wo="' + esc(w.id) + '" tabindex="0" role="button"' + ta((w.judul || 'Work Order') + ' — ' + vn(c, w.kendaraan_id) + (t ? '\nTarget ' + dshort(t) : '') + (pr ? '\nPrioritas ' + pr : '')) + '><div class="vz-ct">' + esc(w.judul || w.nomor_wo || 'Work Order') + '</div><div class="vz-cs">' + esc(vn(c, w.kendaraan_id)) + '</div><div class="vz-cm">' + (pr && pr !== 'normal' ? '<i class="vz-dot" style="background:' + (pr === 'kritis' ? 'var(--danger)' : 'var(--viz-4)') + '"></i>' + esc(pr) : '') + (t ? '<span class="' + (late ? 'vw-bad' : '') + '">' + (late ? 'Lewat ' : '') + dshort(t) + '</span>' : '') + '</div></div>'; }).join('') + (a.length > lim ? '<button type="button" class="vz-more" data-go="wo">+' + (a.length - lim) + ' lagi ›</button>' : '') : '<div class="vz-none">Kosong</div>') + '</div>'; }).join('') + '</div>';
+  return tot ? h : h;
+}, true);
+add('wodonut', 'Servis', 'Work Order per Status', 'm', function(c){
+  var st = [['open', 'Open'], ['proses', 'Proses'], ['tunda', 'Tunda'], ['selesai', 'Selesai'], ['batal', 'Batal']], d = donut(st.map(function(s){ return { l:s[1], v:c.wos.filter(function(w){ return w.status === s[0]; }).length, c:VC[s[0]], go:'wo' }; }), null, 'Work Order');
+  return d || none('Belum ada Work Order.');
+}, true);
+add('prio', 'Servis', 'Work Order per Prioritas', 'm', function(c){
+  var pr = [['normal', 'Normal', VC.c1], ['tinggi', 'Tinggi', VC.c4], ['kritis', 'Kritis', VC.bad]], d = donut(pr.map(function(p){ return { l:p[1], v:c.wos.filter(function(w){ return (w.prioritas || 'normal') === p[0]; }).length, c:p[2], go:'wo' }; }), null, 'Work Order');
+  return d || none('Belum ada Work Order.');
+}, false);
+add('defsev', 'Kerusakan', 'Kerusakan per Tingkat', 'm', function(c){
+  var sv = [['darurat', 'Darurat', VC.bad], ['berat', 'Berat', VC.c2], ['sedang', 'Sedang', VC.c4], ['ringan', 'Ringan', VC.c1]], d = donut(sv.map(function(s){ return { l:s[1], v:c.defects.filter(function(x){ return x.tingkat_keparahan === s[0]; }).length, c:s[2], go:'defect' }; }), null, 'Laporan');
+  var op = c.defects.filter(function(x){ return x.status !== 'selesai'; }).length;
+  return d ? d + '<p class="vw-note">' + op + ' dari ' + c.defects.length + ' laporan masih terbuka.</p>' : none('Belum ada laporan kerusakan.');
+}, true);
+add('inspdonut', 'Inspeksi', 'Hasil Item Inspeksi (90 hari)', 'm', function(c){
+  var cut = new Date(c.now.getTime() - 90 * DAY), sid = {}; c.sess.forEach(function(s){ var t = toD(s.tanggal); if(t && t >= cut) sid[s.id] = 1; });
+  var a = (c.items || []).filter(function(i){ return sid[i.session_id || i.inspection_session_id]; }), n = function(k){ return a.filter(function(i){ return i.status === k; }).length; };
+  var d = donut([{ l:'Baik', v:n('baik'), c:VC.ok, go:'insp' }, { l:'Perhatian', v:n('perhatian'), c:VC.warn, go:'insp' }, { l:'Buruk', v:n('buruk'), c:VC.bad, go:'insp' }], null, 'Item');
+  return d || none('Belum ada hasil inspeksi 90 hari terakhir.');
+}, true);
+add('costcat', 'Biaya', 'Biaya per Bulan: Part, Jasa, BBM', 'l', function(c){
+  var ms = nMonths(c, ST.range); c.wos.forEach(function(w){ if(w.status !== 'selesai') return; var t = toD(w.tanggal_selesai); if(!t) return; var bbm = w.task_key === 'quick_bbm'; addTo(ms, t, bbm ? 'bbm' : 'part', Number(w.biaya_part) || 0); addTo(ms, t, 'jasa', Number(w.biaya_jasa) || 0); });
+  if(!ms.some(function(m){ return m.s.part || m.s.jasa || m.s.bbm; })) return none('Belum ada biaya pada rentang ini.');
+  return stacked('costcat', ms, [{ key:'part', l:'Part', c:VC.c1 }, { key:'jasa', l:'Jasa', c:VC.c2 }, { key:'bbm', l:'BBM', c:VC.c3 }]);
+}, true);
+add('topveh', 'Biaya', 'Biaya per Kendaraan', 'm', function(c){
+  var by = {}; c.wos.forEach(function(w){ if(w.status !== 'selesai') return; var t = toD(w.tanggal_selesai); if(!inRange(t, c)) return; by[w.kendaraan_id] = (by[w.kendaraan_id] || 0) + (Number(w.biaya_part) || 0) + (Number(w.biaya_jasa) || 0); });
+  var h = hbar(Object.keys(by).map(function(id, i){ return { l:vn(c, id) || id, v:by[id], c:[VC.c1, VC.c2, VC.c3, VC.c4][i % 4], go:'cost', tip:(vn(c, id) || id) + ': ' + fRp(by[id]) }; }).sort(function(x, y){ return y.v - x.v; }), fRp);
+  return h ? h + '<p class="vw-note">Rentang mengikuti pilihan di atas (' + ST.range + ' bulan).</p>' : none('Belum ada biaya pada rentang ini.');
+}, true);
+add('taskbars', 'Servis', 'Pekerjaan Selesai per Jenis', 'l', function(c){
+  var by = {}; c.wos.forEach(function(w){ if(w.status !== 'selesai') return; var t = toD(w.tanggal_selesai); if(!inRange(t, c)) return; var l = taskLabel(w); by[l] = (by[l] || 0) + 1; });
+  var h = hbar(Object.keys(by).map(function(l){ return { l:l, v:by[l], c:VC.c1, go:'wo', tip:l + ': ' + by[l] + ' pekerjaan' }; }).sort(function(x, y){ return y.v - x.v; }).slice(0, 7), function(x){ return x + '×'; });
+  return h || none('Belum ada pekerjaan selesai pada rentang ini.');
+}, true);
+add('timeline', 'Servis', 'Linimasa Servis dan Kejadian', 'f', function(c){
+  var back = 60, fwd = 60, t0 = c.now.getTime() - back * DAY, t1 = c.now.getTime() + fwd * DAY, vs = c.vs.slice(0, 8), W2 = 640, lw = 112, rh = 34, pt = 22, H = pt + vs.length * rh + 14, x = function(t){ return lw + (t - t0) / (t1 - t0) * (W2 - lw - 10); };
+  if(!vs.length) return none();
+  var s = '<div class="vz-scroll"><svg class="vw-svg vz-tl" viewBox="0 0 ' + W2 + ' ' + H + '" style="min-width:560px" role="img" aria-label="Linimasa 60 hari ke belakang dan ke depan">';
+  for(var m = new Date(new Date(t0).getFullYear(), new Date(t0).getMonth() + 1, 1); m.getTime() < t1; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)){ var gx = x(m.getTime()); s += '<line x1="' + gx + '" x2="' + gx + '" y1="' + (pt - 6) + '" y2="' + (H - 8) + '" stroke="var(--border)"/><text x="' + (gx + 3) + '" y="12" font-size="10" fill="var(--text-dim)">' + MON[m.getMonth()] + '</text>'; }
+  var tx = x(c.now.getTime()); s += '<line x1="' + tx + '" x2="' + tx + '" y1="' + (pt - 6) + '" y2="' + (H - 8) + '" stroke="var(--viz-accent-ring)" stroke-width="1.5" stroke-dasharray="3 3"/><text x="' + tx + '" y="' + (H - 0) + '" text-anchor="middle" font-size="9.5" fill="var(--viz-accent-ring)">hari ini</text>';
+  vs.forEach(function(v, i){ var y = pt + i * rh + rh / 2; s += '<line x1="' + lw + '" x2="' + (W2 - 10) + '" y1="' + y + '" y2="' + y + '" stroke="var(--surface-2)" stroke-width="2"/><text x="4" y="' + (y + 4) + '" font-size="11" fill="var(--text)">' + esc(vname(v).slice(0, 17)) + '</text>';
+    var ev = []; c.wos.forEach(function(w){ if(w.kendaraan_id !== v.id) return; if(w.status === 'selesai'){ var t = toD(w.tanggal_selesai); if(t) ev.push({ t:t, k:'done', l:(w.judul || 'Work Order') + ' (selesai)', go:'wo' }); } else if(w.status !== 'batal'){ var tg = toD(w.tanggal_target); if(tg) ev.push({ t:tg, k:tg < c.now ? 'late' : 'plan', l:(w.judul || 'Work Order') + (tg < c.now ? ' (lewat target)' : ' (terjadwal)'), go:'wo', id:w.id }); } });
+    c.defects.forEach(function(d){ if(d.kendaraan_id !== v.id) return; var t = toD(d.tanggal_ditemukan); if(t) ev.push({ t:t, k:'def', l:'Kerusakan: ' + (d.gejala || d.nomor_defect || '-') + ' (' + (d.tingkat_keparahan || '-') + ')', go:'defect' }); });
+    c.sess.forEach(function(se){ if(se.kendaraan_id !== v.id) return; var t = toD(se.tanggal); if(t) ev.push({ t:t, k:'insp', l:'Inspeksi ' + String(se.jenis_inspeksi || '').replace(/_/g, ' '), go:'insp' }); });
+    ev.forEach(function(e){ var px = x(e.t.getTime()); if(px < lw || px > W2 - 6) return; var tip = e.l + '\n' + dshort(e.t) + ' · ' + vname(v), a = ta(tip) + goA(e.go) + (e.id ? ' data-wo="' + esc(e.id) + '"' : '');
+      if(e.k === 'done') s += '<circle class="vz-ev" cx="' + px.toFixed(1) + '" cy="' + y + '" r="6" fill="var(--viz-3)" stroke="var(--surface)" stroke-width="2"' + a + '/>';
+      else if(e.k === 'insp') s += '<rect class="vz-ev" x="' + (px - 2.5).toFixed(1) + '" y="' + (y - 7) + '" width="5" height="14" rx="2" fill="var(--viz-dim)"' + a + '/>';
+      else if(e.k === 'def') s += '<path class="vz-ev" d="M' + px.toFixed(1) + ' ' + (y - 8) + ' L' + (px + 7.5).toFixed(1) + ' ' + (y + 6) + ' L' + (px - 7.5).toFixed(1) + ' ' + (y + 6) + ' Z" fill="var(--danger)" stroke="var(--surface)" stroke-width="1.5"' + a + '/>';
+      else s += '<path class="vz-ev" d="M' + px.toFixed(1) + ' ' + (y - 8) + ' L' + (px + 8).toFixed(1) + ' ' + y + ' L' + px.toFixed(1) + ' ' + (y + 8) + ' L' + (px - 8).toFixed(1) + ' ' + y + ' Z" fill="' + (e.k === 'late' ? 'var(--danger)' : 'var(--viz-2)') + '" stroke="var(--surface)" stroke-width="1.5"' + a + '/>'; }); });
+  s += '</svg></div><div class="vz-lg2 vz-static"><span><i class="vz-s vz-c" style="background:var(--viz-3)"></i>WO selesai</span><span><i class="vz-s vz-d" style="background:var(--viz-2)"></i>WO terjadwal</span><span><i class="vz-s vz-d" style="background:var(--danger)"></i>Lewat target</span><span><i class="vz-s vz-t" style="background:var(--danger)"></i>Kerusakan</span><span><i class="vz-s vz-r" style="background:var(--viz-dim)"></i>Inspeksi</span></div>';
+  return s;
+}, true);
+add('heat', 'Lainnya', 'Peta Aktivitas 26 Minggu', 'f', function(c){
+  var weeks = 26, today = new Date(c.now.getFullYear(), c.now.getMonth(), c.now.getDate()), dow = (today.getDay() + 6) % 7, start = new Date(today.getTime() - ((weeks - 1) * 7 + dow) * DAY), cnt = {}, add1 = function(t, k){ var d = toD(t); if(!d) return; var key = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); (cnt[key] = cnt[key] || { wo:0, insp:0, def:0 })[k]++; };
+  c.wos.forEach(function(w){ if(w.status === 'selesai') add1(w.tanggal_selesai, 'wo'); }); c.sess.forEach(function(s){ add1(s.tanggal, 'insp'); }); c.defects.forEach(function(d){ add1(d.tanggal_ditemukan, 'def'); });
+  var cs = 14, gp = 3, W2 = weeks * (cs + gp) + 22, H = 7 * (cs + gp) + 16, s = '<div class="vz-scroll"><svg class="vw-svg" viewBox="0 0 ' + W2 + ' ' + H + '" style="min-width:420px" role="img" aria-label="Peta panas aktivitas harian">', tot = 0, mxn = 0;
+  var cells = []; for(var w = 0; w < weeks; w++) for(var d = 0; d < 7; d++){ var dt = new Date(start.getTime() + (w * 7 + d) * DAY); if(dt > today) continue; var o = cnt[dt.getFullYear() + '-' + dt.getMonth() + '-' + dt.getDate()] || { wo:0, insp:0, def:0 }, n = o.wo + o.insp + o.def; tot += n; mxn = Math.max(mxn, n); cells.push([w, d, dt, o, n]); }
+  ['Sen', '', 'Rab', '', 'Jum', '', 'Min'].forEach(function(l, i){ if(l) s += '<text x="0" y="' + (14 + i * (cs + gp) + 10) + '" font-size="9" fill="var(--text-dim)">' + l + '</text>'; });
+  var lastM = -1, lastX = -99; cells.forEach(function(e){ if(e[1] === 0 && e[2].getMonth() !== lastM){ lastM = e[2].getMonth(); var lx = 22 + e[0] * (cs + gp); if(lx - lastX < 34) return; lastX = lx; s += '<text x="' + (22 + e[0] * (cs + gp)) + '" y="9" font-size="9.5" fill="var(--text-dim)">' + MON[lastM] + '</text>'; } });
+  cells.forEach(function(e){ var n = e[4], lvl = !n ? 0 : (mxn <= 1 ? 3 : Math.min(4, Math.ceil(n / mxn * 4))), op = [0, .3, .5, .75, 1][lvl]; s += '<rect class="vz-hc" x="' + (22 + e[0] * (cs + gp)) + '" y="' + (14 + e[1] * (cs + gp)) + '" width="' + cs + '" height="' + cs + '" rx="3" fill="' + (n ? 'var(--viz-3)' : 'var(--surface-2)') + '"' + (n ? ' fill-opacity="' + op + '"' : '') + ta(dshort(e[2]) + '\n' + (n ? (e[3].wo ? e[3].wo + ' WO selesai · ' : '') + (e[3].insp ? e[3].insp + ' inspeksi · ' : '') + (e[3].def ? e[3].def + ' kerusakan' : '') : 'Tidak ada aktivitas')) + '/>'; });
+  return s + '</svg></div><p class="vw-note">' + tot + ' aktivitas tercatat dalam 26 minggu (WO selesai, inspeksi, laporan kerusakan). Makin pekat makin ramai.</p>';
+}, true);
+/* ---- interaksi bersama: tooltip, klik, legenda ---- */
+function tipEl(){ var e = document.getElementById('vwTip'); if(!e){ e = document.createElement('div'); e.id = 'vwTip'; e.setAttribute('role', 'tooltip'); e.hidden = true; document.body.appendChild(e); } return e; }
+function tipShow(t, x, y){ var e = tipEl(); e.textContent = t.replace(/\\n/g, '\n'); e.hidden = false; var w = e.offsetWidth, h = e.offsetHeight, vw = window.innerWidth; var L = Math.min(Math.max(8, x + 12), vw - w - 8), T = y - h - 12; if(T < 8) T = y + 18; e.style.left = L + 'px'; e.style.top = T + 'px'; }
+function tipHide(){ var e = document.getElementById('vwTip'); if(e) e.hidden = true; }
+function goTo(k){ var p = GO[k]; if(p && typeof showPanel === 'function') showPanel(p); }
+function openWo(id){ goTo('wo'); setTimeout(function(){ try{ if(typeof openWoEdit === 'function') openWoEdit(id); }catch(_){} }, 80); }
+function setRange(v){ v = Number(v); if(v !== 3 && v !== 6 && v !== 12) return; ST.range = v; try{ localStorage.setItem(LSR, String(v)); }catch(_){} render(true); }
+function legToggle(spec){ var p = spec.split(':'); var h = ST.hide[p[0]] = ST.hide[p[0]] || {}; h[p[1]] = !h[p[1]]; render(true); }
+(function(){
+  if(window.__vsumVizBound) return; window.__vsumVizBound = 1;
+  var inCard = function(t){ return t && t.closest && t.closest('#vsumCard'); };
+  document.addEventListener('mousemove', function(e){ var t = e.target.closest && e.target.closest('#vsumCard [data-tip]'); if(t) tipShow(t.getAttribute('data-tip'), e.clientX, e.clientY); else tipHide(); });
+  document.addEventListener('mouseleave', tipHide, true);
+  document.addEventListener('scroll', tipHide, true);
+  document.addEventListener('click', function(e){ var t = e.target; if(!inCard(t)) { tipHide(); return; }
+    var lg = t.closest('[data-lg]'); if(lg){ legToggle(lg.getAttribute('data-lg')); return; }
+    var wo = t.closest('[data-wo]'); if(wo){ openWo(wo.getAttribute('data-wo')); return; }
+    var go = t.closest('[data-go]'); if(go){ if(e.pointerType === 'touch' || (window.matchMedia && matchMedia('(hover:none)').matches)){ var tp = go.getAttribute('data-tip'); if(tp && !go.__tapped){ go.__tapped = 1; setTimeout(function(){ go.__tapped = 0; }, 2500); tipShow(tp, e.clientX, e.clientY); return; } } goTo(go.getAttribute('data-go')); } });
+  document.addEventListener('keydown', function(e){ if(e.key !== 'Enter' && e.key !== ' ') return; var t = e.target; if(!inCard(t)) return; var wo = t.closest && t.closest('[data-wo]'), go = t.closest && t.closest('[data-go]'); if(wo){ e.preventDefault(); openWo(wo.getAttribute('data-wo')); } else if(go){ e.preventDefault(); goTo(go.getAttribute('data-go')); } });
+})();
+var CSS_X = '#vsumCard .vz-dwrap{display:flex;gap:14px;align-items:center;flex-wrap:wrap}#vsumCard .vz-donut{width:150px;flex:0 0 150px}#vsumCard .vz-seg{cursor:pointer;transition:stroke-width .12s}#vsumCard .vz-seg:hover{stroke-width:20}#vsumCard .vz-leg{list-style:none;margin:0;padding:0;flex:1;min-width:130px;font-size:13px}#vsumCard .vz-leg li{display:flex;align-items:center;gap:8px;padding:5px 4px;border-radius:6px;cursor:pointer;min-height:30px}#vsumCard .vz-leg li:hover{background:var(--surface-2)}#vsumCard .vz-leg i{width:10px;height:10px;border-radius:3px;flex:0 0 10px}#vsumCard .vz-leg span{flex:1}#vsumCard .vz-hb{display:flex;flex-direction:column;gap:6px}#vsumCard .vz-hr{display:grid;grid-template-columns:minmax(70px,34%) 1fr auto;gap:8px;align-items:center;font-size:13px;min-height:30px;cursor:pointer;border-radius:6px;padding:0 2px}#vsumCard .vz-hr:hover{background:var(--surface-2)}#vsumCard .vz-hl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#vsumCard .vz-hl small{display:block;color:var(--text-dim);font-size:11px}#vsumCard .vz-ht{height:12px;background:var(--surface-2);border-radius:6px;overflow:hidden}#vsumCard .vz-hf{display:block;height:100%;border-radius:0 6px 6px 0}#vsumCard .vz-hv{font-size:12.5px;white-space:nowrap}#vsumCard .vz-bar{transition:opacity .12s}#vsumCard .vz-hit{cursor:pointer}#vsumCard .vz-hit:hover{fill:var(--surface-2);fill-opacity:.55}#vsumCard .vz-lg2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--text-dim)}#vsumCard .vz-lgb{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:4px 10px;min-height:32px;font-size:12.5px;cursor:pointer}#vsumCard .vz-lgb i{width:10px;height:10px;border-radius:3px}#vsumCard .vz-lgb.off{opacity:.45;text-decoration:line-through}#vsumCard .vz-static span{display:inline-flex;align-items:center;gap:5px;margin-right:8px}#vsumCard .vz-s{display:inline-block;width:11px;height:11px}#vsumCard .vz-c{border-radius:50%}#vsumCard .vz-d{transform:rotate(45deg) scale(.8)}#vsumCard .vz-t{clip-path:polygon(50% 0,100% 100%,0 100%)}#vsumCard .vz-r{width:5px;border-radius:2px}#vsumCard .vz-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}#vsumCard .vz-ev{cursor:pointer;transition:transform .12s;transform-box:fill-box;transform-origin:center}#vsumCard .vz-ev:hover{transform:scale(1.35)}#vsumCard .vz-hc:hover{stroke:var(--text);stroke-width:1.5}#vsumCard .vz-board{display:flex;align-items:flex-start;gap:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}#vsumCard .vz-col{flex:1 1 190px;min-width:170px;background:var(--surface-2);border-radius:10px;padding:8px;border-top:3px solid var(--cc)}#vsumCard .vz-ch{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-bottom:6px}#vsumCard .vz-ch b{background:var(--surface);border-radius:999px;padding:0 9px;font-size:12px;min-width:24px;text-align:center}#vsumCard .vz-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 9px;margin-bottom:6px;cursor:pointer;font-size:12.5px}#vsumCard .vz-card:hover{border-color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.12)}#vsumCard .vz-ct{font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#vsumCard .vz-cs{color:var(--text-dim);font-size:11.5px;margin-top:2px}#vsumCard .vz-cm{display:flex;justify-content:space-between;gap:6px;margin-top:5px;font-size:11.5px;color:var(--text-dim);align-items:center}#vsumCard .vz-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}#vsumCard .vz-more{width:100%;border:0;background:transparent;color:var(--accent);font-size:12.5px;min-height:32px;cursor:pointer}#vsumCard .vz-none{font-size:12px;color:var(--text-dim);padding:8px 2px}#vwTip{position:fixed;z-index:9999;max-width:260px;background:var(--text);color:var(--bg);padding:6px 9px;border-radius:8px;font-size:12px;line-height:1.35;white-space:pre-line;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}#vsumCard .vw-ctl select#vwRange{max-width:120px}#vsumCard .vw-skel{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));margin-top:10px}#vsumCard .vw-sk{height:150px;border-radius:12px;background:linear-gradient(90deg,var(--surface-2),var(--surface),var(--surface-2));background-size:200% 100%;animation:vwsk 1.2s linear infinite}@keyframes vwsk{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){#vsumCard .vw-sk{animation:none}}';
+
+var ORDER = ['kpistrip', 'quick', 'status', 'woboard', 'wodonut', 'defsev', 'inspdonut', 'costcat', 'topveh', 'taskbars', 'timeline', 'heat', 'prio', 'calendar', 'reminders', 'schedule', 'types', 'wo', 'defects', 'elec', 'trips', 'odo', 'spent', 'monthly', 'exposure', 'fuelqa', 'fuelkpi', 'kmlscore', 'kmltrend', 'fuelliters', 'fuelspend', 'priceunit', 'distance', 'co2', 'costtrend', 'accidents', 'compliance', 'relkpi', 'breakdown', 'emergency', 'pmcomp', 'spares', 'submissions', 'findings', 'measure', 'volt', 'fuel', 'papers', 'recent'];
 W.sort(function(x, y){ return ORDER.indexOf(x.id) - ORDER.indexOf(y.id); });
 /* ---------- pilihan widget ---------- */
-function enabled(){ try{ var a = JSON.parse(localStorage.getItem(LSW) || 'null'); if(Array.isArray(a)) return a; }catch(_){} return W.filter(function(w){ return w.dflt; }).map(function(w){ return w.id; }); }
+var NEWDEF = ['woboard', 'wodonut', 'defsev', 'inspdonut', 'costcat', 'topveh', 'taskbars', 'timeline', 'heat'];
+function enabled(){ try{ var a = JSON.parse(localStorage.getItem(LSW) || 'null'); if(Array.isArray(a)){ if(localStorage.getItem(LSV) !== '33'){ NEWDEF.forEach(function(x){ if(a.indexOf(x) < 0) a.push(x); }); localStorage.setItem(LSW, JSON.stringify(a)); localStorage.setItem(LSV, '33'); } return a; } }catch(_){} return W.filter(function(w){ return w.dflt; }).map(function(w){ return w.id; }); }
 function setEnabled(a){ try{ localStorage.setItem(LSW, JSON.stringify(a)); }catch(_){} }
 function toggle(id){ var a = enabled(), i = a.indexOf(id); if(i >= 0) a.splice(i, 1); else a.push(id); setEnabled(a); render(); }
 function restore(){ try{ localStorage.removeItem(LSW); }catch(_){} render(); }
@@ -24039,10 +24190,12 @@ function manageList(){
 /* ---------- tampilan ---------- */
 var CSS = '#vsumCard .vw-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}#vsumCard .vw-head h2{margin:0}#vsumCard .vw-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#vsumCard .vw-ctl select{max-width:220px}#vsumCard .vw-upd{font-size:12px;color:var(--text-dim)}#vsumCard .vw-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));margin-top:10px}#vsumCard .vw-w{border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0;background:var(--surface)}#vsumCard .vw-w.vw-wide{grid-column:span 2}@media(max-width:620px){#vsumCard .vw-w.vw-wide{grid-column:span 1}}#vsumCard .vw-w h3{margin:0 0 8px;font-size:13.5px}#vsumCard .vw-kpis{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px}#vsumCard .vw-num{font-size:24px;font-weight:700;line-height:1.1}#vsumCard .vw-lbl{font-size:12px;color:var(--text-dim)}#vsumCard .vw-ok{color:var(--ok-ink)}#vsumCard .vw-warn{color:var(--warn-ink)}#vsumCard .vw-bad{color:var(--danger-ink)}#vsumCard .vw-list{list-style:none;margin:0;padding:0}#vsumCard .vw-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--border);font-size:13px}#vsumCard .vw-list li:first-child{border-top:0}#vsumCard .vw-l{min-width:0}#vsumCard .vw-r{text-align:right;white-space:nowrap}#vsumCard .vw-sub{font-size:12px;color:var(--text-dim)}#vsumCard .vw-note{font-size:12px;color:var(--text-dim);margin:8px 0 0}#vsumCard .vw-empty{font-size:13px;color:var(--text-dim);margin:0}#vsumCard .vw-pill{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid var(--border)}#vsumCard .vw-p-ok{background:var(--ok-bg);color:var(--ok-ink)}#vsumCard .vw-p-warn{background:var(--warn-bg);color:var(--warn-ink)}#vsumCard .vw-p-bad{background:var(--danger-bg);color:var(--danger-ink)}#vsumCard .vw-p-na{background:var(--surface-2);color:var(--text-dim)}#vsumCard .vw-svg{width:100%;height:auto;display:block}#vsumCard .vw-btns{display:flex;gap:6px;flex-wrap:wrap}#vsumCard .vw-btns button{min-height:36px}#vsumCard .vw-manage{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-top:8px;max-height:340px;overflow:auto}#vsumCard .vw-grp{font-size:12px;font-weight:700;color:var(--text-dim);margin:10px 0 4px;letter-spacing:.04em;text-transform:uppercase}#vsumCard .vw-chk{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13.5px;min-height:30px}#vsumCard .vw-svg text{font-family:inherit}#vsumCard .vw-info{margin-top:6px;font-size:12px;color:var(--text-dim)}#vsumCard .vw-info summary{cursor:pointer;min-height:24px}#vsumCard .vw-info div{margin-top:4px}#vsumCard .vw-leg{display:flex;gap:12px;font-size:12px;color:var(--text-dim);margin-top:4px}#vsumCard .vw-leg i{display:inline-block;width:10px;height:3px;margin-right:4px;vertical-align:middle}#vsumCard .vw-w.vw-full{grid-column:1/-1}#vsumCard .vw-w.vw-bare{border:0;padding:0;background:transparent}#vsumCard .vw-tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))}#vsumCard .vw-tile{border-radius:12px;padding:12px 14px;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:64px}#vsumCard .vw-tile span{font-weight:600;font-size:13.5px}#vsumCard .vw-tile b{font-size:30px;line-height:1}#vsumCard .vw-t-bad{background:#b3392c}#vsumCard .vw-t-warn{background:#a8610a}#vsumCard .vw-t-info{background:#0a6280}#vsumCard .vw-t-ok{background:#187a44}#vsumCard .vw-types{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,100px),1fr))}#vsumCard .vw-ty{border-radius:10px;padding:8px 10px;color:#fff;display:flex;flex-direction:column;gap:2px}#vsumCard .vw-ty span{font-size:12px;font-weight:600}#vsumCard .vw-ty b{font-size:24px;line-height:1.1}#vsumCard .vw-ty small{font-size:11px;opacity:.9}#vsumCard .vw-tbl{width:100%;border-collapse:collapse;font-size:13px}#vsumCard .vw-tbl th{text-align:left;font-size:12px;color:var(--text-dim);padding:6px 8px;border-bottom:1px solid var(--border)}#vsumCard .vw-tbl td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top}#vsumCard .vw-sq{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;background:var(--viz-dim)}#vsumCard .vw-q-bad{background:#b3392c}#vsumCard .vw-q-warn{background:#a8610a}#vsumCard .vw-q-info{background:#0a6280}#vsumCard .vw-q-ok{background:#187a44}#vsumCard .vw-p-info{background:var(--accent-soft);color:var(--accent)}#vsumCard .vw-calh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}#vsumCard .vw-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12.5px}#vsumCard .vw-cd{color:var(--text-dim);font-size:11px;padding:2px 0}#vsumCard .vw-day{position:relative;padding:5px 0 9px;border-radius:6px}#vsumCard .vw-today{outline:2px solid var(--accent);outline-offset:-2px}#vsumCard .vw-dot{position:absolute;left:50%;bottom:2px;width:6px;height:6px;border-radius:50%;transform:translateX(-50%)}#vsumCard .vw-d-bad{background:#b3392c}#vsumCard .vw-d-warn{background:#a8610a}#vsumCard .vw-d-info{background:#0a6280}';
 function minsAgo(){ if(!ST.stamp) return 'baru saja'; var m = Math.floor((Date.now() - ST.stamp) / 60000); return m < 1 ? 'baru saja' : m + ' menit lalu'; }
+function loadingNow(){ return !!(g('sb') && !window.__vehLoaded); }
 function html(){
   var c = ctx(), on = enabled(), V = c.V;
-  var h = '<div class="vw-head"><h2>Ringkasan Kendaraan</h2><div class="vw-ctl"><select id="vwScope" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)" aria-label="Cakupan" onchange="VSUM.setScope(this.value)"><option value="all"' + (ST.scope === 'all' ? ' selected' : '') + '>Semua kendaraan</option>' + V.map(function(v){ return '<option value="' + esc(v.id) + '"' + (v.id === ST.scope ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select><button type="button" class="ghost" onclick="VSUM.render(true)" aria-label="Segarkan">⟳</button><button type="button" class="' + (ST.open ? 'ghost' : '') + '" onclick="VSUM.manage()">Kelola Widget (' + on.length + '/' + W.length + ')</button></div></div><div class="vw-upd">Diperbarui ' + minsAgo() + '</div>';
+  var h = '<div class="vw-head"><h2>Ringkasan Kendaraan</h2><div class="vw-ctl"><select id="vwScope" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)" aria-label="Cakupan" onchange="VSUM.setScope(this.value)"><option value="all"' + (ST.scope === 'all' ? ' selected' : '') + '>Semua kendaraan</option>' + V.map(function(v){ return '<option value="' + esc(v.id) + '"' + (v.id === ST.scope ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select><select id="vwRange" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)" aria-label="Rentang grafik" onchange="VSUM.setRange(this.value)">' + [3, 6, 12].map(function(n){ return '<option value="' + n + '"' + (ST.range === n ? ' selected' : '') + '>' + n + ' bulan</option>'; }).join('') + '</select><button type="button" class="ghost" onclick="VSUM.render(true)" aria-label="Segarkan">⟳</button><button type="button" class="' + (ST.open ? 'ghost' : '') + '" onclick="VSUM.manage()">Kelola Widget (' + on.length + '/' + W.length + ')</button></div></div><div class="vw-upd">' + (loadingNow() ? 'Memperbarui dari server…' : 'Diperbarui ' + minsAgo()) + (window.__fromSnap && loadingNow() ? ' · menampilkan data tersimpan' : '') + '</div>';
   if(ST.open) h += '<div class="vw-manage"><div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap"><input id="vwQ" type="search" placeholder="Cari widget" value="' + esc(ST.q) + '" oninput="VSUM.setQ(this.value)" style="flex:1;min-width:140px"><button type="button" class="ghost" onclick="VSUM.restore()">Kembalikan bawaan</button></div><div id="vwList">' + manageList() + '</div></div>';
+  if(!V.length && loadingNow()) return h + '<div class="vw-skel" aria-busy="true" aria-label="Memuat data">' + '<div class="vw-sk"></div>'.repeat(6) + '</div>';
   if(!V.length) return h + '<p class="vw-empty" style="margin-top:10px">Belum ada kendaraan. Tambah kendaraan lewat tombol + New Entry di atas.</p>';
   var shown = W.filter(function(w){ return on.indexOf(w.id) >= 0; });
   h += shown.length ? '<div class="vw-grid">' + shown.map(function(w){ var body; try{ body = w.fn(c); }catch(e){ body = none('Widget tidak dapat dihitung: ' + (e && e.message)); } var notes = []; body = body.replace(/<p class="vw-note">((?:(?!<button)[\s\S])*?)<\/p>/g, function(m, t){ notes.push(t.replace(/<[^>]+>/g, '')); return ''; }); if(notes.length) body += '<details class="vw-info"><summary aria-label="Keterangan">ⓘ Keterangan</summary><div>' + esc(notes.join(' ')) + '</div></details>'; return '<section class="vw-w' + (w.wide ? ' vw-wide' : '') + (w.full ? ' vw-full' : '') + (w.bare ? ' vw-bare' : '') + '" data-w="' + w.id + '">' + (w.bare ? '' : '<h3>' + esc(w.title) + '</h3>') + body + '</section>'; }).join('') + '</div>' : '<p class="vw-empty" style="margin-top:10px">Tidak ada widget ditampilkan. Buka Kelola Widget untuk memilih.</p>';
@@ -24052,20 +24205,20 @@ function mount(){
   var host = document.getElementById('vsumCard'); if(host) return host;
   var old = null; Array.prototype.forEach.call(document.querySelectorAll('#panel-home h2'), function(h){ if(/^Vehicle Insight/.test(h.textContent.trim())) old = h.closest('.card') || h.parentNode; });
   var anchor = old || document.getElementById('panel-home'); if(!anchor) return null;
-  if(!document.getElementById('vsumStyle')){ var s = document.createElement('style'); s.id = 'vsumStyle'; s.textContent = CSS; document.head.appendChild(s); }
+  if(!document.getElementById('vsumStyle')){ var s = document.createElement('style'); s.id = 'vsumStyle'; s.textContent = CSS + CSS_X; document.head.appendChild(s); }
   host = document.createElement('div'); host.className = 'card'; host.id = 'vsumCard';
   if(old){ old.parentNode.insertBefore(host, old); old.hidden = true; old.style.display = 'none'; old.setAttribute('data-vsum-replaced', '1'); } else anchor.appendChild(host);
   return host;
 }
 function signature(){ var a = [g('vehicles'), g('workOrders'), g('jobCards'), g('defectLogs'), g('inspectionSessions'), g('inspectionItems')].map(function(x){ return (x || []).length; }); return a.join('/') + '|' + (g('vehicles') || []).map(function(v){ return v.id + ':' + v.km_saat_ini; }).join(','); }
 function render(force){
-  try{ var h = mount(); if(!h) return; var a = document.activeElement; if(!force && a && h.contains(a) && /INPUT|SELECT/.test(a.tagName)) return; if(force === true || !ST.stamp) ST.stamp = Date.now(); ST.sig = signature(); h.innerHTML = html(); if(a && a.id === 'vwQ'){ var q = document.getElementById('vwQ'); if(q){ q.focus(); } } }catch(e){ try{ console.warn('VSUM', e.message); }catch(_){} }
+  try{ var h = mount(); if(!h) return; var a = document.activeElement; if(!force && a && h.contains(a) && /INPUT|SELECT/.test(a.tagName)) return; if(force === true || !ST.stamp) ST.stamp = Date.now(); ST.sig = signature(); h.innerHTML = html(); try{ if(window.__snapSave && window.__vehLoaded) window.__snapSave(); }catch(_){} if(a && a.id === 'vwQ'){ var q = document.getElementById('vwQ'); if(q){ q.focus(); } } }catch(e){ try{ console.warn('VSUM', e.message); }catch(_){} }
 }
 function manage(){ ST.open = !ST.open; render(); }
 function onShow(){ render(); }
 setInterval(function(){ var p = document.getElementById('panel-home'); if(!p || p.hidden) return; var sel = g('selectedId'); if(sel && sel !== ST.lastSel){ ST.lastSel = sel; if(ST.scope !== sel){ ST.scope = sel; try{ localStorage.setItem(LSS, sel); }catch(_){} render(true); return; } } if(signature() !== ST.sig){ ST.stamp = Date.now(); render(); } var u = document.querySelector('#vsumCard .vw-upd'); if(u) u.textContent = 'Diperbarui ' + minsAgo(); }, 1500);
 function boot(){ var o = window.renderBoard; if(typeof o === 'function' && !o.__vsum){ var w = function(){ var r = o.apply(this, arguments); render(); return r; }; w.__vsum = 1; window.renderBoard = w; } render(); }
-window.VSUM = { cal:cal, render:render, onShow:onShow, manage:manage, toggle:toggle, restore:restore, setScope:setScope, setAct:setAct, setQ:setQ, qa:qa, html:html, widgets:W, _st:ST, enabled:enabled, ctx:ctx };
+window.VSUM = { setRange:setRange, donut:donut, hbar:hbar, stacked:stacked, cal:cal, render:render, onShow:onShow, manage:manage, toggle:toggle, restore:restore, setScope:setScope, setAct:setAct, setQ:setQ, qa:qa, html:html, widgets:W, _st:ST, enabled:enabled, ctx:ctx };
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 400); }); else setTimeout(boot, 400);
 })();
 
