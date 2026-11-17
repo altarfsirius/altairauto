@@ -458,20 +458,11 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 31 (17 Nov 2026)" aria-label="Versi 1.0, revisi 31"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 31</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 32 (18 Nov 2026)" aria-label="Versi 1.0, revisi 32"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 32</span></div>
   </div>
 </div>
 
   <div class="wrap">
-
-  <div id="panel-dash">
-    <div class="crumb">Home <span class="sep">/</span> <span class="current">Dashboard</span></div>
-    <header style="margin-bottom:14px;">
-      <h1 class="page-title">Dashboard</h1>
-      <p class="page-desc">Personal maintenance assistant: rawat kendaraan seperti merawat pesawat, supaya laik jalan, aman, efisien, dan andal. / Keep every vehicle serviceable.</p>
-    </header>
-    <div id="dashRoot"><div class="card"><p class="hint" style="margin:0;">Memuat Dashboard…</p></div></div>
-  </div>
 
   <div id="panel-home" hidden>
     <div class="crumb">Home <span class="sep">/</span> <span class="current">Vehicle Identification</span></div>
@@ -941,7 +932,7 @@
             <tr><td>4. Rinci dengan Task (Action)</td><td>Pecah Work Order menjadi tugas: pilih template, part, nomor part, biaya, teknisi.</td><td>JC-xxxx per tugas</td><td><button type="button" class="ghost" onclick="showPanel('workorder')">Task Detail</button></td></tr>
             <tr><td>5. Kerjakan &amp; catat</td><td>Ubah status ke In Progress; setelah selesai pilih Mark as Complete, isi tanggal &amp; KM realisasi.</td><td>Riwayat servis &amp; odometer terbaru</td><td><button type="button" class="ghost" onclick="showPanel('workorder')">Work Order</button></td></tr>
             <tr><td>6. Temukan &amp; tangani masalah</td><td>Catat kerusakan di Defects; untuk masalah berulang buka Problem Analysis (RCA &rarr; PICA).</td><td>DL-xxxx / PC-xxxx</td><td><button type="button" class="ghost" onclick="showPanel('kerusakan')">Defects</button> <button type="button" class="ghost" onclick="showPanel('risiko')">Problem</button></td></tr>
-            <tr><td>7. Tinjau &amp; perbaiki</td><td>Baca Dashboard dan Cost, sesuaikan interval, tutup siklus PDCA.</td><td>Program yang makin tepat</td><td><button type="button" class="ghost" onclick="showPanel('kpi')">Dashboard</button></td></tr>
+            <tr><td>7. Tinjau &amp; perbaiki</td><td>Baca Ringkasan Kendaraan (Vehicles) dan Cost, sesuaikan interval, tutup siklus PDCA.</td><td>Program yang makin tepat</td><td><button type="button" class="ghost" onclick="showPanel('kpi')">Dashboard</button></td></tr>
           </tbody>
         </table></div>
       </div>
@@ -993,7 +984,7 @@
             <tr><td>Repeat failure</td><td>0 masalah yang sama berulang dua kali</td><td>Jika berulang, buka Problem Analysis</td></tr>
             <tr><td>MTBF</td><td>Naik dari waktu ke waktu</td><td>Km rata-rata antar kerusakan</td></tr>
             <tr><td>MTTR</td><td>Turun dari waktu ke waktu</td><td>Lama Work Order dari dibuka sampai Completed</td></tr>
-            <tr><td>Cost per km</td><td>Stabil atau turun</td><td>Cost &amp; Dashboard (TCO)</td></tr>
+            <tr><td>Cost per km</td><td>Stabil atau turun</td><td>Cost &amp; Ringkasan Kendaraan (TCO)</td></tr>
           </tbody>
         </table></div>
         <h3 style="margin:14px 0 6px;">Ritme yang disarankan</h3>
@@ -1001,7 +992,7 @@
           <li><strong>Mingguan/sebelum perjalanan:</strong> tekanan ban, level oli &amp; cairan, lampu, rem.</li>
           <li><strong>Bulanan:</strong> buka Program, lihat tugas Segera/Overdue, bundel jadi satu Work Order bila &ge; 3 tugas.</li>
           <li><strong>Tiap servis:</strong> catat KM, part number, biaya, dan foto/bukti.</li>
-          <li><strong>Tahunan:</strong> tinjau Dashboard &amp; Cost, evaluasi interval, putuskan pertahankan/overhaul/ganti.</li>
+          <li><strong>Tahunan:</strong> tinjau Ringkasan Kendaraan &amp; Cost, evaluasi interval, putuskan pertahankan/overhaul/ganti.</li>
         </ul>
         <p class="hint" style="margin-top:8px;"><strong>Hindari:</strong> menandai selesai tanpa KM, menunda tanpa alasan, mengganti part tanpa mencatat nomor part, dan memperbaiki gejala tanpa mencari akar masalah.</p>
       </div>
@@ -7226,7 +7217,7 @@ Dimensi
     </header>
 
     <div class="card" id="kpiEmptyCard" hidden>
-      <p class="hint">Belum ada kendaraan tersimpan. Tambahkan kendaraan dulu di tab Home untuk melihat Dashboard.</p>
+      <p class="hint">Belum ada kendaraan tersimpan. Tambahkan kendaraan dulu di tab Home untuk melihat Ringkasan Kendaraan.</p>
     </div>
 
     <div id="kpiContent">
@@ -7733,6 +7724,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-18</td><td>Rev 32: <strong>Dashboard dipindahkan ke Vehicles</strong>. Menu Dashboard dihapus; halaman awal kini Vehicles. Di bawah papan kendaraan ada <strong>Ringkasan Kendaraan</strong> berbentuk widget (kartu angka berwarna, jadwal perawatan, kalender, tipe pekerjaan, status laik jalan, kerusakan, kelistrikan &amp; BBM, keandalan MTBF/MTTR, biaya) dengan menu <strong>Kelola Widget</strong> (tampil/sembunyi, cari, kembalikan bawaan; tersimpan di perangkat). Tiga grafik Vehicle Insight yang kurang informatif diganti. Kartu duplikat (Timeline, Cost, Why It Matters, Projects, Papers) tidak dibawa; isinya tetap ada di Program, Insight, Library, Project, dan Documents. <strong>Perbaikan KM</strong>: status laik jalan dan jadwal kunjungan kini memakai odometer gabungan, bukan KM registrasi.</td></tr>
             <tr><td class="mono">2026-11-17</td><td>Rev 31: <strong>Kartu kelistrikan diuji dengan data cadangan nyata</strong>. Dua alarm palsu diperbaiki: Ertiga 12,2&ndash;12,3 V tidak lagi "Perhatian" (batas mobil diturunkan) dan kendaraan listrik (tanpa alternator) tidak dinilai pada tegangan mesin hidup serta memakai batas rendah.</td></tr>
             <tr><td class="mono">2026-11-17</td><td>Rev 30: <strong>Form inspeksi lebih ringkas</strong>. Bagian tegangan/suhu/KM/L terlipat (ingat pilihan buka/tutup), tombol "Isi dari pengukuran terakhir" (hanya kolom kosong, bertanda putus-putus, bisa dikosongkan), dan pengingat ukur tiap 7 hari (muncul saat aplikasi dibuka, bukan notifikasi dorong; interval dapat diubah).</td></tr>
             <tr><td class="mono">2026-11-16</td><td>Rev 29: <strong>Kesehatan Kelistrikan &amp; Suhu</strong> di halaman Inspection. Tegangan mesin mati/hidup, temperatur, dan KM/L rata-rata dibaca sebagai tren terhadap kebiasaan tiap kendaraan (median + sebaran, dipisah per jenis inspeksi), dengan arah pemeriksaan aki vs pengisian. Ambang Estimasi, dapat diubah; ADV150 memakai batas lebih rendah. Hanya menandai, tidak menulis data.</td></tr>
@@ -7811,7 +7803,7 @@ function drivetrainBadgeLabel(v){
 }
 
 const NAV_GROUPS = [
-  { key:'home', navBtnId:'navHomeBtn', panels:['dash','home','appraisal'] },
+  { key:'home', navBtnId:'navHomeBtn', panels:['home','appraisal'] },
   { key:'service', navBtnId:'navGroupServiceBtn', panels:['program','svcpkg','planboard','project','workorder','parts','partlib','kerusakan','inspeksi','event'] },
   { key:'insight', navBtnId:'navGroupInsightBtn', panels:['kpi','usage','laporan','risiko','ela','biaya'] },
   { key:'library', navBtnId:'navGroupLibraryBtn', panels:['playbook','guide','mguide','concepts','dasar','governance','tool','mitra','dokumen','support'] },
@@ -7879,7 +7871,7 @@ function renderSideNav(){
   list.innerHTML = NAV_GROUPS.filter(g => g.key !== 'settings').map(item).join('');
   foot.innerHTML = item(NAV_GROUPS.find(g => g.key === 'settings'));
 }
-let currentPanel = 'dash';
+let currentPanel = 'home';
 function syncTopNav(name){
   const group = groupForPanel(name);
   activeGroupKey = group.key;
@@ -7907,6 +7899,7 @@ function syncTopNav(name){
 renderSideNav();
 
 function showPanel(name){
+  if(name === 'dash') name = 'home';
   document.getElementById('panel-home').hidden = name !== 'home';
   { const _pd = document.getElementById('panel-dash'); if(_pd) _pd.hidden = name !== 'dash'; }
   document.getElementById('panel-appraisal').hidden = name !== 'appraisal';
@@ -7962,7 +7955,8 @@ function showPanel(name){
   if(window.SVCPKG && name === 'svcpkg') SVCPKG.onShow();
   if(window.DASH && name === 'dash') DASH.onShow();
   if(window.PARTSPO && name === 'parts') PARTSPO.onShow();
-  if(window.PLAN && name === 'dash') PLAN.onShow();
+  if(window.PLAN && name === 'home') PLAN.onShow();
+  if(window.VSUM && name === 'home') VSUM.onShow();
   if(window.BOM && name === 'parts') BOM.onShow();
   if(window.HEALTH && name === 'settings') HEALTH.onShow();
   if(window.VDOCS && name === 'dokumen') VDOCS.onShow();
@@ -21278,7 +21272,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:31,date:'2026-11-17'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:32,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -21922,6 +21916,7 @@ function packagesFrom(items, v){
   return out;
 }
 /* ---- status laik jalan (indikator, bukan sertifikasi) ---- */
+function kmOf(v){ try{ if(typeof effectiveKmInfo === 'function'){ var e = effectiveKmInfo(v); if(e && e.km != null) return Number(e.km); } }catch(_){} return v.km_saat_ini != null ? Number(v.km_saat_ini) : null; }
 function statusOf(v, items, st){
   var why = [], lvl = 'ok'; var bump = function(x){ if(x === 'nogo' || (x === 'attn' && lvl !== 'nogo')) lvl = x; };
   var crit = items.filter(function(i){ return i.cat.safety && i.overdue; }); if(crit.length){ bump('nogo'); why.push('Safety item overdue: ' + uniq(crit.map(function(i){ return i.cat.label; })).join(', ')); }
@@ -21929,7 +21924,7 @@ function statusOf(v, items, st){
   (st.defects || []).filter(function(d){ return d.kendaraan_id === v.id && d.status !== 'selesai' && (d.tingkat_keparahan === 'berat' || d.tingkat_keparahan === 'darurat'); }).slice(0, 1).forEach(function(){ bump('nogo'); why.push('Open severe defect report'); });
   var od = items.filter(function(i){ return !i.cat.safety && i.overdue; }); if(od.length){ bump('attn'); why.push(od.length + ' maintenance item(s) overdue'); }
   var soon = items.filter(function(i){ return i.cat.safety && i.state === 'soon'; }); if(soon.length){ bump('attn'); why.push('Safety item due soon: ' + uniq(soon.map(function(i){ return i.cat.label; })).join(', ')); }
-  if(v.km_saat_ini == null && !items.length) return { lvl:'nodata', why:['No odometer reading yet'] };
+  if(kmOf(v) == null && !items.length) return { lvl:'nodata', why:['No odometer reading yet'] };
   return { lvl:lvl, why:why };
 }
 function uniq(a){ return a.filter(function(x, i){ return a.indexOf(x) === i; }); }
@@ -21952,7 +21947,7 @@ function scopeVehicles(){ var vs = vehList(); return ST.scope === 'all' ? vs : v
 function compute(){
   var now = new Date(), vs = scopeVehicles(), wos = g('workOrders') || [], defects = g('defectLogs') || [], items = [], per = [], pkgs = [];
   vs.forEach(function(v){ var it = itemsFor(v, now); items = items.concat(it); per.push({ v:v, items:it, st:statusOf(v, it, { wo:wos, defects:defects }) }); pkgs = pkgs.concat(packagesFrom(it, v)); });
-  var visits = []; if(window.SVCPKG && SVCPKG.nextVisit) vs.forEach(function(v){ try{ var km = Number(v.km_saat_ini) || 0, nv = SVCPKG.nextVisit(v, km); if(nv){ var left = nv.km - km, d = new Date(now.getTime() + Math.max(0, left) / Math.max(1, (typeof assumedAnnualKm === 'function' ? assumedAnnualKm(v) : 10000)) * 365 * DAY); visits.push({ vid:v.id, vehicle:vname(v), level:'KM', km:nv.km, date:d, state:(left <= 1000 || (d - now) <= 30 * DAY) ? 'soon' : (d - now) <= 90 * DAY ? 'upcoming' : 'later', items:nv.items.map(function(id){ return { tpl:{ nama:SVCPKG.nameOf(id) || id }, cat:catOf({ id:id, nama:SVCPKG.nameOf(id) }) }; }), est:0, kmLeft:left }); } }catch(_){} });
+  var visits = []; if(window.SVCPKG && SVCPKG.nextVisit) vs.forEach(function(v){ try{ var km = Number(kmOf(v)) || 0, nv = SVCPKG.nextVisit(v, km); if(nv){ var left = nv.km - km, d = new Date(now.getTime() + Math.max(0, left) / Math.max(1, (typeof assumedAnnualKm === 'function' ? assumedAnnualKm(v) : 10000)) * 365 * DAY); visits.push({ vid:v.id, vehicle:vname(v), level:'KM', km:nv.km, date:d, state:(left <= 1000 || (d - now) <= 30 * DAY) ? 'soon' : (d - now) <= 90 * DAY ? 'upcoming' : 'later', items:nv.items.map(function(id){ return { tpl:{ nama:SVCPKG.nameOf(id) || id }, cat:catOf({ id:id, nama:SVCPKG.nameOf(id) }) }; }), est:0, kmLeft:left }); } }catch(_){} });
   return { now:now, vs:vs, wos:wos, per:per, items:items, pkgs:pkgs, visits:visits, cost:costBlock(vs, items, wos, now) };
 }
 /* ---- tampilan ---- */
@@ -21964,7 +21959,7 @@ function statusCard(C){
   var h = '<div class="dx-card"><h2 class="dx-h">Roadworthy Status</h2><p class="dx-sub">Rawat kendaraan seperti merawat pesawat: laik jalan, aman, efisien. Indikator dari data tercatat, bukan sertifikasi resmi. / Indicator from recorded data, not an official certificate.</p>';
   if(!C.per.length) return h + '<p class="dx-sub" style="margin:0;">Belum ada kendaraan. Add a vehicle in Vehicles, lalu kembali ke sini.</p></div>';
   h += '<div class="dx-grid">' + C.per.map(function(p){ var od = p.items.filter(function(i){ return i.overdue; }).length, soon = p.items.filter(function(i){ return i.state === 'soon'; }).length;
-    return '<div class="dx-st"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>' + esc(vname(p.v)) + '</strong>' + badge(p.st.lvl) + '</div><div class="dx-sub" style="margin:4px 0;">' + (p.v.km_saat_ini != null ? fkm(p.v.km_saat_ini) + ' km' : 'no odometer') + ' · ' + od + ' overdue · ' + soon + ' due soon</div>' + (p.st.why.length ? '<ul style="margin:0 0 0 16px;padding:0;font-size:13px;">' + p.st.why.slice(0, 3).map(function(w){ return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' : '<div class="dx-sub" style="margin:0;">' + esc(STLBL[p.st.lvl][1]) + '</div>') + '</div>'; }).join('') + '</div>';
+    return '<div class="dx-st"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;"><strong>' + esc(vname(p.v)) + '</strong>' + badge(p.st.lvl) + '</div><div class="dx-sub" style="margin:4px 0;">' + (kmOf(p.v) != null ? fkm(kmOf(p.v)) + ' km' : 'no odometer') + ' · ' + od + ' overdue · ' + soon + ' due soon</div>' + (p.st.why.length ? '<ul style="margin:0 0 0 16px;padding:0;font-size:13px;">' + p.st.why.slice(0, 3).map(function(w){ return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' : '<div class="dx-sub" style="margin:0;">' + esc(STLBL[p.st.lvl][1]) + '</div>') + '</div>'; }).join('') + '</div>';
   var any = C.items.length === 0 ? '<p class="dx-sub" style="margin:8px 0 0;">Catatan: overdue hanya terdeteksi bila ada riwayat perawatan terakhir yang tercatat. / Overdue is detected only where a last-done record exists.</p>' : '';
   return h + any + '</div>';
 }
@@ -23793,9 +23788,285 @@ function render(){ try{ ergoMount(); var h = mount(); if(h) h.innerHTML = html()
 function saveFor(pk){ var all = loadCfg(), o = {}; Array.prototype.forEach.call(document.querySelectorAll('#elhCfg input'), function(i){ var n = num(i.value); if(n != null) o[i.getAttribute('data-k')] = n; }); all[pk] = o; saveCfg(all); render(); }
 function resetFor(pk){ var all = loadCfg(); delete all[pk]; saveCfg(all); render(); }
 function hook(){ var o = window.renderInspeksiPage; if(typeof o !== 'function' || o.__elh) return false; var w = function(){ var r = o.apply(this, arguments); render(); return r; }; w.__elh = 1; window.renderInspeksiPage = w; return true; }
-window.ELH = { remindInfo:remindInfo, lastMeasure:lastMeasure, fillLast:fillLast, analyze:analyze, evalSeries:evalSeries, cfgFor:cfgFor, defaults:DEF, html:html, render:render, saveFor:saveFor, resetFor:resetFor, _hook:hook, _order:ORDER };
+window.ELH = { vehicleSummary:function(v){ return summaryFor(g('inspectionSessions') || [], v, loadCfg()); }, remindInfo:remindInfo, lastMeasure:lastMeasure, fillLast:fillLast, analyze:analyze, evalSeries:evalSeries, cfgFor:cfgFor, defaults:DEF, html:html, render:render, saveFor:saveFor, resetFor:resetFor, _hook:hook, _order:ORDER };
 function boot(){ if(!hook()) setTimeout(boot, 300); else render(); }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+
+</script>
+<script id="vsumScript">
+/* Altair Auto — Ringkasan Kendaraan (Rev 32): widget di halaman Vehicles, menggantikan menu Dashboard.
+   Hanya MEMBACA data yang sudah dimuat aplikasi (kendaraan, WO, kerusakan, inspeksi, dokumen) dan mesin hitung DASH.compute. Tidak menulis ke database.
+   Widget dapat ditampilkan/disembunyikan (Kelola Widget); pilihan disimpan di perangkat. */
+(function(){
+'use strict';
+if(window.VSUM) return;
+var esc = function(s){ s = String(s == null ? '' : s); return s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+function g(name){ try{ return (typeof window[name] !== 'undefined') ? window[name] : (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+var DAY = 86400000, LSW = 'ik_vsum_w', LSS = 'ik_vsum_scope';
+var fkm = function(n){ return Number(n).toLocaleString('id-ID'); };
+function fRp(n){ n = Number(n) || 0; return 'Rp ' + (n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' jt' : n.toLocaleString('id-ID')); }
+function vname(v){ return [v.merk, v.model, v.tahun].filter(Boolean).join(' ') || v.plat_nomor || v.id; }
+function toD(x){ if(!x) return null; var d = new Date(x); return isNaN(d) ? null : d; }
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function kmOf(v){ try{ var e = (typeof effectiveKmInfo === 'function') ? effectiveKmInfo(v) : null; if(e && e.km != null) return Number(e.km); }catch(_){} return v.km_saat_ini != null ? Number(v.km_saat_ini) : null; }
+var ST = { cal:null, scope:'all', open:false, q:'', stamp:null, sig:'', lastSel:null };
+try{ ST.scope = localStorage.getItem(LSS) || 'all'; }catch(_){}
+/* ---------- komponen kecil ---------- */
+function bars(rows, fmt){
+  var W = 260, H = 110, pad = 18, mx = Math.max.apply(null, rows.map(function(r){ return r.v; }).concat([1])), bw = Math.max(10, (W - pad * 2) / rows.length - 8);
+  var s = '<svg class="vw-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Grafik batang">';
+  rows.forEach(function(r, i){ var x = pad + i * ((W - pad * 2) / rows.length) + 4, h = Math.round((H - 34) * r.v / mx), y = H - 18 - h;
+    s += '<rect x="' + x + '" y="' + (r.v ? y : H - 19) + '" width="' + bw + '" height="' + (r.v ? h : 1) + '" rx="3" fill="var(--viz-seq)"><title>' + esc(r.l + ': ' + (fmt ? fmt(r.v) : r.v)) + '</title></rect>';
+    s += '<text x="' + (x + bw / 2) + '" y="' + (H - 5) + '" text-anchor="middle" font-size="10" fill="var(--text-dim)">' + esc(r.l) + '</text>';
+    if(r.v) s += '<text x="' + (x + bw / 2) + '" y="' + (y - 3) + '" text-anchor="middle" font-size="10" fill="var(--text)">' + esc(fmt ? fmt(r.v, true) : r.v) + '</text>'; });
+  return s + '</svg>';
+}
+function spark(vals){
+  if(!vals || vals.length < 2) return '';
+  var W = 90, H = 24, xs = vals.map(function(x){ return x.v; }), mn = Math.min.apply(null, xs), mx = Math.max.apply(null, xs), rg = (mx - mn) || 1;
+  var pts = vals.map(function(x, i){ return (i * (W - 4) / (vals.length - 1) + 2).toFixed(1) + ',' + (H - 3 - (x.v - mn) / rg * (H - 6)).toFixed(1); }), l = pts[pts.length - 1].split(',');
+  return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Tren"><polyline fill="none" stroke="var(--viz-seq)" stroke-width="2" stroke-linejoin="round" points="' + pts.join(' ') + '"/><circle cx="' + l[0] + '" cy="' + l[1] + '" r="3" fill="var(--viz-seq)" stroke="var(--surface)" stroke-width="2"/></svg>';
+}
+function kpi(n, l, tone){ return '<div class="vw-kpi"><div class="vw-num' + (tone ? ' vw-' + tone : '') + '">' + esc(n) + '</div><div class="vw-lbl">' + esc(l) + '</div></div>'; }
+function row(l, r){ return '<li><span class="vw-l">' + l + '</span><span class="vw-r">' + r + '</span></li>'; }
+function pill(t, k){ return '<span class="vw-pill vw-p-' + k + '">' + esc(t) + '</span>'; }
+var LV = { ok:['✓ Laik', 'ok'], attn:['▲ Perhatian', 'warn'], nogo:['⚠ Tidak disarankan', 'bad'], nodata:['○ Belum ada data', 'na'] };
+function none(t){ return '<p class="vw-empty">' + esc(t || 'Belum ada data.') + '</p>'; }
+/* ---------- data bersama ---------- */
+function ctx(){
+  var V = g('vehicles') || [], sc = ST.scope, vs = sc === 'all' ? V : V.filter(function(v){ return v.id === sc; }); if(!vs.length) vs = V;
+  var ids = {}; vs.forEach(function(v){ ids[v.id] = 1; });
+  var C = null; try{ var st = window.DASH && DASH._st; if(st){ var old = st.scope; st.scope = ST.scope; try{ C = DASH.compute(); } finally { st.scope = old; } } }catch(_){}
+  var inScope = function(a){ return (a || []).filter(function(x){ return ids[x.kendaraan_id]; }); };
+  return { V:V, vs:vs, ids:ids, C:C, now:new Date(), wos:inScope(g('workOrders')), defects:inScope(g('defectLogs')), sess:inScope(g('inspectionSessions')), items:g('inspectionItems') || [] };
+}
+function monthsBack(n, now){ var a = []; for(var i = n - 1; i >= 0; i--){ var d = new Date(now.getFullYear(), now.getMonth() - i, 1); a.push({ k:ymd(d), l:['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][d.getMonth()], v:0 }); } return a; }
+/* ---------- daftar widget ---------- */
+var W = [];
+function add(id, group, title, w, fn, dflt){ W.push({ id:id, group:group, title:title, wide:w === 'l', full:w === 'f', bare:id === 'kpistrip' || id === 'relkpi' || id === 'fuelkpi', fn:fn, dflt:!!dflt }); }
+add('quick', 'Kendaraan', 'Aksi Cepat', 'm', function(c){
+  var vs = c.V; if(!vs.length) return none('Tambah kendaraan dulu.');
+  var act = ST.act && vs.some(function(v){ return v.id === ST.act; }) ? ST.act : (vs.some(function(v){ return v.id === ST.scope; }) ? ST.scope : vs[0].id); ST.act = act;
+  var B = function(k, t, cls){ return '<button type="button" class="' + (cls || 'ghost') + '" onclick="VSUM.qa(\'' + k + '\')">' + esc(t) + '</button>'; };
+  return '<div class="field" style="margin:0 0 8px"><label for="vwAct">Untuk kendaraan</label><select id="vwAct" onchange="VSUM.setAct(this.value)">' + vs.map(function(v){ return '<option value="' + esc(v.id) + '"' + (v.id === act ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select></div><div class="vw-btns">' + B('fuel', 'Isi BBM') + B('tire', 'Tambah angin') + B('pre', 'Pre-trip') + B('post', 'Post-trip') + B('def', 'Lapor kerusakan') + B('inc', 'Insiden', 'danger') + B('acc', 'Kecelakaan', 'danger') + '</div>';
+}, true);
+add('status', 'Kendaraan', 'Status Laik Jalan', 'm', function(c){
+  if(!c.C || !c.C.per.length) return none(); var n = { ok:0, attn:0, nogo:0, nodata:0 }; c.C.per.forEach(function(p){ n[p.st.lvl] = (n[p.st.lvl] || 0) + 1; });
+  return '<div class="vw-kpis">' + kpi(n.ok, 'Laik', 'ok') + kpi(n.attn, 'Perhatian', 'warn') + kpi(n.nogo, 'Tidak disarankan', 'bad') + '</div><ul class="vw-list">' + c.C.per.map(function(p){ var L = LV[p.st.lvl] || LV.nodata; return row(esc(vname(p.v)) + (p.st.why.length ? '<div class="vw-sub">' + esc(p.st.why[0]) + '</div>' : ''), pill(L[0], L[1])); }).join('') + '</ul><p class="vw-note">Indikator dari data tercatat, bukan sertifikasi.</p>';
+}, true);
+add('odo', 'Kendaraan', 'Odometer Terakhir', 's', function(c){ return '<ul class="vw-list">' + c.vs.map(function(v){ var k = kmOf(v); return row(esc(vname(v)), k == null ? 'belum ada' : fkm(k) + ' km'); }).join('') + '</ul><p class="vw-note">Dari empat sumber (registrasi, BBM, inspeksi, Work Order).</p>'; }, true);
+add('papers', 'Kendaraan', 'Dokumen & Recall', 's', function(c){
+  if(!window.VDOCS) return none('Modul dokumen belum termuat.'); try{ if(!VDOCS._st.loaded && !VDOCS._st.loading && !ST.docsAsked){ ST.docsAsked = true; VDOCS.load().then(function(){ render(); }); } }catch(_){}
+  var A = []; try{ A = VDOCS.attention(c.now).filter(function(x){ return c.ids[x.r.kendaraan_id] && x.r.jenis !== 'recall'; }); }catch(_){}
+  var rec = []; try{ rec = (VDOCS._st.rows || []).filter(function(r){ return c.ids[r.kendaraan_id] && r.jenis === 'recall' && VDOCS.statusOf(r).key === 'soon'; }); }catch(_){}
+  var exp = A.filter(function(x){ return x.st.key === 'expired'; }).length;
+  return '<div class="vw-kpis">' + kpi(exp, 'Lewat masa', exp ? 'bad' : 'ok') + kpi(A.length - exp, 'Segera habis', A.length - exp ? 'warn' : 'ok') + kpi(rec.length, 'Recall terbuka', rec.length ? 'warn' : 'ok') + '</div>' + (A.length ? '<ul class="vw-list">' + A.slice(0, 4).map(function(x){ return row(esc(x.r.judul), pill(x.st.label, x.st.key === 'expired' ? 'bad' : 'warn')); }).join('') + '</ul>' : '') + '<p class="vw-note"><button type="button" class="ghost" onclick="showPanel(\'dokumen\')">Buka Dokumen ›</button></p>';
+}, false);
+add('trips', 'Inspeksi', 'Pre-trip & Post-trip Terakhir', 'm', function(c){
+  var last = function(vid, j){ var xs = (g('inspectionSessions') || []).filter(function(s){ return s.kendaraan_id === vid && s.jenis_inspeksi === j && toD(s.tanggal); }).map(function(s){ return toD(s.tanggal); }).sort(function(a, b){ return b - a; }); return xs[0] || null; };
+  var ago = function(d){ if(!d) return pill('belum ada', 'na'); var n = Math.floor((c.now - d) / DAY); return pill(n <= 0 ? 'hari ini' : n + ' hari lalu', n > 14 ? 'warn' : 'ok'); };
+  return '<ul class="vw-list">' + c.vs.map(function(v){ return row(esc(vname(v)) + '<div class="vw-sub">Pre-trip ' + ago(last(v.id, 'before_departure')) + ' · Post-trip ' + ago(last(v.id, 'after_arrival')) + '</div>', ''); }).join('') + '</ul>';
+}, true);
+add('submissions', 'Inspeksi', 'Inspeksi per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.sess.forEach(function(s){ var d = toD(s.tanggal); if(!d) return; var k = ymd(d); m.forEach(function(x){ if(x.k === k) x.v++; }); }); var tot = m.reduce(function(a, b){ return a + b.v; }, 0); return tot ? bars(m) : none('Belum ada inspeksi 6 bulan terakhir.'); }, false);
+add('findings', 'Inspeksi', 'Temuan Non-Baik (30 hari)', 's', function(c){
+  var from = new Date(c.now.getTime() - 30 * DAY), sid = {}; c.sess.forEach(function(s){ var d = toD(s.tanggal); if(d && d >= from) sid[s.id] = s; });
+  var it = c.items.filter(function(i){ return sid[i.session_id] && i.status && i.status !== 'baik'; }), buruk = it.filter(function(i){ return i.status === 'buruk'; }).length;
+  return '<div class="vw-kpis">' + kpi(it.length - buruk, 'Perhatian', it.length - buruk ? 'warn' : 'ok') + kpi(buruk, 'Buruk', buruk ? 'bad' : 'ok') + '</div>' + (it.length ? '<ul class="vw-list">' + it.slice(0, 4).map(function(i){ return row(esc(i.komponen || 'Item'), pill(i.status, i.status === 'buruk' ? 'bad' : 'warn')); }).join('') + '</ul>' : '<p class="vw-note">Tidak ada temuan.</p>');
+}, false);
+add('measure', 'Inspeksi', 'Pengingat Ukur Tegangan', 's', function(c){
+  if(!window.ELH) return none('Modul kelistrikan belum termuat.'); return '<ul class="vw-list">' + c.vs.map(function(v){ var r = null; try{ r = ELH.remindInfo({ vehicles:c.V, sessions:g('inspectionSessions') || [], vehicleId:v.id }); }catch(_){} return row(esc(vname(v)), !r ? '' : (r.days == null ? pill('belum pernah', 'warn') : pill(r.days + ' hari lalu', r.due ? 'warn' : 'ok'))); }).join('') + '</ul>';
+}, false);
+add('defects', 'Kerusakan', 'Laporan Kerusakan Terbuka', 'm', function(c){
+  var op = c.defects.filter(function(d){ return d.status !== 'selesai'; }), sv = function(k){ return op.filter(function(d){ return d.tingkat_keparahan === k; }).length; };
+  return '<div class="vw-kpis">' + kpi(op.length, 'Terbuka', op.length ? 'warn' : 'ok') + kpi(sv('berat') + sv('darurat'), 'Berat/Darurat', (sv('berat') + sv('darurat')) ? 'bad' : 'ok') + '</div>' + (op.length ? '<ul class="vw-list">' + op.slice(0, 4).map(function(d){ var v = c.V.filter(function(x){ return x.id === d.kendaraan_id; })[0]; return row(esc(d.gejala || d.nomor_defect || 'Kerusakan') + '<div class="vw-sub">' + esc(v ? vname(v) : '') + '</div>', pill(d.tingkat_keparahan || '-', /berat|darurat/.test(d.tingkat_keparahan || '') ? 'bad' : 'warn')); }).join('') + '</ul>' : '<p class="vw-note">Tidak ada laporan terbuka.</p>');
+}, true);
+add('wo', 'Servis', 'Work Order Aktif', 's', function(c){ var n = function(s){ return c.wos.filter(function(w){ return w.status === s; }).length; }; return '<div class="vw-kpis">' + kpi(n('open'), 'Open') + kpi(n('proses'), 'Proses') + kpi(n('tunda'), 'Tunda', n('tunda') ? 'warn' : '') + '</div><p class="vw-note"><button type="button" class="ghost" onclick="showPanel(\'workorder\')">Buka Work Order ›</button></p>'; }, true);
+add('reminders', 'Servis', 'Pengingat Servis', 's', function(c){ if(!c.C) return none(); var od = c.C.items.filter(function(i){ return i.overdue; }).length, so = c.C.items.filter(function(i){ return i.state === 'soon'; }).length; return '<div class="vw-kpis">' + kpi(od, 'Terlambat', od ? 'bad' : 'ok') + kpi(so, 'Segera', so ? 'warn' : 'ok') + '</div><p class="vw-note">Terlambat hanya terdeteksi bila ada riwayat perawatan terakhir.</p>'; }, true);
+add('spent', 'Biaya', 'Biaya 12 Bulan', 'm', function(c){ if(!c.C) return none(); var k = c.C.cost; return '<div class="vw-kpis">' + kpi(fRp(k.spent), 'Perawatan (aktual)') + kpi(fRp(k.planned), '90 hari ke depan (Estimasi)') + kpi(fRp(k.fuel), 'BBM') + '</div><p class="vw-note">' + k.n + ' Work Order selesai, di luar BBM. Estimasi memakai asumsi bawaan, bukan prediksi.</p>'; }, true);
+add('monthly', 'Biaya', 'Biaya Perawatan per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.wos.forEach(function(w){ if(w.status !== 'selesai' || w.task_key === 'quick_bbm') return; var d = toD(w.tanggal_selesai); if(!d) return; var k = ymd(d), v = (Number(w.biaya_part) || 0) + (Number(w.biaya_jasa) || 0); m.forEach(function(x){ if(x.k === k) x.v += v; }); }); var tot = m.reduce(function(a, b){ return a + b.v; }, 0); return tot ? bars(m, function(v, short){ return short ? (v >= 1e6 ? (v / 1e6).toFixed(1).replace('.', ',') + 'jt' : Math.round(v / 1e3) + 'rb') : fRp(v); }) : none('Belum ada biaya selesai 6 bulan terakhir.'); }, false);
+add('exposure', 'Biaya', 'Risiko Jika Ditunda (Estimasi)', 's', function(c){ if(!c.C) return none(); var k = c.C.cost; return '<div class="vw-kpis">' + kpi(fRp(k.expo), 'Eksposur terburuk', k.expo ? 'warn' : 'ok') + kpi(k.nExpo, 'Kelompok part', '') + '</div><p class="vw-note">Hanya dihitung untuk item terlambat atau segera.</p>'; }, false);
+add('elec', 'Kelistrikan & BBM', 'Kesehatan Kelistrikan', 'm', function(c){
+  if(!window.ELH || !ELH.vehicleSummary) return none('Modul kelistrikan belum termuat.'); var L = [['Normal', 'ok'], ['Perhatian', 'warn'], ['Cek', 'bad']];
+  return '<ul class="vw-list">' + c.vs.map(function(v){ var s = ELH.vehicleSummary(v); return row(esc(vname(v)) + (s.a.hint ? '<div class="vw-sub">' + esc(s.a.hint) + '</div>' : ''), s.a.any ? pill(L[s.a.worst][0], L[s.a.worst][1]) : pill('belum ada data', 'na')); }).join('') + '</ul><p class="vw-note">Ambang Estimasi; baseline dari data kendaraan sendiri. Rincian di Inspection.</p>';
+}, true);
+add('volt', 'Kelistrikan & BBM', 'Tren Tegangan Mesin Mati', 'm', function(c){
+  if(!window.ELH || !ELH.vehicleSummary) return none(); var rows = c.vs.map(function(v){ var s = ELH.vehicleSummary(v), r = (s.a.res.post.voff.n ? s.a.res.post.voff : s.a.res.pre.voff); return r.n ? row(esc(vname(v)) + '<div class="vw-sub">' + r.n + ' data</div>', spark(r.spark) + ' <strong>' + r.latest.v.toFixed(1).replace('.', ',') + ' V</strong>') : ''; }).filter(Boolean);
+  return rows.length ? '<ul class="vw-list">' + rows.join('') + '</ul>' : none('Belum ada pengukuran tegangan.');
+}, false);
+add('fuel', 'Kelistrikan & BBM', 'KM/L Terakhir vs Kebiasaan', 'm', function(c){
+  if(!window.ELH || !ELH.vehicleSummary) return none(); var rows = c.vs.map(function(v){ var s = ELH.vehicleSummary(v), r = (s.a.res.post.fuel.n ? s.a.res.post.fuel : s.a.res.pre.fuel); return r.n ? row(esc(vname(v)) + '<div class="vw-sub">kebiasaan ' + (r.base == null ? 'belum ada' : r.base.toFixed(1).replace('.', ',') + ' km/L') + '</div>', spark(r.spark) + ' <strong>' + r.latest.v.toFixed(1).replace('.', ',') + '</strong> ' + (r.level ? pill(r.level === 2 ? 'Cek' : 'Perhatian', r.level === 2 ? 'bad' : 'warn') : '')) : ''; }).filter(Boolean);
+  return rows.length ? '<ul class="vw-list">' + rows.join('') + '</ul><p class="vw-note">Dari isian inspeksi. Penurunan bisa menandakan busi, filter udara, tekanan ban, CVT, atau rem seret.</p>' : none('Belum ada isian KM/L di inspeksi.');
+}, false);
+add('recent', 'Lainnya', 'Pekerjaan Selesai Terbaru', 'm', function(c){ var a = c.wos.filter(function(w){ return w.status === 'selesai' && toD(w.tanggal_selesai); }).sort(function(x, y){ return toD(y.tanggal_selesai) - toD(x.tanggal_selesai); }).slice(0, 5); return a.length ? '<ul class="vw-list">' + a.map(function(w){ var v = c.V.filter(function(x){ return x.id === w.kendaraan_id; })[0]; return row(esc(w.judul || w.nomor_wo || 'Work Order') + '<div class="vw-sub">' + esc(v ? vname(v) : '') + ' · ' + esc(String(w.tanggal_selesai).slice(0, 10)) + '</div>', esc(fRp((Number(w.biaya_part) || 0) + (Number(w.biaya_jasa) || 0)))); }).join('') + '</ul>' : none(); }, false);
+
+/* ---- gaya dashboard pemeliharaan: kartu angka berwarna, tabel jadwal, kalender, tipe pekerjaan, tren penyelesaian ---- */
+function sched(c){
+  if(!c.C) return []; var a = c.C.pkgs.map(function(p){ return { n:p.level + '-Check', lv:p.level, v:p.vehicle, st:p.state, d:p.date, km:p.km, k:p.items.length, est:p.est, iv:'Berkala' }; }).concat(c.C.visits.map(function(p){ return { n:'Service visit', lv:'KM', v:p.vehicle, st:p.state, d:p.date, km:p.km, k:p.items.length, est:0, iv:'Per KM' }; }));
+  var ORD = { overdue:0, soon:1, upcoming:2, later:3 }; a.sort(function(x, y){ return ((ORD[x.st] == null ? 9 : ORD[x.st]) - (ORD[y.st] == null ? 9 : ORD[y.st])) || ((x.d || 0) - (y.d || 0)); }); return a;
+}
+function tile(n, l, k){ return '<div class="vw-tile vw-t-' + k + '"><span>' + esc(l) + '</span><b>' + esc(n) + '</b></div>'; }
+add('kpistrip', 'Kendaraan', 'Ikhtisar (kartu angka)', 'f', function(c){
+  var it = c.C ? c.C.items : [], od = it.filter(function(i){ return i.overdue; }).length, now = c.now.getTime(), wk = it.filter(function(i){ return !i.overdue && i.date && (i.date.getTime() - now) <= 7 * DAY; }).length, mo = it.filter(function(i){ return i.state === 'soon'; }).length, act = c.wos.filter(function(w){ return w.status === 'open' || w.status === 'proses' || w.status === 'tunda'; }).length;
+  return '<div class="vw-tiles">' + tile(od, 'Terlambat', 'bad') + tile(wk, 'Minggu ini', 'warn') + tile(mo, 'Segera (≤ 30 hari)', 'info') + tile(act, 'Work Order aktif', 'ok') + '</div>';
+}, true);
+add('schedule', 'Servis', 'Jadwal Perawatan Berkala', 'f', function(c){
+  var a = sched(c); if(!a.length) return none('Belum ada paket terjadwal. Isi KM kendaraan dan catat perawatan terakhir.');
+  var L = { overdue:['Terlambat', 'bad'], soon:['Segera', 'warn'], upcoming:['90 hari', 'info'], later:['Terjadwal', 'ok'] };
+  return '<div style="overflow-x:auto"><table class="vw-tbl"><thead><tr><th>Pekerjaan</th><th>Jatuh tempo</th><th>Kendaraan</th><th>Interval</th><th>Status</th></tr></thead><tbody>' + a.slice(0, 8).map(function(p){ var l = L[p.st] || ['-', 'na']; return '<tr><td><span class="vw-sq vw-q-' + l[1] + '"></span><strong>' + esc(p.n) + '</strong><div class="vw-sub">' + p.k + ' tugas' + (p.est ? ' · ' + fRp(p.est) + ' (Estimasi)' : '') + '</div></td><td>' + (p.d ? esc(p.d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })) : '—') + (p.km != null ? '<div class="vw-sub">' + fkm(p.km) + ' km</div>' : '') + '</td><td>' + esc(p.v) + '</td><td>' + esc(p.iv) + '</td><td>' + pill(l[0], l[1]) + '</td></tr>'; }).join('') + '</tbody></table></div><p class="vw-note">Tanggal dari KM dihitung dengan asumsi pemakaian tahunan (Estimasi). <button type="button" class="ghost" onclick="showPanel(\'program\')">Program ›</button> <button type="button" class="ghost" onclick="showPanel(\'planboard\')">Plan Board ›</button></p>';
+}, true);
+add('calendar', 'Servis', 'Kalender Jatuh Tempo', 'm', function(c){
+  var m = ST.cal || new Date(c.now.getFullYear(), c.now.getMonth(), 1), first = new Date(m.getFullYear(), m.getMonth(), 1), days = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate(), a = sched(c), by = {};
+  a.forEach(function(p){ if(p.d && p.d.getFullYear() === m.getFullYear() && p.d.getMonth() === m.getMonth()){ var k = p.d.getDate(); by[k] = by[k] || []; by[k].push(p); } });
+  var h = '<div class="vw-calh"><button type="button" class="ghost" onclick="VSUM.cal(-1)" aria-label="Bulan sebelumnya">‹</button><strong>' + esc(m.toLocaleDateString('id-ID', { month:'long', year:'numeric' })) + '</strong><button type="button" class="ghost" onclick="VSUM.cal(1)" aria-label="Bulan berikutnya">›</button></div><div class="vw-cal">';
+  ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].forEach(function(d){ h += '<span class="vw-cd">' + d + '</span>'; });
+  for(var i = 0; i < first.getDay(); i++) h += '<span></span>';
+  for(var d = 1; d <= days; d++){ var ev = by[d], tod = (m.getFullYear() === c.now.getFullYear() && m.getMonth() === c.now.getMonth() && d === c.now.getDate()); var worst = ev ? (ev.some(function(x){ return x.st === 'overdue'; }) ? 'bad' : ev.some(function(x){ return x.st === 'soon'; }) ? 'warn' : 'info') : ''; h += '<span class="vw-day' + (tod ? ' vw-today' : '') + '"' + (ev ? ' title="' + esc(ev.map(function(x){ return x.n + ' · ' + x.v; }).join('; ')) + '"' : '') + '>' + d + (ev ? '<i class="vw-dot vw-d-' + worst + '"></i>' : '') + '</span>'; }
+  h += '</div>'; var up = a.filter(function(p){ return p.d && p.d >= new Date(c.now.getFullYear(), c.now.getMonth(), c.now.getDate()); }).slice(0, 3);
+  return h + (up.length ? '<ul class="vw-list" style="margin-top:8px">' + up.map(function(p){ return row('<strong>' + esc(p.d.toLocaleDateString('id-ID', { day:'numeric', month:'short' })) + '</strong> · ' + esc(p.n) + '<div class="vw-sub">' + esc(p.v) + '</div>', ''); }).join('') + '</ul>' : '<p class="vw-note">Tidak ada jadwal mendatang.</p>');
+}, true);
+add('types', 'Servis', 'Tipe Pekerjaan Terjadwal', 'm', function(c){
+  var a = sched(c), n = function(lv){ return a.filter(function(p){ return p.lv === lv; }).length; };
+  return '<div class="vw-types">' + [['A-Check', 'A', 'ok', 'ringan'], ['C-Check', 'C', 'warn', 'menengah-besar'], ['D-Check', 'D', 'bad', 'overhaul'], ['Per KM', 'KM', 'info', 'Service visit']].map(function(t){ return '<div class="vw-ty vw-t-' + t[2] + '"><span>' + t[0] + '</span><b>' + n(t[1]) + '</b><small>' + t[3] + '</small></div>'; }).join('') + '</div>';
+}, false);
+add('compliance', 'Servis', 'Ketepatan Waktu Work Order', 'm', function(c){
+  var m = monthsBack(6, c.now).map(function(x){ x.t = 0; x.d = 0; return x; });
+  c.wos.forEach(function(w){ var tg = toD(w.tanggal_target); if(!tg || w.status === 'batal') return; var k = ymd(tg); m.forEach(function(x){ if(x.k === k){ x.t++; var f = toD(w.tanggal_selesai); if(w.status === 'selesai' && f && f.getTime() <= tg.getTime() + DAY) x.d++; } }); });
+  var pts = m.filter(function(x){ return x.t > 0; }).map(function(x){ x.r = Math.round(x.d / x.t * 100); return x; }); if(pts.length < 2) return none('Butuh Work Order bertanggal target dari sedikitnya 2 bulan.');
+  var W2 = 260, H = 110, px = function(i){ return 24 + i * (W2 - 40) / (m.length - 1); }, py = function(r){ return 14 + (100 - r) / 100 * (H - 38); }, idx = m.map(function(x, i){ return x.r != null ? [px(i), py(x.r), x] : null; }).filter(Boolean);
+  var line = idx.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '), area = 'M' + idx[0][0].toFixed(1) + ',' + (H - 24) + ' L' + line.replace(/ /g, ' L') + ' L' + idx[idx.length - 1][0].toFixed(1) + ',' + (H - 24) + ' Z';
+  var sv = '<svg class="vw-svg" viewBox="0 0 ' + W2 + ' ' + H + '" role="img" aria-label="Tren ketepatan waktu Work Order"><path d="' + area + '" fill="var(--viz-seq)" opacity=".12"/><polyline points="' + line + '" fill="none" stroke="var(--viz-seq)" stroke-width="2.5" stroke-linejoin="round"/>';
+  idx.forEach(function(p){ sv += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="4" fill="var(--surface)" stroke="var(--viz-seq)" stroke-width="2"><title>' + esc(p[2].l + ': ' + p[2].r + '% (' + p[2].d + ' dari ' + p[2].t + ')') + '</title></circle><text x="' + p[0].toFixed(1) + '" y="' + (p[1] - 8).toFixed(1) + '" text-anchor="middle" font-size="10" fill="var(--text)">' + p[2].r + '%</text>'; });
+  m.forEach(function(x, i){ sv += '<text x="' + px(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="var(--text-dim)">' + x.l + '</text>'; });
+  return sv + '</svg><p class="vw-note">Work Order bertanggal target di bulan itu yang selesai paling lambat satu hari setelah target.</p>';
+}, false);
+/* ---- keandalan & kerusakan (gaya Maintenance & Reliability) ---- */
+function relBase(c){
+  var from = new Date(c.now.getTime() - 365 * DAY), nv = Math.max(1, c.vs.length), woById = {}; c.wos.forEach(function(w){ woById[w.id] = w; });
+  var f = c.defects.filter(function(d){ var t = toD(d.tanggal_ditemukan); return t && t >= from; }), rep = [];
+  f.forEach(function(d){ var w = d.work_order_id ? woById[d.work_order_id] : null, a = toD(d.tanggal_ditemukan), b = w ? toD(w.tanggal_selesai) : null; if(a && b && w.status === 'selesai' && b >= a) rep.push((b - a) / DAY); });
+  var down = rep.reduce(function(x, y){ return x + y; }, 0), span = 365 * nv;
+  return { n:f.length, mtbf:f.length >= 2 ? Math.round(span / f.length) : null, mttr:rep.length ? down / rep.length : null, nrep:rep.length, down:down, avail:rep.length ? Math.max(0, 100 - down / span * 100) : null, nv:nv };
+}
+add('relkpi', 'Keandalan', 'Ikhtisar Keandalan (12 bulan)', 'f', function(c){
+  var r = relBase(c), f1 = function(x, d){ return x == null ? '—' : x.toFixed(d).replace('.', ','); };
+  return '<div class="vw-tiles">' + tile(r.avail == null ? '—' : f1(r.avail, 1) + '%', 'Ketersediaan', 'ok') + tile(r.mtbf == null ? '—' : r.mtbf, 'MTBF (hari)', 'ok') + tile(f1(r.mttr, 1), 'MTTR (hari)', 'info') + tile(f1(r.down, 0), 'Downtime (hari)', 'info') + '</div><p class="vw-note">Dari ' + r.n + ' laporan kerusakan dan ' + r.nrep + ' perbaikan yang punya Work Order tertaut selesai, ' + r.nv + ' kendaraan. Sampel kecil: baca sebagai Estimasi. MTTR dihitung dari tanggal laporan sampai Work Order tertaut selesai.</p>';
+}, false);
+add('breakdown', 'Keandalan', 'Frekuensi Kerusakan per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.defects.forEach(function(d){ var t = toD(d.tanggal_ditemukan); if(!t) return; var k = ymd(t); m.forEach(function(x){ if(x.k === k) x.v++; }); }); var tot = m.reduce(function(a, b){ return a + b.v; }, 0); return tot ? bars(m) : none('Tidak ada laporan kerusakan 6 bulan terakhir.'); }, false);
+add('emergency', 'Keandalan', 'Perbaikan Darurat/Kritis per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.wos.forEach(function(w){ if(w.prioritas !== 'kritis' && w.prioritas !== 'darurat') return; var t = toD(w.tanggal_selesai || w.tanggal_target); if(!t) return; var k = ymd(t); m.forEach(function(x){ if(x.k === k) x.v++; }); }); var tot = m.reduce(function(a, b){ return a + b.v; }, 0); return tot ? bars(m) : none('Tidak ada Work Order kritis 6 bulan terakhir.'); }, false);
+add('pmcomp', 'Keandalan', 'Kepatuhan Perawatan', 's', function(c){
+  var it = c.C ? c.C.items : []; if(!it.length) return none('Belum ada item terjadwal; isi KM dan catat perawatan terakhir.'); var od = it.filter(function(i){ return i.overdue; }).length, pct = Math.round((it.length - od) / it.length * 100), R = 40, C2 = 2 * Math.PI * R, on = C2 * pct / 100;
+  return '<svg class="vw-svg" viewBox="0 0 120 100" role="img" aria-label="Kepatuhan perawatan ' + pct + ' persen" style="max-width:200px;margin:0 auto"><circle cx="60" cy="50" r="' + R + '" fill="none" stroke="var(--viz-dim)" stroke-width="12"/><circle cx="60" cy="50" r="' + R + '" fill="none" stroke="var(--viz-seq)" stroke-width="12" stroke-dasharray="' + on.toFixed(1) + ' ' + C2.toFixed(1) + '" transform="rotate(-90 60 50)"/><text x="60" y="55" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">' + pct + '%</text></svg><p class="vw-note">' + (it.length - od) + ' dari ' + it.length + ' item tidak terlambat. Terlambat hanya terdeteksi bila ada riwayat perawatan terakhir.</p>';
+}, false);
+add('spares', 'Biaya', 'Biaya Part per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.wos.forEach(function(w){ if(w.status !== 'selesai' || w.task_key === 'quick_bbm') return; var t = toD(w.tanggal_selesai); if(!t) return; var k = ymd(t); m.forEach(function(x){ if(x.k === k) x.v += Number(w.biaya_part) || 0; }); }); var mx = Math.max.apply(null, m.map(function(x){ return x.v; }).concat([1])); if(m.every(function(x){ return !x.v; })) return none('Belum ada biaya part 6 bulan terakhir.'); return '<ul class="vw-list">' + m.slice().reverse().map(function(x){ return '<li><span class="vw-l" style="width:34px;flex:none">' + x.l + '</span><span style="flex:1;min-width:0"><span style="display:block;height:10px;border-radius:5px;background:var(--viz-seq);width:' + Math.round(x.v / mx * 100) + '%;min-width:' + (x.v ? 3 : 0) + 'px"></span></span><span class="vw-r">' + (x.v ? fRp(x.v) : '—') + '</span></li>'; }).join('') + '</ul>'; }, false);
+
+/* ---- BBM & jarak (gaya tren armada). Dihitung sendiri dari Work Order Quick Entry (task_key quick_bbm); isian janggal ditandai dan tidak dihitung. ---- */
+var PPL_MIN = 5000, PPL_MAX = 30000, EF = { bensin:2.31, diesel:2.68 };
+function litersOf(w){ var m = /([\d]+(?:[.,]\d+)?)/.exec(String(w.parts_terpakai || '')); if(!m) return null; var x = parseFloat(m[1].replace(',', '.')); return isFinite(x) && x > 0 ? x : null; }
+function fuelData(c){
+  var months = monthsBack(6, c.now), idx = {}; months.forEach(function(m, i){ idx[m.k] = i; });
+  var out = { months:months, fills:[], issues:[], liters:months.map(function(){ return 0; }), cost:months.map(function(){ return 0; }), costOk:months.map(function(){ return 0; }), dist:months.map(function(){ return 0; }), distL:months.map(function(){ return 0; }), co2:months.map(function(){ return 0; }), maint:months.map(function(){ return 0; }) };
+  var vb = {}; c.V.forEach(function(v){ vb[v.id] = v; });
+  c.vs.forEach(function(v){
+    var fills = c.wos.filter(function(w){ return w.kendaraan_id === v.id && w.task_key === 'quick_bbm' && w.status === 'selesai' && toD(w.tanggal_selesai); }).map(function(w){ var cost = (Number(w.biaya_part) || 0) + (Number(w.biaya_jasa) || 0), l = litersOf(w); return { w:w, v:v, d:toD(w.tanggal_selesai), km:(w.km_saat_selesai != null ? Number(w.km_saat_selesai) : null), l:l, cost:cost, diesel:/dex|solar|diesel/i.test(String(w.judul || '')) }; }).sort(function(a, b){ return (a.d - b.d) || ((a.km || 0) - (b.km || 0)); });
+    var prev = null;
+    fills.forEach(function(f){
+      var why = null, ppl = f.l ? f.cost / f.l : null; if(f.l == null) why = 'volume (liter) kosong'; else if(f.cost > 0 && (ppl < PPL_MIN || ppl > PPL_MAX)) why = 'harga per liter tidak wajar (Rp ' + Math.round(ppl).toLocaleString('id-ID') + '/L dari ' + f.l.toLocaleString('id-ID') + ' L dan ' + fRp(f.cost) + ')'; else if(f.cost <= 0) why = 'biaya kosong';
+      f.bad = why; if(why) out.issues.push({ f:f, why:why });
+      var k = idx[ymd(f.d)]; if(k != null){ out.cost[k] += f.cost; if(!why){ out.costOk[k] += f.cost; out.liters[k] += f.l; out.co2[k] += f.l * (f.v.powertrain === 'listrik' ? 0 : (f.diesel ? EF.diesel : EF.bensin)); } }
+      if(prev && f.km != null && prev.km != null && !why){ var dist = f.km - prev.km; if(dist > 0){ var r = dist / f.l; if(r < 2 || r > 120){ out.issues.push({ f:f, why:'KM/L tidak wajar (' + r.toFixed(1).replace('.', ',') + ' km/L dari ' + fkm(dist) + ' km dan ' + f.l.toLocaleString('id-ID') + ' L)' }); } else if(k != null){ out.dist[k] += dist; out.distL[k] += f.l; } } }
+      if(f.km != null) prev = f; out.fills.push(f);
+    });
+    c.wos.forEach(function(w){ if(w.kendaraan_id !== v.id || w.status !== 'selesai' || w.task_key === 'quick_bbm') return; var d = toD(w.tanggal_selesai), k = d ? idx[ymd(d)] : null; if(k != null) out.maint[k] += (Number(w.biaya_part) || 0) + (Number(w.biaya_jasa) || 0); });
+  });
+  return out;
+}
+function lineChart(labels, series, fmt, trend){
+  var W2 = 260, H = 120, all = []; series.forEach(function(sr){ sr.v.forEach(function(x){ if(x != null) all.push(x); }); }); if(!all.length) return ''; var mx = Math.max.apply(null, all), mn = Math.min(0, Math.min.apply(null, all)), rg = (mx - mn) || 1;
+  var px = function(i){ return 22 + i * (W2 - 40) / Math.max(1, labels.length - 1); }, py = function(v){ return 16 + (mx - v) / rg * (H - 42); }, svg = '<svg class="vw-svg" viewBox="0 0 ' + W2 + ' ' + H + '" role="img" aria-label="Grafik garis">';
+  var cols = ['var(--viz-seq)', 'var(--viz-2)'];
+  series.forEach(function(sr, si){ var pts = []; sr.v.forEach(function(x, i){ if(x != null) pts.push([px(i), py(x), x, i]); }); if(!pts.length) return; svg += '<polyline fill="none" stroke="' + cols[si % 2] + '" stroke-width="2.5" stroke-linejoin="round" points="' + pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '"/>';
+    if(trend && pts.length >= 3){ var n = pts.length, sx = 0, sy = 0, sxy = 0, sxx = 0; pts.forEach(function(p){ sx += p[3]; sy += p[2]; sxy += p[3] * p[2]; sxx += p[3] * p[3]; }); var dn = n * sxx - sx * sx, sl = dn ? (n * sxy - sx * sy) / dn : 0, ic = (sy - sl * sx) / n, a0 = pts[0][3], a1 = pts[n - 1][3]; svg += '<line x1="' + px(a0).toFixed(1) + '" y1="' + py(ic + sl * a0).toFixed(1) + '" x2="' + px(a1).toFixed(1) + '" y2="' + py(ic + sl * a1).toFixed(1) + '" stroke="var(--text-dim)" stroke-width="1.2" stroke-dasharray="4 3"/>'; }
+    pts.forEach(function(p){ svg += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.5" fill="var(--surface)" stroke="' + cols[si % 2] + '" stroke-width="2"><title>' + esc(sr.n + ' ' + labels[p[3]] + ': ' + (fmt ? fmt(p[2]) : p[2])) + '</title></circle>'; if(series.length === 1) svg += '<text x="' + p[0].toFixed(1) + '" y="' + (p[1] - 7).toFixed(1) + '" text-anchor="middle" font-size="10" fill="var(--text)">' + esc(fmt ? fmt(p[2], true) : p[2]) + '</text>'; }); });
+  labels.forEach(function(l, i){ svg += '<text x="' + px(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="var(--text-dim)">' + esc(l) + '</text>'; });
+  svg += '</svg>'; if(series.length > 1) svg += '<div class="vw-leg">' + series.map(function(sr, si){ return '<span><i style="background:' + cols[si % 2] + '"></i>' + esc(sr.n) + '</span>'; }).join('') + '</div>'; return svg;
+}
+function kmlSeries(fd){ return fd.months.map(function(m, i){ return fd.distL[i] > 0 ? fd.dist[i] / fd.distL[i] : null; }); }
+var f1 = function(x){ return x == null ? '—' : Number(x).toFixed(1).replace('.', ','); };
+add('fuelkpi', 'BBM & Jarak', 'Ikhtisar BBM (6 bulan)', 'f', function(c){
+  var fd = fuelData(c), sum = function(a){ return a.reduce(function(x, y){ return x + y; }, 0); }, L = sum(fd.liters), D = sum(fd.dist), DL = sum(fd.distL);
+  return '<div class="vw-tiles">' + tile(fkm(Math.round(D)) + ' km', 'Jarak antar isi', 'info') + tile(f1(L) + ' L', 'BBM terbeli', 'info') + tile(DL ? f1(D / DL) + ' km/L' : '—', 'Rata-rata km/L', 'ok') + tile(fRp(sum(fd.cost)), 'Biaya BBM', 'warn') + '</div><p class="vw-note">Dari Work Order Quick Entry; isian janggal tidak dihitung (lihat widget Isian BBM Perlu Diperiksa). KM/L di sini sederhana (isi ke isi); metode full-to-full lengkap ada di Usage.</p>';
+}, false);
+add('kmlscore', 'BBM & Jarak', 'KM/L Bulan Terakhir', 's', function(c){
+  var fd = fuelData(c), s = kmlSeries(fd), last = null, prev = null, li = -1; for(var i = s.length - 1; i >= 0; i--){ if(s[i] != null){ if(last == null){ last = s[i]; li = i; } else { prev = s[i]; break; } } }
+  if(last == null) return none('Belum ada pasangan isi BBM berKM yang valid.'); var d = prev == null ? null : last - prev;
+  return '<div class="vw-kpis">' + kpi(f1(last), 'km/L · ' + fd.months[li].l) + '</div>' + (d == null ? '<p class="vw-note">Belum ada bulan pembanding.</p>' : '<p class="vw-note"><strong class="' + (d >= 0 ? 'vw-ok' : 'vw-bad') + '">' + (d >= 0 ? '▲ +' : '▼ ') + f1(d) + ' km/L</strong> dibanding bulan data sebelumnya</p>');
+}, false);
+add('kmltrend', 'BBM & Jarak', 'Tren KM/L (garis putus-putus = kecenderungan)', 'm', function(c){ var fd = fuelData(c), s = kmlSeries(fd); return s.some(function(x){ return x != null; }) ? lineChart(fd.months.map(function(m){ return m.l; }), [{ n:'km/L', v:s }], function(v){ return f1(v); }, true) : none('Belum ada data KM/L yang valid.'); }, false);
+add('fuelliters', 'BBM & Jarak', 'Konsumsi BBM per Bulan (liter)', 'm', function(c){ var fd = fuelData(c); return fd.liters.some(Boolean) ? bars(fd.months.map(function(m, i){ return { l:m.l, v:Math.round(fd.liters[i] * 10) / 10 }; }), function(v){ return f1(v) + ' L'; }) : none('Belum ada isian BBM yang valid.'); }, false);
+add('fuelspend', 'BBM & Jarak', 'Biaya BBM per Bulan', 'm', function(c){ var fd = fuelData(c); return fd.cost.some(Boolean) ? bars(fd.months.map(function(m, i){ return { l:m.l, v:fd.cost[i] }; }), function(v, short){ return short ? (v >= 1e6 ? (v / 1e6).toFixed(1).replace('.', ',') + 'jt' : Math.round(v / 1e3) + 'rb') : fRp(v); }) : none('Belum ada biaya BBM.'); }, false);
+add('priceunit', 'BBM & Jarak', 'Harga BBM per Liter', 'm', function(c){ var fd = fuelData(c), rows = fd.months.map(function(m, i){ return { l:m.l, v:fd.liters[i] ? Math.round(fd.costOk[i] / fd.liters[i]) : 0 }; }); return rows.some(function(r){ return r.v; }) ? bars(rows, function(v, short){ return short ? (v / 1000).toFixed(1).replace('.', ',') + 'rb' : 'Rp ' + v.toLocaleString('id-ID') + '/L'; }) : none('Belum ada isian BBM yang valid.'); }, false);
+add('distance', 'BBM & Jarak', 'Jarak Tempuh per Bulan (antar isi)', 'm', function(c){ var fd = fuelData(c); return fd.dist.some(Boolean) ? bars(fd.months.map(function(m, i){ return { l:m.l, v:Math.round(fd.dist[i]) }; }), function(v){ return fkm(v) + ' km'; }) : none('Belum ada jarak yang dapat dihitung.'); }, false);
+add('co2', 'BBM & Jarak', 'Emisi CO₂ (Estimasi)', 'm', function(c){ var fd = fuelData(c); return fd.co2.some(Boolean) ? bars(fd.months.map(function(m, i){ return { l:m.l, v:Math.round(fd.co2[i]) }; }), function(v){ return fkm(v) + ' kg'; }) + '<p class="vw-note">Estimasi: liter × 2,31 kg/L (bensin) atau 2,68 kg/L (solar). Kendaraan listrik dihitung 0 di titik pakai.</p>' : none('Belum ada isian BBM yang valid.'); }, false);
+add('costtrend', 'Biaya', 'Biaya Perawatan vs BBM per Bulan', 'm', function(c){ var fd = fuelData(c); return (fd.maint.some(Boolean) || fd.cost.some(Boolean)) ? lineChart(fd.months.map(function(m){ return m.l; }), [{ n:'Perawatan', v:fd.maint }, { n:'BBM', v:fd.cost }], function(v){ return fRp(v); }, false) : none('Belum ada biaya 6 bulan terakhir.'); }, false);
+add('accidents', 'Kerusakan', 'Insiden & Kecelakaan per Bulan', 'm', function(c){ var m = monthsBack(6, c.now); c.sess.forEach(function(s){ if(s.jenis_inspeksi !== 'incident' && s.jenis_inspeksi !== 'accident') return; var d = toD(s.tanggal); if(!d) return; var k = ymd(d); m.forEach(function(x){ if(x.k === k) x.v++; }); }); return m.some(function(x){ return x.v; }) ? bars(m) : '<p class="vw-note">Tidak ada insiden atau kecelakaan tercatat 6 bulan terakhir.</p>'; }, false);
+add('fuelqa', 'BBM & Jarak', 'Isian BBM Perlu Diperiksa', 'l', function(c){
+  var fd = fuelData(c), all = []; c.vs.forEach(function(){}); var iss = []; (function(){ var cc = { V:c.V, vs:c.vs, wos:c.wos, now:new Date(2100, 0, 1) }; })();
+  /* semua isian (bukan hanya 6 bulan) */
+  var seen = {}, list = []; fd.issues.forEach(function(x){ list.push(x); seen[x.f.w.id] = 1; });
+  var full = fuelDataAll(c); full.issues.forEach(function(x){ if(!seen[x.f.w.id]){ list.push(x); seen[x.f.w.id] = 1; } });
+  if(!list.length) return '<p class="vw-note">Semua isian BBM tampak wajar.</p>';
+  list.sort(function(a, b){ return b.f.d - a.f.d; });
+  return '<p class="vw-note" style="margin-top:0">' + list.length + ' isian tampak janggal dan tidak dihitung di widget BBM. Periksa titik desimal (mis. 9,8 L terketik 98 L) dan jumlah Rp.</p><ul class="vw-list">' + list.slice(0, 8).map(function(x){ return row('<strong>' + esc(x.f.d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })) + '</strong> · ' + esc(vname(x.f.v)) + '<div class="vw-sub">' + esc(String(x.f.w.judul || 'Fuel Purchase')) + ' · ' + esc(x.why) + '</div>', pill('Periksa', 'warn')); }).join('') + '</ul>' + (list.length > 8 ? '<p class="vw-note">dan ' + (list.length - 8) + ' lainnya.</p>' : '') + '<p class="vw-note"><button type="button" class="ghost" onclick="showPanel(\'workorder\')">Buka Work Order ›</button></p>';
+}, true);
+function fuelDataAll(c){ var cc = { V:c.V, vs:c.vs, wos:c.wos, now:new Date(c.now.getFullYear() + 20, 0, 1) }; return fuelData(cc); }
+var ORDER = ['kpistrip', 'quick', 'status', 'calendar', 'reminders', 'schedule', 'types', 'wo', 'defects', 'elec', 'trips', 'odo', 'spent', 'monthly', 'exposure', 'fuelqa', 'fuelkpi', 'kmlscore', 'kmltrend', 'fuelliters', 'fuelspend', 'priceunit', 'distance', 'co2', 'costtrend', 'accidents', 'compliance', 'relkpi', 'breakdown', 'emergency', 'pmcomp', 'spares', 'submissions', 'findings', 'measure', 'volt', 'fuel', 'papers', 'recent'];
+W.sort(function(x, y){ return ORDER.indexOf(x.id) - ORDER.indexOf(y.id); });
+/* ---------- pilihan widget ---------- */
+function enabled(){ try{ var a = JSON.parse(localStorage.getItem(LSW) || 'null'); if(Array.isArray(a)) return a; }catch(_){} return W.filter(function(w){ return w.dflt; }).map(function(w){ return w.id; }); }
+function setEnabled(a){ try{ localStorage.setItem(LSW, JSON.stringify(a)); }catch(_){} }
+function toggle(id){ var a = enabled(), i = a.indexOf(id); if(i >= 0) a.splice(i, 1); else a.push(id); setEnabled(a); render(); }
+function restore(){ try{ localStorage.removeItem(LSW); }catch(_){} render(); }
+function setScope(v){ ST.scope = v; try{ localStorage.setItem(LSS, v); }catch(_){} render(); }
+function setAct(v){ ST.act = v; }
+function cal(d){ var b = ST.cal || new Date(new Date().getFullYear(), new Date().getMonth(), 1); ST.cal = new Date(b.getFullYear(), b.getMonth() + d, 1); render(true); }
+function qa(k){ if(window.DASH){ DASH.setAct(ST.act); DASH.qa(k); } }
+function setQ(v){ ST.q = String(v || ''); var l = document.getElementById('vwList'); if(l) l.innerHTML = manageList(); }
+function manageList(){
+  var on = enabled(), q = ST.q.trim().toLowerCase(), groups = []; W.forEach(function(w){ if(q && (w.title + ' ' + w.group).toLowerCase().indexOf(q) < 0) return; var gi = groups.filter(function(x){ return x.n === w.group; })[0]; if(!gi){ gi = { n:w.group, a:[] }; groups.push(gi); } gi.a.push(w); });
+  return groups.map(function(gr){ return '<div class="vw-grp">' + esc(gr.n) + '</div>' + gr.a.map(function(w){ return '<label class="vw-chk"><input type="checkbox" ' + (on.indexOf(w.id) >= 0 ? 'checked ' : '') + 'onchange="VSUM.toggle(\'' + w.id + '\')"> ' + esc(w.title) + '</label>'; }).join(''); }).join('') || '<p class="vw-empty">Tidak ada widget cocok.</p>';
+}
+/* ---------- tampilan ---------- */
+var CSS = '#vsumCard .vw-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}#vsumCard .vw-head h2{margin:0}#vsumCard .vw-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#vsumCard .vw-ctl select{max-width:220px}#vsumCard .vw-upd{font-size:12px;color:var(--text-dim)}#vsumCard .vw-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));margin-top:10px}#vsumCard .vw-w{border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0;background:var(--surface)}#vsumCard .vw-w.vw-wide{grid-column:span 2}@media(max-width:620px){#vsumCard .vw-w.vw-wide{grid-column:span 1}}#vsumCard .vw-w h3{margin:0 0 8px;font-size:13.5px}#vsumCard .vw-kpis{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px}#vsumCard .vw-num{font-size:24px;font-weight:700;line-height:1.1}#vsumCard .vw-lbl{font-size:12px;color:var(--text-dim)}#vsumCard .vw-ok{color:var(--ok-ink)}#vsumCard .vw-warn{color:var(--warn-ink)}#vsumCard .vw-bad{color:var(--danger-ink)}#vsumCard .vw-list{list-style:none;margin:0;padding:0}#vsumCard .vw-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--border);font-size:13px}#vsumCard .vw-list li:first-child{border-top:0}#vsumCard .vw-l{min-width:0}#vsumCard .vw-r{text-align:right;white-space:nowrap}#vsumCard .vw-sub{font-size:12px;color:var(--text-dim)}#vsumCard .vw-note{font-size:12px;color:var(--text-dim);margin:8px 0 0}#vsumCard .vw-empty{font-size:13px;color:var(--text-dim);margin:0}#vsumCard .vw-pill{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid var(--border)}#vsumCard .vw-p-ok{background:var(--ok-bg);color:var(--ok-ink)}#vsumCard .vw-p-warn{background:var(--warn-bg);color:var(--warn-ink)}#vsumCard .vw-p-bad{background:var(--danger-bg);color:var(--danger-ink)}#vsumCard .vw-p-na{background:var(--surface-2);color:var(--text-dim)}#vsumCard .vw-svg{width:100%;height:auto;display:block}#vsumCard .vw-btns{display:flex;gap:6px;flex-wrap:wrap}#vsumCard .vw-btns button{min-height:36px}#vsumCard .vw-manage{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-top:8px;max-height:340px;overflow:auto}#vsumCard .vw-grp{font-size:12px;font-weight:700;color:var(--text-dim);margin:10px 0 4px;letter-spacing:.04em;text-transform:uppercase}#vsumCard .vw-chk{display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13.5px;min-height:30px}#vsumCard .vw-svg text{font-family:inherit}#vsumCard .vw-info{margin-top:6px;font-size:12px;color:var(--text-dim)}#vsumCard .vw-info summary{cursor:pointer;min-height:24px}#vsumCard .vw-info div{margin-top:4px}#vsumCard .vw-leg{display:flex;gap:12px;font-size:12px;color:var(--text-dim);margin-top:4px}#vsumCard .vw-leg i{display:inline-block;width:10px;height:3px;margin-right:4px;vertical-align:middle}#vsumCard .vw-w.vw-full{grid-column:1/-1}#vsumCard .vw-w.vw-bare{border:0;padding:0;background:transparent}#vsumCard .vw-tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))}#vsumCard .vw-tile{border-radius:12px;padding:12px 14px;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:64px}#vsumCard .vw-tile span{font-weight:600;font-size:13.5px}#vsumCard .vw-tile b{font-size:30px;line-height:1}#vsumCard .vw-t-bad{background:#b3392c}#vsumCard .vw-t-warn{background:#a8610a}#vsumCard .vw-t-info{background:#0a6280}#vsumCard .vw-t-ok{background:#187a44}#vsumCard .vw-types{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,100px),1fr))}#vsumCard .vw-ty{border-radius:10px;padding:8px 10px;color:#fff;display:flex;flex-direction:column;gap:2px}#vsumCard .vw-ty span{font-size:12px;font-weight:600}#vsumCard .vw-ty b{font-size:24px;line-height:1.1}#vsumCard .vw-ty small{font-size:11px;opacity:.9}#vsumCard .vw-tbl{width:100%;border-collapse:collapse;font-size:13px}#vsumCard .vw-tbl th{text-align:left;font-size:12px;color:var(--text-dim);padding:6px 8px;border-bottom:1px solid var(--border)}#vsumCard .vw-tbl td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top}#vsumCard .vw-sq{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;background:var(--viz-dim)}#vsumCard .vw-q-bad{background:#b3392c}#vsumCard .vw-q-warn{background:#a8610a}#vsumCard .vw-q-info{background:#0a6280}#vsumCard .vw-q-ok{background:#187a44}#vsumCard .vw-p-info{background:var(--accent-soft);color:var(--accent)}#vsumCard .vw-calh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}#vsumCard .vw-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:12.5px}#vsumCard .vw-cd{color:var(--text-dim);font-size:11px;padding:2px 0}#vsumCard .vw-day{position:relative;padding:5px 0 9px;border-radius:6px}#vsumCard .vw-today{outline:2px solid var(--accent);outline-offset:-2px}#vsumCard .vw-dot{position:absolute;left:50%;bottom:2px;width:6px;height:6px;border-radius:50%;transform:translateX(-50%)}#vsumCard .vw-d-bad{background:#b3392c}#vsumCard .vw-d-warn{background:#a8610a}#vsumCard .vw-d-info{background:#0a6280}';
+function minsAgo(){ if(!ST.stamp) return 'baru saja'; var m = Math.floor((Date.now() - ST.stamp) / 60000); return m < 1 ? 'baru saja' : m + ' menit lalu'; }
+function html(){
+  var c = ctx(), on = enabled(), V = c.V;
+  var h = '<div class="vw-head"><h2>Ringkasan Kendaraan</h2><div class="vw-ctl"><select id="vwScope" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)" aria-label="Cakupan" onchange="VSUM.setScope(this.value)"><option value="all"' + (ST.scope === 'all' ? ' selected' : '') + '>Semua kendaraan</option>' + V.map(function(v){ return '<option value="' + esc(v.id) + '"' + (v.id === ST.scope ? ' selected' : '') + '>' + esc(vname(v)) + '</option>'; }).join('') + '</select><button type="button" class="ghost" onclick="VSUM.render(true)" aria-label="Segarkan">⟳</button><button type="button" class="' + (ST.open ? 'ghost' : '') + '" onclick="VSUM.manage()">Kelola Widget (' + on.length + '/' + W.length + ')</button></div></div><div class="vw-upd">Diperbarui ' + minsAgo() + '</div>';
+  if(ST.open) h += '<div class="vw-manage"><div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap"><input id="vwQ" type="search" placeholder="Cari widget" value="' + esc(ST.q) + '" oninput="VSUM.setQ(this.value)" style="flex:1;min-width:140px"><button type="button" class="ghost" onclick="VSUM.restore()">Kembalikan bawaan</button></div><div id="vwList">' + manageList() + '</div></div>';
+  if(!V.length) return h + '<p class="vw-empty" style="margin-top:10px">Belum ada kendaraan. Tambah kendaraan lewat tombol + New Entry di atas.</p>';
+  var shown = W.filter(function(w){ return on.indexOf(w.id) >= 0; });
+  h += shown.length ? '<div class="vw-grid">' + shown.map(function(w){ var body; try{ body = w.fn(c); }catch(e){ body = none('Widget tidak dapat dihitung: ' + (e && e.message)); } var notes = []; body = body.replace(/<p class="vw-note">((?:(?!<button)[\s\S])*?)<\/p>/g, function(m, t){ notes.push(t.replace(/<[^>]+>/g, '')); return ''; }); if(notes.length) body += '<details class="vw-info"><summary aria-label="Keterangan">ⓘ Keterangan</summary><div>' + esc(notes.join(' ')) + '</div></details>'; return '<section class="vw-w' + (w.wide ? ' vw-wide' : '') + (w.full ? ' vw-full' : '') + (w.bare ? ' vw-bare' : '') + '" data-w="' + w.id + '">' + (w.bare ? '' : '<h3>' + esc(w.title) + '</h3>') + body + '</section>'; }).join('') + '</div>' : '<p class="vw-empty" style="margin-top:10px">Tidak ada widget ditampilkan. Buka Kelola Widget untuk memilih.</p>';
+  return h;
+}
+function mount(){
+  var host = document.getElementById('vsumCard'); if(host) return host;
+  var old = null; Array.prototype.forEach.call(document.querySelectorAll('#panel-home h2'), function(h){ if(/^Vehicle Insight/.test(h.textContent.trim())) old = h.closest('.card') || h.parentNode; });
+  var anchor = old || document.getElementById('panel-home'); if(!anchor) return null;
+  if(!document.getElementById('vsumStyle')){ var s = document.createElement('style'); s.id = 'vsumStyle'; s.textContent = CSS; document.head.appendChild(s); }
+  host = document.createElement('div'); host.className = 'card'; host.id = 'vsumCard';
+  if(old){ old.parentNode.insertBefore(host, old); old.hidden = true; old.style.display = 'none'; old.setAttribute('data-vsum-replaced', '1'); } else anchor.appendChild(host);
+  return host;
+}
+function signature(){ var a = [g('vehicles'), g('workOrders'), g('jobCards'), g('defectLogs'), g('inspectionSessions'), g('inspectionItems')].map(function(x){ return (x || []).length; }); return a.join('/') + '|' + (g('vehicles') || []).map(function(v){ return v.id + ':' + v.km_saat_ini; }).join(','); }
+function render(force){
+  try{ var h = mount(); if(!h) return; var a = document.activeElement; if(!force && a && h.contains(a) && /INPUT|SELECT/.test(a.tagName)) return; if(force === true || !ST.stamp) ST.stamp = Date.now(); ST.sig = signature(); h.innerHTML = html(); if(a && a.id === 'vwQ'){ var q = document.getElementById('vwQ'); if(q){ q.focus(); } } }catch(e){ try{ console.warn('VSUM', e.message); }catch(_){} }
+}
+function manage(){ ST.open = !ST.open; render(); }
+function onShow(){ render(); }
+setInterval(function(){ var p = document.getElementById('panel-home'); if(!p || p.hidden) return; var sel = g('selectedId'); if(sel && sel !== ST.lastSel){ ST.lastSel = sel; if(ST.scope !== sel){ ST.scope = sel; try{ localStorage.setItem(LSS, sel); }catch(_){} render(true); return; } } if(signature() !== ST.sig){ ST.stamp = Date.now(); render(); } var u = document.querySelector('#vsumCard .vw-upd'); if(u) u.textContent = 'Diperbarui ' + minsAgo(); }, 1500);
+function boot(){ var o = window.renderBoard; if(typeof o === 'function' && !o.__vsum){ var w = function(){ var r = o.apply(this, arguments); render(); return r; }; w.__vsum = 1; window.renderBoard = w; } render(); }
+window.VSUM = { cal:cal, render:render, onShow:onShow, manage:manage, toggle:toggle, restore:restore, setScope:setScope, setAct:setAct, setQ:setQ, qa:qa, html:html, widgets:W, _st:ST, enabled:enabled, ctx:ctx };
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 400); }); else setTimeout(boot, 400);
 })();
 
 </script>
