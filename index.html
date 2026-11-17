@@ -458,7 +458,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 30 (17 Nov 2026)" aria-label="Versi 1.0, revisi 30"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 30</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 31 (17 Nov 2026)" aria-label="Versi 1.0, revisi 31"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 31</span></div>
   </div>
 </div>
 
@@ -7733,6 +7733,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-17</td><td>Rev 31: <strong>Kartu kelistrikan diuji dengan data cadangan nyata</strong>. Dua alarm palsu diperbaiki: Ertiga 12,2&ndash;12,3 V tidak lagi "Perhatian" (batas mobil diturunkan) dan kendaraan listrik (tanpa alternator) tidak dinilai pada tegangan mesin hidup serta memakai batas rendah.</td></tr>
             <tr><td class="mono">2026-11-17</td><td>Rev 30: <strong>Form inspeksi lebih ringkas</strong>. Bagian tegangan/suhu/KM/L terlipat (ingat pilihan buka/tutup), tombol "Isi dari pengukuran terakhir" (hanya kolom kosong, bertanda putus-putus, bisa dikosongkan), dan pengingat ukur tiap 7 hari (muncul saat aplikasi dibuka, bukan notifikasi dorong; interval dapat diubah).</td></tr>
             <tr><td class="mono">2026-11-16</td><td>Rev 29: <strong>Kesehatan Kelistrikan &amp; Suhu</strong> di halaman Inspection. Tegangan mesin mati/hidup, temperatur, dan KM/L rata-rata dibaca sebagai tren terhadap kebiasaan tiap kendaraan (median + sebaran, dipisah per jenis inspeksi), dengan arah pemeriksaan aki vs pengisian. Ambang Estimasi, dapat diubah; ADV150 memakai batas lebih rendah. Hanya menandai, tidak menulis data.</td></tr>
             <tr><td class="mono">2026-11-16</td><td>Rev 28: <strong>Koneksi database lebih tahan hilang</strong>. Koneksi (Project URL + Publishable key) kini disalin ke tiga tempat (localStorage, IndexedDB, Cache Storage) dan dipulihkan otomatis dari salah satunya. Bila semua hilang tetapi sesi login masih ada, kolom Project URL terisi otomatis dari sesi; hanya Publishable key yang perlu diketik. Baris diagnosis di layar Connect diperluas.</td></tr>
@@ -21277,7 +21278,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:30,date:'2026-11-17'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:31,date:'2026-11-17'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -23612,7 +23613,7 @@ var ORDER = ['honda_adv150_abs_2019', 'suzuki_ertiga_manual_2020', 'kia_picanto_
 /* Bawaan per kelas. Motor/ADV sengaja LEBIH RENDAH: aki motor kecil jarang berada di 12,4 V. Semua berlabel Estimasi. */
 var DEF = {
   motor: { off_warn:11.9, off_check:11.6, on_warn:12.8, on_check:12.5, on_high:15.0, on_high_check:15.5, drop_warn:0.3, drop_check:0.6, temp_warn:8, temp_check:15, fuel_warn:15, fuel_check:25, min_n:5, remind_days:7 },
-  mobil: { off_warn:12.2, off_check:12.0, on_warn:13.2, on_check:12.8, on_high:15.0, on_high_check:15.5, drop_warn:0.3, drop_check:0.6, temp_warn:8, temp_check:15, fuel_warn:15, fuel_check:25, min_n:5, remind_days:7 }
+  mobil: { off_warn:12.0, off_check:11.8, on_warn:13.0, on_check:12.6, on_high:15.0, on_high_check:15.5, drop_warn:0.3, drop_check:0.6, temp_warn:8, temp_check:15, fuel_warn:15, fuel_check:25, min_n:5, remind_days:7 }
 };
 var FIELDS = [
   ['off_warn', 'Tegangan mati: Perhatian bila ≤ (V)'], ['off_check', 'Tegangan mati: Cek bila ≤ (V)'],
@@ -23628,7 +23629,7 @@ function median(a){ var s = a.slice().sort(function(x, y){ return x - y; }), m =
 function slope(ys){ var n = ys.length, sx = 0, sy = 0, sxy = 0, sxx = 0, i; for(i = 0; i < n; i++){ sx += i; sy += ys[i]; sxy += i * ys[i]; sxx += i * i; } var d = n * sxx - sx * sx; return d ? (n * sxy - sx * sy) / d : 0; }
 function r2(x){ return Math.round(x * 100) / 100; }
 function fmt(x, d){ return x == null ? '—' : Number(x).toFixed(d == null ? 1 : d).replace('.', ','); }
-function kelas(profId, v){ var k = String((v && v.kategori) || '').toLowerCase(); if(profId === 'honda_adv150_abs_2019') return 'motor'; if(k.indexOf('motor') >= 0) return 'motor'; return 'mobil'; }
+function kelas(profId, v){ if(v && v.powertrain === 'listrik') return 'motor'; var k = String((v && v.kategori) || '').toLowerCase(); if(profId === 'honda_adv150_abs_2019') return 'motor'; if(k.indexOf('motor') >= 0) return 'motor'; return 'mobil'; }
 function loadCfg(){ try{ return JSON.parse(localStorage.getItem(LSK) || '{}') || {}; }catch(_){ return {}; } }
 function saveCfg(o){ try{ localStorage.setItem(LSK, JSON.stringify(o)); }catch(_){} }
 function cfgFor(profKey, cls, all){ var base = DEF[cls] || DEF.mobil, over = (all || loadCfg())[profKey] || {}, out = {}; Object.keys(base).forEach(function(k){ var n = num(over[k]); out[k] = n == null ? base[k] : n; }); out.min_n = Math.max(2, Math.round(out.min_n)); out.remind_days = Math.max(1, Math.round(out.remind_days)); return out; }
@@ -23684,6 +23685,7 @@ function analyze(sessions, cfg){
     };
     res[grp] = {}; Object.keys(m).forEach(function(k){ res[grp][k] = evalSeries(m[k][1], m[k][0], cfg); });
   });
+  if(cfg.skip_on) ['pre', 'post'].forEach(function(grp){ ['von', 'delta'].forEach(function(k){ res[grp][k].level = 0; res[grp][k].reasons = []; res[grp][k].skip = true; }); });
   var worst = 0, kurang = true, any = false;
   Object.keys(res).forEach(function(grp){ Object.keys(res[grp]).forEach(function(k){ var r = res[grp][k]; if(r.n){ any = true; if(r.level > worst) worst = r.level; if(!r.kurang) kurang = false; } }); });
   /* Ringkasan diagnosis: pisahkan aki (tegangan mati) vs pengisian (tegangan hidup) */
@@ -23709,12 +23711,12 @@ function badge(l, kurang){ var L = LVL[l]; return '<span class="elh-b elh-' + L.
 function rows(a){
   var h = '';
   ['pre', 'post'].forEach(function(grp){ Object.keys(NAMA).forEach(function(k){ var r = a.res[grp][k]; if(!r.n) return; var nm = NAMA[k];
-    h += '<tr><td><strong>' + esc(nm[0]) + '</strong><div class="elh-n">' + GRP[grp] + ' · ' + r.n + ' data</div></td><td>' + fmt(r.latest.v, nm[2]) + ' ' + nm[1] + '<div class="elh-n">' + esc(r.latest.d) + '</div></td><td>' + (r.base == null ? '<span class="elh-n">butuh ' + '≥ data</span>' : fmt(r.base, nm[2]) + ' ' + nm[1] + (r.lo != null ? '<div class="elh-n">kisaran biasa ' + fmt(r.lo, nm[2]) + '–' + fmt(r.hi, nm[2]) + '</div>' : '')) + '</td><td>' + spark(r.spark) + '</td><td>' + badge(r.level, r.kurang && r.level === 0) + (r.reasons.length ? '<div class="elh-n">' + r.reasons.map(esc).join('; ') + '</div>' : '') + '</td></tr>'; }); });
+    h += '<tr><td><strong>' + esc(nm[0]) + '</strong><div class="elh-n">' + GRP[grp] + ' · ' + r.n + ' data</div></td><td>' + fmt(r.latest.v, nm[2]) + ' ' + nm[1] + '<div class="elh-n">' + esc(r.latest.d) + '</div></td><td>' + (r.base == null ? '<span class="elh-n">butuh ' + '≥ data</span>' : fmt(r.base, nm[2]) + ' ' + nm[1] + (r.lo != null ? '<div class="elh-n">kisaran biasa ' + fmt(r.lo, nm[2]) + '–' + fmt(r.hi, nm[2]) + '</div>' : '')) + '</td><td>' + spark(r.spark) + '</td><td>' + (r.skip ? '<span class="elh-n">tidak dinilai (kendaraan listrik)</span>' : badge(r.level, r.kurang && r.level === 0)) + (r.reasons.length ? '<div class="elh-n">' + r.reasons.map(esc).join('; ') + '</div>' : '') + '</td></tr>'; }); });
   return h;
 }
 var CSS = '.elh-b{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid var(--border)}.elh-ok{background:var(--ok-bg);color:var(--ok-ink)}.elh-warn{background:var(--warn-bg);color:var(--warn-ink)}.elh-check{background:var(--danger-bg);color:var(--danger-ink)}.elh-n{font-size:12px;color:var(--text-dim);font-weight:400}.elh-sp{display:block}.elh-sum{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.elh-sum span{font-size:12.5px}.elh-note{font-size:12.5px;color:var(--text-dim);margin:8px 0}.elh-cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:8px}.elh-cfg label{font-size:12px;color:var(--text-dim);display:block}.elh-cfg input{width:100%;box-sizing:border-box}';
 function summaryFor(sessionsAll, v, allCfg){
-  var pk = profKeyOf(v), c = cfgFor(pk, kelas(pk, v), allCfg), ss = sessionsAll.filter(function(s){ return s.kendaraan_id === v.id; });
+  var pk = profKeyOf(v), c = cfgFor(pk, kelas(pk, v), allCfg), ss = sessionsAll.filter(function(s){ return s.kendaraan_id === v.id; }); c.skip_on = v.powertrain === 'listrik';
   return { v:v, pk:pk, c:c, a:analyze(ss, c), n:ss.length };
 }
 function orderVeh(V){ return V.slice().sort(function(x, y){ var ix = ORDER.indexOf(profKeyOf(x)), iy = ORDER.indexOf(profKeyOf(y)); ix = ix < 0 ? 99 : ix; iy = iy < 0 ? 99 : iy; return ix - iy; }); }
