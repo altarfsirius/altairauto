@@ -496,7 +496,7 @@
       <div class="name">Altair Auto</div>
       <div class="tagline">Program perawatan kendaraan &middot; reliability-centered</div>
     </div>
-    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 46 (18 Nov 2026)" aria-label="Versi 1.0, revisi 46"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 46</span></div>
+    <div class="ver-badge" id="verBadge" role="note" title="Altair Auto versi 1.0, revisi 48 (18 Nov 2026)" aria-label="Versi 1.0, revisi 48"><span class="vb-ver">v1.0</span><span class="vb-rev">Rev 48</span></div>
   </div>
 </div>
 
@@ -7768,7 +7768,9 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
-            <tr><td class="mono">2026-11-18</td><td>Rev 46: Pemilih kendaraan di Pemakaian (Usage) kini chip seperti menu Analitik dan Biaya (sebelumnya dropdown sendiri).</td></tr>
+            <tr><td class="mono">2026-11-18</td><td>Rev 48: Tugas &amp; Part Sendiri (mis. Check Spring) di Parts &rsaquo; Umur Pakai: interval KM atau waktu, ikut Program, Work Order, Komponen Terpasang, dan Prediksi. Rentang umur part (KM dan bulan, P10-P90) untuk part baru atau yang sudah ada; isian umur nyata saat part diganti (KM dan tanggal dilepas, alasan). Reliabilitas memakai umur nyata (&ge;3) atau rentang yang diisi. SQL opsional: migration_rev48.sql.</td></tr>
+<tr><td class="mono">2026-11-18</td><td>Rev 47: Komponen Terpasang: tombol "Aktifkan lagi (batalkan Replaced)" untuk komponen berstatus Replaced yang salah ditandai.</td></tr>
+<tr><td class="mono">2026-11-18</td><td>Rev 46: Pemilih kendaraan di Pemakaian (Usage) kini chip seperti menu Analitik dan Biaya (sebelumnya dropdown sendiri).</td></tr>
 <tr><td class="mono">2026-11-18</td><td>Rev 45: Perbaikan Analitik: kartu yang sengaja disembunyikan (Work Order Akan Dikerjakan, Timeline Board) tidak lagi muncul kembali saat pindah tab; tab menjadi Armada (semua) / Kendaraan Terpilih / Prediksi; memilih chip kendaraan langsung membuka Kendaraan Terpilih; ada baris "Menampilkan data: ..." agar jelas kendaraan yang dianalisis.</td></tr>
 <tr><td class="mono">2026-11-18</td><td>Rev 44: Prediksi &amp; Kelaikan (Analitik &rsaquo; tab Prediksi, ringkasan di Home). Laju pakai dari odometer nyata (Theil-Sen) menghasilkan prediksi tanggal dan KM perawatan; reliabilitas part (Weibull); tren dan prediksi aki (Mann-Kendall); pembersihan data BBM ganjil (MAD); status kelaikan berbasis gerbang (Laik / Bersyarat / Tidak Laik) dengan alasan dan masa berlaku; daftar data yang perlu dicatat berikutnya. Semua estimasi, metode tertulis di halaman.</td></tr>
 <tr><td class="mono">2026-11-18</td><td>Rev 43: Settings dirapikan. Satu gulungan 5.000 px dibagi 5 tab (Koneksi, Cadangan &amp; Akun, Kesehatan, Polaris &amp; Riwayat, Aplikasi); pengingat backup di atas halaman (peringatan bila belum pernah atau lebih dari 7 hari). Duplikasi antar grup dihapus: Problem dan Beban Listrik pindah ke grup Service (Kondisi &amp; Problem); tab Dokumen OEM di Parts diarahkan ke Library &rsaquo; Dokumen. Dua profil ukuran: web (lebih lebar dan rapat) dan iPhone (huruf lebih besar, target sentuh 44px).</td></tr>
@@ -9467,6 +9469,9 @@ function renderInstalledComponentsPage(){
     if(c.status === 'aktif'){
       actions += `<button class="ghost" style="padding:4px 10px;font-size:12px;" onclick="markInstalledComponentReplaced('${c.id}')">Mark as Replaced</button>`;
     }
+    if(c.status === 'diganti'){
+      actions += `<button class="ghost" style="padding:4px 10px;font-size:12px;" onclick="markInstalledComponentActive('${c.id}')">Aktifkan lagi (batalkan Replaced)</button>`;
+    }
     actions += ` <button class="ghost" style="padding:4px 10px;font-size:12px;" onclick="handleDeleteInstalledComponent('${c.id}')">Delete</button>`;
     const scheduleCell = `<select class="inline-input" style="width:auto;" onchange="updateInstalledComponentField('${c.id}','task_key',this.value || null)">${icTaskOptionsForVehicle(v, c.task_key)}</select>`;
     return `<tr>
@@ -9547,6 +9552,13 @@ document.getElementById('componentForm').addEventListener('submit', async functi
 async function markInstalledComponentReplaced(id){
   if(!sb) return;
   await sb.from('installed_component').update({ status:'diganti', updated_at: new Date().toISOString() }).eq('id', id);
+  loadInstalledComponents();
+}
+
+async function markInstalledComponentActive(id){
+  if(!sb) return;
+  const { error } = await sb.from('installed_component').update({ status:'aktif', updated_at: new Date().toISOString() }).eq('id', id);
+  if(error){ alert('Gagal mengaktifkan lagi: ' + (error.message || error)); return; }
   loadInstalledComponents();
 }
 
@@ -16111,7 +16123,7 @@ function guideHtml(){
 const guide = { render(){ const r = $('mguideRoot'); if(r) r.innerHTML = guideHtml(); }, onShow(){ guide.render(); }, hz(k, v){ HZ[k] = Math.max(1, Number(v) || HZ[k]); try{ localStorage.setItem('ac6_horizon', JSON.stringify(HZ)); }catch(e){} guide.render(); } };
 
 /* ---------- Backup / Restore ---------- */
-const TABLES = ['kendaraan', 'work_order', 'job_card', 'project', 'project_item', 'part_library', 'part_order_plan', 'installed_component', 'inspection_session', 'inspection_item', 'cost_budget_item', 'defect_log', 'electrical_capacity', 'electrical_load_item', 'engineering_spec', 'fea_item', 'fmea_risk', 'governance_document', 'integration_link', 'integration_log', 'kaizen_item', 'manual_reference', 'monitoring_parameter', 'oem_document', 'parts_catalog_ref', 'pdca_cycle', 'pica_item', 'problem_case', 'purchase_appraisal', 'purchase_appraisal_item', 'rca_analysis', 'spec_sheet_attachment', 'spec_sheet_item', 'technical_record', 'tool', 'touring_event', 'workshop_resource', 'plan_setting', 'plan_schedule', 'plan_audit'];
+const TABLES = ['kendaraan', 'work_order', 'job_card', 'project', 'project_item', 'part_library', 'part_order_plan', 'installed_component', 'maint_task_custom', 'inspection_session', 'inspection_item', 'cost_budget_item', 'defect_log', 'electrical_capacity', 'electrical_load_item', 'engineering_spec', 'fea_item', 'fmea_risk', 'governance_document', 'integration_link', 'integration_log', 'kaizen_item', 'manual_reference', 'monitoring_parameter', 'oem_document', 'parts_catalog_ref', 'pdca_cycle', 'pica_item', 'problem_case', 'purchase_appraisal', 'purchase_appraisal_item', 'rca_analysis', 'spec_sheet_attachment', 'spec_sheet_item', 'technical_record', 'tool', 'touring_event', 'workshop_resource', 'plan_setting', 'plan_schedule', 'plan_audit'];
 const BK = { last:null, msg:null, busy:false, pending:null, auth:null };
 async function sha256(txt){ try{ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }catch(e){ return 'tidak tersedia'; } }
 async function collect(){
@@ -16120,7 +16132,7 @@ async function collect(){
     for(const t of TABLES){
       let all = [], from = 0, err = null;
       for(;;){ const r = await sb.from(t).select('*').range(from, from + 999); if(r.error){ err = r.error.message; break; } all = all.concat(r.data || []); if(!r.data || r.data.length < 1000) break; from += 1000; }
-      if(err) out.errors[t] = err; else out.tables[t] = all;
+      if(err && t === 'maint_task_custom' && /does not exist|schema cache|relation/i.test(err)) continue; if(err) out.errors[t] = err; else out.tables[t] = all;
     }
   }else{
     out.tables.kendaraan = typeof vehicles !== 'undefined' ? vehicles : [];
@@ -21411,7 +21423,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:46,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:48,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
@@ -24417,7 +24429,7 @@ var DEFS = [
     { l:'Polaris & Riwayat', m:/Report to Polaris|Kejadian yang belum|Import service history/i },
     { l:'Aplikasi', m:/PWA|Tentang/i } ] },
   { key:'parts', panel:'#panel-parts', scopes:['#panel-parts', '#partsContent'], extra:['partsPoRoot', 'bomRoot'], tabs:[
-    { l:'Umur Pakai', m:/Spare Part & Remaining Life|Part Purchase Source|Validasi Konsistensi/i },
+    { l:'Umur Pakai', m:/Spare Part & Remaining Life|Part Purchase Source|Validasi Konsistensi|Tugas & Part Sendiri/i },
     { l:'Permintaan & PO', m:/Parts Demand|BOM|#partsPoRoot|#bomRoot/i },
     { l:'Komponen Terpasang', m:/Installed Component/i },
     { l:'Spesifikasi', m:/Technical Specification|Spesifikasi Referensi|OEM Reference Data/i },
@@ -24688,6 +24700,7 @@ function dedupe(name){
 function onShow(name){
   try{ renderPnav(name); }catch(_){}
   try{ if(window.PROG) window.PROG.onShow(name); }catch(_){}
+  try{ if(window.CT) window.CT.onShow(name); }catch(_){}
   try{ renderStrip(name); foldDesc(name); }catch(_){}
   DEFS.forEach(function(d){ if(TABS[d.key]) applyTabs(d.key); });
   try{ dedupe(name); }catch(_){}
@@ -24800,8 +24813,11 @@ function relRows(v, effV, rate){
       age = Math.max(0, age); var beta = betaFor(part.nama + ' ' + tpl.nama), u = age / L, du = dU30 / L, basis = 'B10 = interval, β ' + beta + ' (asumsi)', R, R30, uX80, uX50, fitInfo = null;
       /* riwayat nyata: interval antar penggantian untuk tugas yang sama */
       var ks = wos.filter(function(w){ return w.task_key === tpl.id; }).map(function(w){ return Number(w.km_saat_selesai); }).sort(function(a, b){ return a - b; }), ints = []; for(var i = 1; i < ks.length; i++) if(ks[i] - ks[i - 1] > 50) ints.push(ks[i] - ks[i - 1]);
-      var fit = kmBased ? weibullFit(ints) : null;
-      if(fit){ R = Math.exp(-Math.pow(age / fit.eta, fit.beta)); R30 = Math.exp(-(Math.pow((age + dU30) / fit.eta, fit.beta) - Math.pow(age / fit.eta, fit.beta))) * 1; R30 = Math.exp(-Math.pow((age + dU30) / fit.eta, fit.beta)) / Math.max(1e-9, R); uX80 = fit.eta * Math.pow(-Math.log(0.8), 1 / fit.beta) / L; uX50 = fit.eta * Math.pow(-Math.log(0.5), 1 / fit.beta) / L; basis = 'Weibull dari ' + fit.n + ' interval nyata (β ' + fN(fit.beta, 1) + ', η ' + fN(fit.eta) + ' km): Estimasi, sampel kecil'; fitInfo = fit; }
+      var ext = typeof window.PROG_LIFE === 'function' ? window.PROG_LIFE(v, tpl.id) : null;
+      var lifeList = kmBased ? (ext && ext.kms.length >= ints.length ? ext.kms : ints) : (ext ? ext.months : []), fit = weibullFit(lifeList), prior = ext && ext.prior ? (kmBased ? ext.prior.km : ext.prior.bulan) : null, un = unit;
+      if(fit){ basis = 'Weibull dari ' + fit.n + ' umur nyata (β ' + fN(fit.beta, 1) + ', η ' + fN(fit.eta, kmBased ? 0 : 1) + ' ' + un + (ext && ext.pooled ? ', digabung kendaraan sejenis' : '') + '): Estimasi, sampel kecil'; }
+      else if(prior){ fit = { beta:prior.beta, eta:prior.eta, n:0, prior:true }; basis = 'Weibull dari rentang umur yang Anda isi (' + fN(prior.b10, kmBased ? 0 : 1) + '–' + fN(prior.b90, kmBased ? 0 : 1) + ' ' + un + ' = P10–P90; β ' + fN(prior.beta, 1) + '): Estimasi'; }
+      if(fit){ R = Math.exp(-Math.pow(age / fit.eta, fit.beta)); R30 = Math.exp(-Math.pow((age + dU30) / fit.eta, fit.beta)) / Math.max(1e-9, R); uX80 = fit.eta * Math.pow(-Math.log(0.8), 1 / fit.beta) / L; uX50 = fit.eta * Math.pow(-Math.log(0.5), 1 / fit.beta) / L; fitInfo = fit; }
       else { R = relAssumed(u, beta); R30 = relAssumed(u + du, beta) / Math.max(1e-9, R); uX80 = uAtR(0.8, beta); uX50 = uAtR(0.5, beta); }
       function at(uT){ var rem = (uT - u) * L; if(rem <= 0) return { over:true }; if(kmBased) return { km:kmNow + rem, date:addDays(today, rem / rate.mid), dLo:rem / rate.hi, dHi:rem / rate.lo }; return { km:kmNow + rate.mid * rem * 30.44, date:addDays(today, rem * 30.44) }; }
       out.push({ nama:part.nama, tugas:tpl.nama, u:u, age:age, L:L, unit:unit, R:R, R30:R30, a80:at(uX80), a50:at(uX50), basis:basis, assumed:assumed, fit:fitInfo, taskId:tpl.id });
@@ -24980,6 +24996,214 @@ function home(){
 function onShow(name){ try{ if(name === 'kpi') render(); if(name === 'home') home(); }catch(e){ if(window.console) console.error('[prog]', e); } }
 setInterval(function(){ var c = g('currentPanel'); if(c === 'kpi' || c === 'home') onShow(c); }, 2500);
 window.PROG = { analyse:analyse, html:html, render:render, home:home, onShow:onShow, stats:{ theilSen:theilSen, mannKendall:mannKendall, weibullFit:weibullFit, relAssumed:relAssumed, median:median, mad:mad } };
+})();
+
+</script>
+<script id="ctaskScript">
+/* Altair Auto — Tugas & Part Sendiri + umur part nyata (Rev 48)
+   1) Pengguna menambah tugas/part sendiri (mis. "Check Spring") ke jadwal perawatan; ikut Program, Parts, Work Order, Prediksi.
+   2) Rentang umur (KM dan bulan, terpendek-terpanjang yang wajar) untuk part baru atau part yang sudah ada -> Weibull P10-P90.
+   3) Umur nyata part yang diganti (KM dan tanggal dilepas) -> dipakai sebagai data reliabilitas.
+   Penyimpanan: tabel opsional maint_task_custom + kolom opsional installed_component.(tanggal_lepas, km_saat_lepas, alasan_lepas) (migration_rev48.sql).
+   Tanpa SQL: tersimpan di perangkat ini (localStorage) dan diberi label; aplikasi tetap berjalan. */
+(function(){
+'use strict';
+if(window.CT) return;
+var LS = 'ik_ctask_v1', LSL = 'ik_iclife_v1';
+function g(n){ try{ return (new Function('return typeof ' + n + " !== 'undefined' ? " + n + ' : undefined'))(); }catch(_){ return undefined; } }
+function $(s, r){ return (r || document).querySelector(s); }
+function $$(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+function num(x){ if(x === '' || x == null) return null; var n = Number(String(x).replace(',', '.')); return isFinite(n) ? n : null; }
+function fN(x, d){ return x == null ? '–' : Number(x).toLocaleString('id-ID', { maximumFractionDigits:d == null ? 0 : d }); }
+function ls(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(_){ return d; } }
+function sv(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){} }
+function uid(){ return 'loc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+var CT = { items:[], mode:'detect', loaded:false, msg:null, editId:null, delId:null, lifeId:null, icCols:false };
+
+/* ---------- Weibull dari rentang P10-P90 ---------- */
+var Y10 = Math.log(-Math.log(0.9)), Y90 = Math.log(-Math.log(0.1));
+function fromRange(a, b){
+  if(!(a > 0) || !(b > a)) return null;
+  var beta = (Y90 - Y10) / Math.log(b / a); beta = Math.max(1, Math.min(6, beta));
+  var eta = Math.exp(Math.log(a) - Y10 / beta);
+  return { beta:beta, eta:eta, b10:a, b50:eta * Math.pow(Math.LN2, 1 / beta), b90:b };
+}
+
+/* ---------- penyimpanan ---------- */
+async function load(){
+  var sb = g('sb'); CT.items = ls(LS, []); CT.mode = 'lokal';
+  if(sb){
+    try{ var r = await sb.from('maint_task_custom').select('*'); if(!r.error){ CT.mode = 'db'; CT.items = r.data || []; } }catch(_){}
+  }
+  CT.loaded = true; syncCatalog(); return CT.items;
+}
+function persistLocal(){ sv(LS, CT.items); }
+async function saveItem(it){
+  var sb = g('sb'), isNew = !it.id;
+  if(CT.mode === 'db' && sb){
+    var row = { kendaraan_id:it.semua ? null : it.kendaraan_id, nama:it.nama, trigger:it.trigger, interval_km:it.interval_km, interval_bulan:it.interval_bulan, umur_min_km:it.umur_min_km, umur_max_km:it.umur_max_km, umur_min_bulan:it.umur_min_bulan, umur_max_bulan:it.umur_max_bulan, catatan:it.catatan, semua:!!it.semua, dasar_task_id:it.dasar_task_id || null, aktif:true, updated_at:new Date().toISOString() };
+    var r = isNew ? await sb.from('maint_task_custom').insert([row]) : await sb.from('maint_task_custom').update(row).eq('id', it.id);
+    if(r.error) throw new Error(r.error.message); await load();
+  } else {
+    if(isNew){ it.id = uid(); CT.items.push(it); } else CT.items = CT.items.map(function(x){ return x.id === it.id ? it : x; });
+    persistLocal(); syncCatalog();
+  }
+}
+async function removeItem(id){
+  var sb = g('sb');
+  if(CT.mode === 'db' && sb){ var r = await sb.from('maint_task_custom').delete().eq('id', id); if(r.error) throw new Error(r.error.message); await load(); }
+  else { CT.items = CT.items.filter(function(x){ return x.id !== id; }); persistLocal(); syncCatalog(); }
+}
+
+/* ---------- integrasi ke mesin jadwal ---------- */
+function tplFor(v){
+  return CT.items.filter(function(it){ return it.aktif !== false && !it.dasar_task_id && (it.semua || it.kendaraan_id === v.id); }).map(function(it){
+    var ik = num(it.interval_km), ib = num(it.interval_bulan);
+    if(it.trigger === 'waktu') return { id:'custom_' + it.id, nama:it.nama, trigger:'waktu', intervalBulan:ib || 12, custom:true };
+    return { id:'custom_' + it.id, nama:it.nama, trigger:'km', interval:{ motor:ik || 5000, mobil:ik || 5000, niaga:ik || 5000, lainnya:ik || 5000 }, intervalBulan:ib || undefined, custom:true };
+  });
+}
+function syncCatalog(){
+  var cat = g('PARTS_CATALOG'); if(!cat) return;
+  for(var i = cat.length - 1; i >= 0; i--) if(String(cat[i].id).indexOf('part_custom_') === 0) cat.splice(i, 1);
+  CT.items.forEach(function(it){ if(it.aktif !== false && !it.dasar_task_id) cat.push({ id:'part_custom_' + it.id, nama:it.nama, taskId:'custom_' + it.id }); });
+}
+function life(id){
+  var c = (g('installedComponents') || []).filter(function(x){ return x.id === id; })[0];
+  if(c && c.km_saat_lepas != null || c && c.tanggal_lepas) return { km_lepas:c.km_saat_lepas, tgl_lepas:c.tanggal_lepas, alasan:c.alasan_lepas || 'aus', src:'db' };
+  var l = ls(LSL, {})[id]; return l ? { km_lepas:l.km_lepas, tgl_lepas:l.tgl_lepas, alasan:l.alasan || 'aus', src:'lokal' } : null;
+}
+/* data umur untuk reliabilitas: dipakai oleh prog.js */
+function lifeFor(v, tplId){
+  var vs = g('vehicles') || [], same = vs.filter(function(x){ return x.merk === v.merk && x.model === v.model; }).map(function(x){ return x.id; }), kms = [], months = [], n = 0;
+  (g('installedComponents') || []).forEach(function(c){
+    if(c.status !== 'diganti' || c.task_key !== tplId || same.indexOf(c.kendaraan_id) < 0) return;
+    var l = life(c.id); if(!l || l.alasan === 'preventif') return; n++;
+    var k = l.km_lepas != null && c.km_saat_pasang != null ? Number(l.km_lepas) - Number(c.km_saat_pasang) : null; if(k != null && k > 50) kms.push(k);
+    if(l.tgl_lepas && c.tanggal_pasang){ var m = (new Date(l.tgl_lepas) - new Date(c.tanggal_pasang)) / (864e5 * 30.44); if(m > 0.5) months.push(m); }
+  });
+  var prior = null; CT.items.forEach(function(it){ if(it.aktif === false) return; var match = it.dasar_task_id === tplId || ('custom_' + it.id) === tplId; if(!match) return; if(it.semua || it.kendaraan_id === v.id || !it.kendaraan_id) prior = { km:fromRange(num(it.umur_min_km), num(it.umur_max_km)), bulan:fromRange(num(it.umur_min_bulan), num(it.umur_max_bulan)), a:it }; });
+  return { kms:kms, months:months, prior:prior, n:n, pooled:same.length > 1 };
+}
+
+/* ---------- UI: kartu Tugas & Part Sendiri ---------- */
+var CSS = '#ctCard .ct-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}#ctCard .ct-row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);flex-wrap:wrap}#ctLife{margin-top:12px}.ct-pill{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--surface-2,#eef1f4);font-size:12px}';
+function css(){ if($('#ctStyle')) return; var s = document.createElement('style'); s.id = 'ctStyle'; s.textContent = CSS; document.head.appendChild(s); }
+function curVeh(){ var vs = g('vehicles') || [], id = g('programVehicleId'); return vs.filter(function(v){ return v.id === id; })[0] || vs[0]; }
+function preview(it){
+  var out = []; var k = fromRange(num(it.umur_min_km), num(it.umur_max_km)), m = fromRange(num(it.umur_min_bulan), num(it.umur_max_bulan));
+  if(k) out.push('KM: β ' + fN(k.beta, 1) + ', η ' + fN(k.eta) + ' km, B10 ' + fN(k.b10) + ', median ' + fN(k.b50) + ', P90 ' + fN(k.b90)); if(m) out.push('Waktu: β ' + fN(m.beta, 1) + ', η ' + fN(m.eta, 1) + ' bln, B10 ' + fN(m.b10, 1) + ', median ' + fN(m.b50, 1) + ', P90 ' + fN(m.b90, 1));
+  return out.join(' · ');
+}
+function html(){
+  var v = curVeh(), cat = (g('PARTS_CATALOG') || []).filter(function(p){ return String(p.id).indexOf('part_custom_') !== 0; });
+  var e = CT.editId ? CT.items.filter(function(x){ return x.id === CT.editId; })[0] : null; e = e || { trigger:'km' };
+  var h = '<h2>Tugas &amp; Part Sendiri (rentang umur)</h2><p class="hint">Tambahkan tugas atau part yang belum ada (mis. <strong>Check Spring</strong>), atau isi <strong>rentang umur</strong> untuk part yang sudah ada. Rentang umur dipakai menghitung reliabilitas dan prediksi. Tugas baru langsung muncul di Program, pilihan Work Order, Komponen Terpasang, dan Prediksi.</p>';
+  h += CT.mode === 'lokal' ? '<p class="hint">Penyimpanan: <strong>di perangkat ini saja</strong> (belum ada tabel di database). Jalankan <code>migration_rev48.sql</code> agar tersimpan di database dan ikut backup.</p>' : '<p class="hint">Penyimpanan: database (tabel maint_task_custom).</p>';
+  if(CT.msg) h += '<div class="msg show ' + CT.msg.k + '">' + esc(CT.msg.t) + '</div>';
+  h += '<form id="ctForm" novalidate><div class="ct-g">' +
+    '<div class="field"><label for="ct_jenis">Jenis entri</label><select id="ct_jenis"><option value="baru"' + (e.dasar_task_id ? '' : ' selected') + '>Tugas/part baru</option><option value="rentang"' + (e.dasar_task_id ? ' selected' : '') + '>Rentang umur part yang sudah ada</option></select></div>' +
+    '<div class="field" id="ct_f_nama"><label for="ct_nama">Nama tugas/part</label><input id="ct_nama" type="text" placeholder="mis. Check Spring" value="' + esc(e.nama || '') + '"></div>' +
+    '<div class="field" id="ct_f_dasar" hidden><label for="ct_dasar">Part yang sudah ada</label><select id="ct_dasar">' + cat.map(function(p){ return '<option value="' + esc(p.taskId) + '"' + (e.dasar_task_id === p.taskId ? ' selected' : '') + '>' + esc(p.nama) + '</option>'; }).join('') + '</select></div>' +
+    '<div class="field"><label for="ct_semua">Berlaku untuk</label><select id="ct_semua"><option value="0">' + esc(v ? [v.merk, v.model].filter(Boolean).join(' ') : 'Kendaraan terpilih') + ' saja</option><option value="1"' + (e.semua ? ' selected' : '') + '>Semua kendaraan</option></select></div>' +
+    '<div class="field" id="ct_f_trig"><label for="ct_trig">Pemicu jadwal</label><select id="ct_trig"><option value="km"' + (e.trigger === 'km' ? ' selected' : '') + '>Berdasarkan KM</option><option value="waktu"' + (e.trigger === 'waktu' ? ' selected' : '') + '>Berdasarkan waktu</option></select></div>' +
+    '<div class="field" id="ct_f_ik"><label for="ct_ik">Interval (KM)</label><input id="ct_ik" type="number" min="0" inputmode="numeric" value="' + (e.interval_km != null ? e.interval_km : '') + '"></div>' +
+    '<div class="field" id="ct_f_ib"><label for="ct_ib">Interval (bulan)</label><input id="ct_ib" type="number" min="0" inputmode="decimal" value="' + (e.interval_bulan != null ? e.interval_bulan : '') + '"></div></div>' +
+    '<p class="pg-lbl" style="margin:12px 0 4px;font-weight:600">Rentang umur part (terpendek sampai terpanjang yang wajar dialami)</p><div class="ct-g">' +
+    '<div class="field"><label for="ct_kmin">Umur minimum (KM)</label><input id="ct_kmin" type="number" min="0" inputmode="numeric" value="' + (e.umur_min_km != null ? e.umur_min_km : '') + '"></div>' +
+    '<div class="field"><label for="ct_kmax">Umur maksimum (KM)</label><input id="ct_kmax" type="number" min="0" inputmode="numeric" value="' + (e.umur_max_km != null ? e.umur_max_km : '') + '"></div>' +
+    '<div class="field"><label for="ct_bmin">Umur minimum (bulan)</label><input id="ct_bmin" type="number" min="0" inputmode="decimal" value="' + (e.umur_min_bulan != null ? e.umur_min_bulan : '') + '"></div>' +
+    '<div class="field"><label for="ct_bmax">Umur maksimum (bulan)</label><input id="ct_bmax" type="number" min="0" inputmode="decimal" value="' + (e.umur_max_bulan != null ? e.umur_max_bulan : '') + '"></div></div>' +
+    '<div class="field"><label for="ct_cat">Catatan</label><input id="ct_cat" type="text" value="' + esc(e.catatan || '') + '"></div>' +
+    '<p class="hint" id="ct_prev"></p><div class="row-actions"><button type="submit" class="primary">' + (CT.editId ? 'Simpan perubahan' : 'Tambahkan') + '</button>' + (CT.editId ? '<button type="button" class="ghost" data-ct="cancel">Batal</button>' : '') + '</div></form>';
+  var mine = CT.items.slice();
+  h += '<h3 style="margin:16px 0 4px;font-size:15px">Daftar (' + mine.length + ')</h3>' + (mine.length ? mine.map(function(it){
+    var kend = it.semua ? 'semua kendaraan' : (((g('vehicles') || []).filter(function(x){ return x.id === it.kendaraan_id; })[0] || {}).model || '–');
+    var dasar = it.dasar_task_id ? ((g('PARTS_CATALOG') || []).filter(function(p){ return p.taskId === it.dasar_task_id; })[0] || {}).nama : null;
+    var pv = preview(it);
+    return '<div class="ct-row"><span style="min-width:0"><strong>' + esc(dasar ? 'Rentang umur: ' + dasar : it.nama) + '</strong> <span class="ct-pill">' + esc(kend) + '</span>' + (it.dasar_task_id ? '' : ' <span class="ct-pill">' + (it.trigger === 'waktu' ? 'tiap ' + fN(it.interval_bulan) + ' bln' : 'tiap ' + fN(it.interval_km) + ' km') + '</span>') + (pv ? '<br><span class="hint">' + esc(pv) + '</span>' : '<br><span class="hint">Belum ada rentang umur: reliabilitas memakai asumsi interval.</span>') + '</span><span>' +
+      '<button type="button" class="ghost" data-ct="edit" data-id="' + esc(it.id) + '">Ubah</button> ' + (CT.delId === it.id ? '<button type="button" class="danger" data-ct="delok" data-id="' + esc(it.id) + '">Ya, hapus</button> <button type="button" class="ghost" data-ct="cancel">Batal</button>' : '<button type="button" class="ghost" data-ct="del" data-id="' + esc(it.id) + '">Hapus</button>') + '</span></div>'; }).join('') : '<p class="hint">Belum ada. Isi formulir di atas.</p>');
+  return h;
+}
+function syncForm(){
+  var j = $('#ct_jenis'); if(!j) return; var rg = j.value === 'rentang', trig = $('#ct_trig').value;
+  $('#ct_f_nama').hidden = rg; $('#ct_f_dasar').hidden = !rg; $('#ct_f_trig').hidden = rg; $('#ct_f_ik').hidden = rg || trig !== 'km'; $('#ct_f_ib').hidden = rg ? true : false;
+  var tmp = { umur_min_km:$('#ct_kmin').value, umur_max_km:$('#ct_kmax').value, umur_min_bulan:$('#ct_bmin').value, umur_max_bulan:$('#ct_bmax').value }; var p = preview(tmp); $('#ct_prev').textContent = p ? 'Hasil model (Weibull dari P10–P90): ' + p : 'Isi minimum dan maksimum (maksimum harus lebih besar) untuk melihat model umur.';
+}
+function render(){
+  var host = $('#partsContent'); if(!host) return; css();
+  var c = $('#ctCard'); if(!c){ c = document.createElement('div'); c.id = 'ctCard'; c.className = 'card'; host.appendChild(c);
+    c.addEventListener('input', function(){ syncForm(); }); c.addEventListener('change', function(){ syncForm(); });
+    c.addEventListener('submit', async function(ev){ ev.preventDefault(); await submit(); });
+    c.addEventListener('click', async function(ev){ var b = ev.target.closest('[data-ct]'); if(!b) return; var a = b.getAttribute('data-ct'), id = b.getAttribute('data-id');
+      if(a === 'edit'){ CT.editId = id; CT.delId = null; CT.msg = null; render(); c.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      else if(a === 'cancel'){ CT.editId = null; CT.delId = null; render(); }
+      else if(a === 'del'){ CT.delId = id; render(); }
+      else if(a === 'delok'){ try{ await removeItem(id); CT.msg = { k:'ok', t:'Dihapus.' }; }catch(e){ CT.msg = { k:'err', t:'Gagal menghapus: ' + e.message }; } CT.delId = null; render(); refreshOthers(); } }); }
+  c.innerHTML = html(); syncForm();
+}
+async function submit(){
+  var v = curVeh(); var jenis = $('#ct_jenis').value, it = { semua:$('#ct_semua').value === '1', kendaraan_id:v ? v.id : null, catatan:$('#ct_cat').value || null, aktif:true };
+  if(CT.editId) it.id = CT.editId; it.umur_min_km = num($('#ct_kmin').value); it.umur_max_km = num($('#ct_kmax').value); it.umur_min_bulan = num($('#ct_bmin').value); it.umur_max_bulan = num($('#ct_bmax').value);
+  if((it.umur_min_km != null || it.umur_max_km != null) && !(it.umur_min_km > 0 && it.umur_max_km > it.umur_min_km)){ CT.msg = { k:'err', t:'Rentang KM: minimum harus lebih dari 0 dan maksimum lebih besar dari minimum.' }; render(); return; }
+  if((it.umur_min_bulan != null || it.umur_max_bulan != null) && !(it.umur_min_bulan > 0 && it.umur_max_bulan > it.umur_min_bulan)){ CT.msg = { k:'err', t:'Rentang bulan: minimum harus lebih dari 0 dan maksimum lebih besar dari minimum.' }; render(); return; }
+  if(jenis === 'rentang'){ it.dasar_task_id = $('#ct_dasar').value; it.nama = 'Rentang umur ' + ($('#ct_dasar').selectedOptions[0] || {}).textContent; it.trigger = 'km'; if(it.umur_min_km == null && it.umur_min_bulan == null){ CT.msg = { k:'err', t:'Isi rentang umur (KM atau bulan).' }; render(); return; } }
+  else { it.nama = ($('#ct_nama').value || '').trim(); it.trigger = $('#ct_trig').value; it.interval_km = num($('#ct_ik').value); it.interval_bulan = num($('#ct_ib').value);
+    if(!it.nama){ CT.msg = { k:'err', t:'Nama tugas/part wajib diisi.' }; render(); return; }
+    if(it.trigger === 'km' && !(it.interval_km > 0)){ CT.msg = { k:'err', t:'Isi interval KM (lebih dari 0).' }; render(); return; }
+    if(it.trigger === 'waktu' && !(it.interval_bulan > 0)){ CT.msg = { k:'err', t:'Isi interval bulan (lebih dari 0).' }; render(); return; } }
+  try{ await saveItem(it); CT.msg = { k:'ok', t:(CT.editId ? 'Perubahan disimpan.' : 'Ditambahkan.') + (CT.mode === 'lokal' ? ' (tersimpan di perangkat ini)' : '') }; CT.editId = null; }catch(e){ CT.msg = { k:'err', t:'Gagal menyimpan: ' + e.message }; }
+  render(); refreshOthers();
+}
+function refreshOthers(){ ['renderProgramPage', 'renderPartsPage', 'renderWorkOrderPage'].forEach(function(f){ try{ if(typeof window[f] === 'function') window[f](); }catch(_){} }); try{ if(window.PROG){ var c = $('#progCard'); if(c) c.removeAttribute('data-sig'); } }catch(_){} }
+
+/* ---------- UI: umur part yang diganti ---------- */
+function decorateIC(){
+  $$('button[onclick^="markInstalledComponentActive"]').forEach(function(b){
+    if(b.parentNode.querySelector('[data-ctl]')) return; var m = /'([^']+)'/.exec(b.getAttribute('onclick') || ''); if(!m) return; var id = m[1];
+    var nb = document.createElement('button'); nb.type = 'button'; nb.className = 'ghost'; nb.setAttribute('data-ctl', id); nb.style.cssText = 'padding:4px 10px;font-size:12px;margin-left:4px'; var l = life(id); nb.textContent = l ? 'Ubah umur part' : 'Isi umur part'; b.parentNode.insertBefore(nb, b.nextSibling);
+    var cmp = (g('installedComponents') || []).filter(function(x){ return x.id === id; })[0]; if(l && cmp){ var k = l.km_lepas != null && cmp.km_saat_pasang != null ? Number(l.km_lepas) - Number(cmp.km_saat_pasang) : null, mo = l.tgl_lepas && cmp.tanggal_pasang ? (new Date(l.tgl_lepas) - new Date(cmp.tanggal_pasang)) / (864e5 * 30.44) : null; var sp = document.createElement('div'); sp.className = 'hint'; sp.textContent = 'Umur: ' + (k != null ? fN(k) + ' km' : '–') + ' · ' + (mo != null ? fN(mo, 1) + ' bln' : '–') + (l.alasan ? ' · ' + l.alasan : ''); b.parentNode.appendChild(sp); }
+  });
+}
+function openLife(id){
+  var c = (g('installedComponents') || []).filter(function(x){ return x.id === id; })[0]; if(!c) return; CT.lifeId = id;
+  var host = $('#ctCard'); if(!host){ render(); host = $('#ctCard'); } var l = life(id) || {}, v = (g('vehicles') || []).filter(function(x){ return x.id === c.kendaraan_id; })[0] || {};
+  var box = $('#ctLife'); if(!box){ box = document.createElement('div'); box.id = 'ctLife'; host.insertBefore(box, host.firstChild.nextSibling); }
+  box.className = 'card'; box.innerHTML = '<h3 style="margin:0 0 6px;font-size:15px">Umur part yang diganti: ' + esc(c.nama_komponen || '') + '</h3><p class="hint">Dipasang ' + (c.tanggal_pasang || '–') + ' pada ' + fN(c.km_saat_pasang) + ' km. Isi saat dilepas; umur dipakai untuk reliabilitas part ini' + (c.task_key ? '' : ' (hubungkan komponen ke tugas jadwal agar terhitung)') + '.</p><div class="ct-g">' +
+    '<div class="field"><label for="cl_km">KM saat dilepas</label><input id="cl_km" type="number" min="0" inputmode="numeric" value="' + (l.km_lepas != null ? l.km_lepas : (v.km_saat_ini != null ? v.km_saat_ini : '')) + '"></div>' +
+    '<div class="field"><label for="cl_tgl">Tanggal dilepas</label><input id="cl_tgl" type="date" value="' + (l.tgl_lepas ? String(l.tgl_lepas).slice(0, 10) : new Date().toISOString().slice(0, 10)) + '"></div>' +
+    '<div class="field"><label for="cl_al">Alasan penggantian</label><select id="cl_al"><option value="aus"' + (l.alasan === 'aus' || !l.alasan ? ' selected' : '') + '>Aus / habis umur</option><option value="rusak"' + (l.alasan === 'rusak' ? ' selected' : '') + '>Rusak sebelum waktunya</option><option value="preventif"' + (l.alasan === 'preventif' ? ' selected' : '') + '>Preventif (masih bagus)</option></select></div></div>' +
+    '<p class="hint" id="cl_prev"></p><div class="row-actions"><button type="button" class="primary" data-cl="save">Simpan umur</button><button type="button" class="ghost" data-cl="close">Tutup</button></div><div class="msg" id="cl_msg"></div>';
+  box.onclick = async function(e){ var b = e.target.closest('[data-cl]'); if(!b) return; if(b.getAttribute('data-cl') === 'close'){ box.parentNode.removeChild(box); return; } await saveLife(c); };
+  box.oninput = function(){ prevLife(c); }; prevLife(c); box.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+function prevLife(c){ var km = num($('#cl_km').value), t = $('#cl_tgl').value, p = $('#cl_prev'); var k = km != null && c.km_saat_pasang != null ? km - Number(c.km_saat_pasang) : null, mo = t && c.tanggal_pasang ? (new Date(t) - new Date(c.tanggal_pasang)) / (864e5 * 30.44) : null; p.textContent = 'Umur terukur: ' + (k != null ? fN(k) + ' km' : 'KM pasang belum diisi') + ' · ' + (mo != null ? fN(mo, 1) + ' bulan' : 'tanggal pasang belum diisi') + '. Alasan "Preventif" tidak dihitung sebagai kegagalan.'; }
+async function saveLife(c){
+  var km = num($('#cl_km').value), t = $('#cl_tgl').value, al = $('#cl_al').value, m = $('#cl_msg');
+  if(km != null && c.km_saat_pasang != null && km < Number(c.km_saat_pasang)){ m.className = 'msg show err'; m.textContent = 'KM dilepas tidak boleh lebih kecil dari KM saat dipasang (' + fN(c.km_saat_pasang) + ').'; return; }
+  if(t && c.tanggal_pasang && new Date(t) < new Date(c.tanggal_pasang)){ m.className = 'msg show err'; m.textContent = 'Tanggal dilepas tidak boleh sebelum tanggal pasang.'; return; }
+  var sb = g('sb'), done = false;
+  if(sb && ('km_saat_lepas' in c || CT.icCols)){ var r = await sb.from('installed_component').update({ km_saat_lepas:km, tanggal_lepas:t || null, alasan_lepas:al, updated_at:new Date().toISOString() }).eq('id', c.id); if(!r.error){ done = true; if(typeof window.loadInstalledComponents === 'function') await window.loadInstalledComponents(); } }
+  if(!done){ var all = ls(LSL, {}); all[c.id] = { km_lepas:km, tgl_lepas:t, alasan:al }; sv(LSL, all); }
+  m.className = 'msg show ok'; m.textContent = done ? 'Umur tersimpan di database.' : 'Umur tersimpan di perangkat ini (jalankan migration_rev48.sql agar masuk database).';
+  decorateICRefresh(); refreshOthers();
+}
+function decorateICRefresh(){ $$('[data-ctl]').forEach(function(n){ var sp = n.parentNode.querySelector('.hint'); if(sp && /^Umur:/.test(sp.textContent)) sp.parentNode.removeChild(sp); n.parentNode.removeChild(n); }); decorateIC(); }
+async function detectIcCols(){ var sb = g('sb'); if(!sb) return; try{ var r = await sb.from('installed_component').select('km_saat_lepas').limit(1); CT.icCols = !r.error; }catch(_){} }
+
+function onShow(name){ if(name === 'parts'){ if(!CT.loaded) load().then(function(){ render(); refreshOthers(); }); else render(); setTimeout(decorateIC, 120); } }
+function boot(){
+  load().then(function(){ detectIcCols(); try{ var cur = g('currentPanel'); if(cur === 'parts') render(); }catch(_){} refreshOthers(); });
+  var o = window.getEffectiveMaintTemplates; if(typeof o === 'function' && !o.__ct){ var w = function(v){ var b = o.apply(this, arguments); try{ var x = tplFor(v); return x.length ? b.concat(x) : b; }catch(_){ return b; } }; w.__ct = 1; window.getEffectiveMaintTemplates = w; }
+  var r = window.renderInstalledComponentsPage; if(typeof r === 'function' && !r.__ct){ var w2 = function(){ var x = r.apply(this, arguments); try{ decorateIC(); }catch(_){} return x; }; w2.__ct = 1; window.renderInstalledComponentsPage = w2; }
+  var m = window.markInstalledComponentReplaced; if(typeof m === 'function' && !m.__ct){ var w3 = async function(id){ var x = await m.apply(this, arguments); try{ setTimeout(function(){ openLife(id); }, 400); }catch(_){} return x; }; w3.__ct = 1; window.markInstalledComponentReplaced = w3; }
+  document.addEventListener('click', function(e){ var b = e.target.closest('[data-ctl]'); if(b) openLife(b.getAttribute('data-ctl')); });
+}
+window.PROG_LIFE = lifeFor;
+window.CT = { load:load, render:render, onShow:onShow, tplFor:tplFor, lifeFor:lifeFor, fromRange:fromRange, openLife:openLife, items:function(){ return CT.items; }, _st:CT };
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 600); }); else setTimeout(boot, 600);
 })();
 
 </script>
