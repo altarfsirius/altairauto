@@ -7773,6 +7773,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-18</td><td>Rev 50: Plan Board mengikuti kendaraan yang dipilih di menu lain (pilihan manual di papan bertahan sampai kendaraan global diganti); tombol bulan satu baris di iPhone; Auto-create tidak lagi membuat Planned WO langsung: tampil pratinjau berisi kartu yang memenuhi syarat dengan kotak centang, dibuat hanya setelah dikonfirmasi.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 49: Rentang wajar (bawah, tengah, atas) untuk tegangan, suhu, dan km/L, dengan batas Estimasi yang dapat diubah per kendaraan. Suhu dan tegangan menjadi gerbang Tidak laik hanya bila Cek pada dua pengukuran berturut-turut; km/L hanya peringatan. Status baru Belum cukup data. Aki yang melewati umur baku tetapi tegangannya normal dipantau berdasarkan kondisi. Tambah/hapus (sembunyikan) template tugas, buat tugas dari kotak pencarian Task Template, dan zoom iPhone dikunci.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 48: Tugas &amp; Part Sendiri (mis. Check Spring) di Parts &rsaquo; Umur Pakai: interval KM atau waktu, ikut Program, Work Order, Komponen Terpasang, dan Prediksi. Rentang umur part (KM dan bulan, P10-P90) untuk part baru atau yang sudah ada; isian umur nyata saat part diganti (KM dan tanggal dilepas, alasan). Reliabilitas memakai umur nyata (&ge;3) atau rentang yang diisi. SQL opsional: migration_rev48.sql.</td></tr>
 <tr><td class="mono">2026-11-18</td><td>Rev 47: Komponen Terpasang: tombol "Aktifkan lagi (batalkan Replaced)" untuk komponen berstatus Replaced yang salah ditandai.</td></tr>
@@ -15684,9 +15685,17 @@ const $ = id => document.getElementById(id);
 const U = () => (window.USAGE && window.USAGE._fn) ? window.USAGE._fn : null;
 const SAFETY = new Set(['rem', 'cairan_rem', 'ban']);
 const WINDOW_DAYS = 7;
-const PB = { month:null, type:'all', vid:'all', sel:null, msg:null, busy:{}, settings:{}, sched:{}, tableOk:true, loaded:false, undo:null, fail:{}, conflict:null, draft:null };
+const PB = { pendOff:false, lastPv:null, month:null, type:'all', vid:'all', sel:null, msg:null, busy:{}, settings:{}, sched:{}, tableOk:true, loaded:false, undo:null, fail:{}, conflict:null, draft:null };
 const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const diffDays = (a, b) => Math.round((a - b) / DAY);
+
+/* Rev 50: papan mengikuti kendaraan yang dipilih di menu lain; pilihan manual di papan bertahan sampai kendaraan global diganti */
+function followSel(){
+  let pv; try{ pv = programVehicleId; }catch(_){ pv = null; }
+  if(!pv || pv === PB.lastPv) return; PB.lastPv = pv;
+  const v = VEHS().find(x => x.id === pv); if(!v) return;
+  PB.type = typeKey(v); PB.vid = v.id; PB.sel = null; PB.pendOff = false;
+}
 
 /* ---------- Adapter data (real = Supabase; preview = memori) ---------- */
 const MEM = { setting:[], sched:[], audit:[] };
@@ -15869,7 +15878,7 @@ async function createPlanned(c, how){
     return { ok:true, wo:r.wo, dup:!!r.dup };
   }finally{ delete PB.busy[key]; }
 }
-async function autoSync(){
+async function autoSync(allowCreate){
   const out = { created:0, retried:0, errors:[] };
   for(const vid of scopeVidsAll()){
     const set = MEM.setting.find(s => s.kendaraan_id === vid); if(!set || !set.auto_create) continue;
@@ -15882,6 +15891,7 @@ async function autoSync(){
         continue;
       }
       if(!c.trigger || c.block) continue;
+      if(!allowCreate) continue;                                  /* Rev 50: pembuatan WO baru hanya setelah pratinjau dikonfirmasi */
       const r = await createPlanned(c, c.trigger);
       if(r.ok && !r.dup) out.created++;
       else if(r.error || r.partial){ PB.fail[fk2] = (PB.fail[fk2] || 0) + 1; if(r.partial) out.created++; out.errors.push(c.name + ': ' + (r.partial ? 'WO dibuat tetapi Task gagal (akan dicoba ulang, maks. 3x) — ' : '') + ((r.error && r.error.message) || 'gagal')); }
@@ -15890,6 +15900,23 @@ async function autoSync(){
   return out;
 }
 function scopeVidsAll(){ return VEHS().map(v => v.id); }
+/* Rev 50: kartu yang memenuhi syarat Auto-create tetapi belum punya WO (hanya kendaraan dalam cakupan papan) */
+function pendingCards(){
+  const out = [];
+  scopeVids().forEach(vid => { const set = MEM.setting.find(x => x.kendaraan_id === vid); if(!set || !set.auto_create) return;
+    cardsFor(vid).forEach(c => { if(c.wo || !c.trigger || c.block) return; if((PB.fail[vid + '|' + c.key] || 0) >= 3) return; out.push(c); }); });
+  return out;
+}
+function pendingHtml(multi){
+  if(PB.pendOff || !PB.tableOk) return '';
+  const L = pendingCards(); if(!L.length) return '';
+  const rows = L.slice(0, 60).map(c => { const v = vById(c.vid), k = esc(c.vid + '|' + c.key);
+    return `<label class="pb6-pr"><input type="checkbox" class="pb6-pc" data-k="${k}" checked> <span><strong>${esc(c.name)}</strong>${multi ? ' <span class="hint">' + esc(((v.merk || '') + ' ' + (v.model || '')).trim()) + '</span>' : ''}<br><span class="hint">${esc(c.trigger)} · jatuh tempo ${esc(fdate(c.orig))}${c.targetKm != null ? ' · target ' + fk(c.targetKm) + ' km' : ''}</span></span></label>`; }).join('');
+  return `<div class="card" style="margin-bottom:10px;border-color:var(--accent,#0a6280);"><div class="card-head"><h2>Auto-create: ${L.length} Planned WO siap dibuat</h2></div>
+    <p class="hint">Belum ada yang dibuat. Hilangkan centang untuk tugas yang tidak perlu (mis. yang sebenarnya sudah dikerjakan tetapi belum tercatat), lalu konfirmasi. Planned WO berstatus Open dan Task-nya dibuat untuk yang dicentang saja.</p>
+    <div class="pb6-prl">${rows}</div>${L.length > 60 ? '<p class="hint">Menampilkan 60 dari ' + L.length + '.</p>' : ''}
+    <div class="row-actions" style="margin-top:8px;"><button type="button" class="primary" onclick="AC6.plan.confirmCreate()">Buat yang dicentang</button><button type="button" class="ghost" onclick="AC6.plan.pendSkip()">Nanti saja</button></div></div>`;
+}
 
 /* ---------- Render ---------- */
 const LANES = [['overdue', 'Overdue'], ['w1', 'Week 1'], ['w2', 'Week 2'], ['w3', 'Week 3'], ['w4', 'Week 4'], ['w5', 'Week 5'], ['upcoming', 'Upcoming'], ['unscheduled', 'Unscheduled']];
@@ -15930,22 +15957,24 @@ function render(){
     (PB.conflict ? `<div class="msg show err" style="margin-bottom:10px;">Konflik: “${esc(PB.conflict.name)}” diubah dari tempat lain. Tampilan dimuat ulang; ulangi perubahan Anda. <button type="button" class="ghost" onclick="AC6.plan.clearConflict()">Tutup</button></div>` : '') +
     (PB.msg ? `<div class="msg show ${PB.msg.k}" style="margin-bottom:10px;">${esc(PB.msg.t)}</div>` : '');
   const auto = one ? `<div class="card" style="margin-bottom:10px;"><div class="card-head"><h2>Auto-create Planned WO — ${esc(typeLabel(vById(one)))}</h2><span class="status-pill ${set.auto_create ? 'ok' : 'muted'}">${set.auto_create ? 'Aktif' : 'Nonaktif'}</span></div>
-    <p class="hint">Bila aktif, saat aplikasi dibuka Plan Board membuat <strong>Planned WO (status Open) + Task</strong> untuk kartu yang memenuhi syarat: odometer aktual mencapai target (<em>Mileage Due</em>), tanggal kalender jatuh tempo (<em>Calendar Due</em>), atau perkiraan tercapai dalam ${Number(set.horizon_days) || 14} hari (<em>Forecast Trigger</em>). Tidak ada penjadwal di server: dibuat <strong>saat aplikasi dibuka</strong> (catch-up), bukan saat browser tertutup. Satu kartu = satu WO (kunci: kendaraan + komponen + siklus servis).</p>
+    <p class="hint">Bila aktif, saat aplikasi dibuka Plan Board menampilkan <strong>pratinjau Planned WO (status Open) + Task</strong> untuk kartu yang memenuhi syarat, dan baru membuatnya setelah Anda konfirmasi: odometer aktual mencapai target (<em>Mileage Due</em>), tanggal kalender jatuh tempo (<em>Calendar Due</em>), atau perkiraan tercapai dalam ${Number(set.horizon_days) || 14} hari (<em>Forecast Trigger</em>). Tidak ada penjadwal di server: pratinjau muncul <strong>saat papan dibuka</strong> (catch-up), bukan saat browser tertutup. Satu kartu = satu WO (kunci: kendaraan + komponen + siklus servis).</p>
     <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;"><input type="checkbox" id="pbAuthChk" ${set.auto_create ? 'checked' : ''}> <span>Saya berwenang dan mengizinkan pembuatan Planned WO + Task otomatis untuk kendaraan ini.</span></label>
     <div class="row-actions" style="margin-top:8px;"><button type="button" class="primary" onclick="AC6.plan.setAuto(true,'${esc(one)}')" ${PB.tableOk ? '' : 'disabled'}>Aktifkan</button><button type="button" class="ghost" onclick="AC6.plan.setAuto(false,'${esc(one)}')" ${PB.tableOk ? '' : 'disabled'}>Nonaktifkan</button><button type="button" class="ghost" onclick="AC6.plan.sync(true)" ${PB.tableOk ? '' : 'disabled'}>Jalankan sinkron sekarang</button></div></div>` : '<p class="hint">Pilih satu kendaraan fisik untuk mengatur Auto-create.</p>';
   const lanes = LANES.map(l => `<div class="pb6-lane" data-l="${l[0]}" ondragover="AC6.plan.over(event)" ondrop="AC6.plan.drop(event,'${l[0]}')"><div class="pb6-lh">${l[1]}<span class="count">${by[l[0]].length}</span></div>${by[l[0]].map(c => cardHtml(c, multi)).join('') || '<div class="hint pb6-empty">—</div>'}</div>`).join('');
   root.innerHTML = `<style>.pb6-board{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;align-items:start}@media(max-width:900px){.pb6-board{grid-template-columns:repeat(2,minmax(200px,1fr))}}@media(max-width:560px){.pb6-board{grid-template-columns:1fr}}
     .pb6-lane{background:var(--surface-2,rgba(127,127,127,.07));border:1px solid var(--border,#ddd);border-radius:10px;padding:8px;min-height:90px}.pb6-lh{display:flex;justify-content:space-between;font-weight:600;font-size:13px;margin-bottom:6px}
     .pb6-card{background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:8px;padding:8px;margin-bottom:8px;cursor:pointer;font-size:12px}.pb6-card.sel{outline:2px solid var(--accent,#2a6df4)}.pb6-t{font-weight:600;font-size:13px;margin-bottom:4px}
+    #planRoot .pb6-nav{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;width:100%;max-width:420px}#planRoot .pb6-nav button{width:auto;flex:0 0 auto;min-width:44px;padding-inline:14px}#planRoot .pb6-nav .pb6-ml{flex:1 1 auto;text-align:center;min-width:0;white-space:nowrap}.pb6-prl{display:grid;gap:6px;max-height:340px;overflow:auto;margin:6px 0}.pb6-pr{display:flex;gap:10px;align-items:flex-start;padding:8px;border:1px solid var(--border,#ddd);border-radius:8px;font-size:13px}.pb6-pr input{margin-top:3px;width:20px;height:20px;flex:0 0 auto}
     .pb6-kv{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;margin:4px 0}.pb6-kv dt{color:var(--muted,#777)}.pb6-kv dd{margin:0}.pb6-tags{display:flex;gap:4px;flex-wrap:wrap}.pb6-empty{text-align:center}</style>
     ${banner}
     <div class="card" style="margin-bottom:10px;"><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
       <div class="field" style="margin:0;"><label for="pbType">Vehicle Type</label><select id="pbType" onchange="AC6.plan.setType(this.value)"><option value="all">All types</option>${types.map(t => `<option value="${esc(t[0])}"${PB.type === t[0] ? ' selected' : ''}>${esc(t[1])}</option>`).join('')}</select></div>
       <div class="field" style="margin:0;"><label for="pbVeh">Vehicle (physical unit)</label><select id="pbVeh" onchange="AC6.plan.setVeh(this.value)"><option value="all">All units</option>${vs.map(v => `<option value="${esc(v.id)}"${PB.vid === v.id ? ' selected' : ''}>${esc(typeLabel(v) + (v.plat_nomor ? ' · ' + v.plat_nomor : ''))}</option>`).join('')}</select></div>
-      <div class="row-actions" style="margin:0;"><button type="button" class="ghost" onclick="AC6.plan.month(-1)" aria-label="Bulan sebelumnya">&lsaquo;</button><strong style="min-width:130px;text-align:center;">${esc(mlabel)}</strong><button type="button" class="ghost" onclick="AC6.plan.month(1)" aria-label="Bulan berikutnya">&rsaquo;</button><button type="button" class="ghost" onclick="AC6.plan.month(0)">Hari ini</button></div>
+      <div class="pb6-nav"><button type="button" class="ghost" onclick="AC6.plan.month(-1)" aria-label="Bulan sebelumnya">&lsaquo;</button><strong class="pb6-ml">${esc(mlabel)}</strong><button type="button" class="ghost" onclick="AC6.plan.month(1)" aria-label="Bulan berikutnya">&rsaquo;</button><button type="button" class="ghost" onclick="AC6.plan.month(0)">Hari ini</button></div>
       ${PB.undo ? `<button type="button" class="ghost" onclick="AC6.plan.undo()">Undo: ${esc(PB.undo.name)}</button>` : ''}</div>
       <p class="hint" style="margin:8px 0 0;">Seret kartu ke lane Week untuk memindahkan jadwal, atau klik kartu &rarr; Edit Schedule. Jadwal hanya boleh bergeser ±${WINDOW_DAYS} hari dari jatuh tempo asli; di luar itu perlu alasan + konfirmasi, dan penundaan yang melanggar batas km/kalender/keselamatan diblokir. Target KM dan jatuh tempo asli tidak pernah berubah.</p></div>
     ${auto}
+    ${pendingHtml(multi)}
     <div class="pb6-board">${lanes}</div>
     <div id="pbDetail">${detailHtml(cards)}</div>`;
 }
@@ -15971,13 +16000,23 @@ function findCard(k){ const [vid] = String(k).split('|'); return cardsFor(vid).f
 function setMsg(k, t){ PB.msg = t ? { k, t } : null; render(); }
 
 const plan = {
-  async onShow(){ if(!PB.loaded){ await dbLoad(); PB.loaded = true; } render(); const r = PB.tableOk ? await autoSync() : null; if(r && (r.created || r.retried || r.errors.length)){ PB.msg = { k:r.errors.length ? 'err' : 'ok', t:'Sinkron: ' + r.created + ' Planned WO dibuat, ' + r.retried + ' Task dipulihkan' + (r.errors.length ? '; gagal: ' + r.errors.join(' | ') : '.') }; } render(); },
+  async onShow(){ if(!PB.loaded){ await dbLoad(); PB.loaded = true; } followSel(); render(); const r = PB.tableOk ? await autoSync(false) : null; if(r && (r.created || r.retried || r.errors.length)){ PB.msg = { k:r.errors.length ? 'err' : 'ok', t:'Sinkron: ' + r.created + ' Planned WO dibuat, ' + r.retried + ' Task dipulihkan' + (r.errors.length ? '; gagal: ' + r.errors.join(' | ') : '.') }; } render(); },
   setType(v){ PB.type = v; PB.vid = 'all'; PB.sel = null; render(); },
   setVeh(v){ PB.vid = v; PB.sel = null; render(); },
   month(d){ if(d === 0){ const t = today0(); PB.month = new Date(t.getFullYear(), t.getMonth(), 1); } else PB.month = new Date(PB.month.getFullYear(), PB.month.getMonth() + d, 1); render(); },
   open(k){ PB.sel = k; PB.draft = null; render(); const c = findCard(k); if(c && c.wo){ /* kartu dengan WO: detail tampil, tombol Open WO tersedia */ } },
   close(){ PB.sel = null; PB.draft = null; render(); },
   clearConflict(){ PB.conflict = null; render(); },
+  pendSkip(){ PB.pendOff = true; render(); },
+  async confirmCreate(){
+    const keys = Array.prototype.map.call(document.querySelectorAll('.pb6-pc:checked'), el => el.getAttribute('data-k'));
+    if(!keys.length){ PB.msg = { k:'err', t:'Tidak ada yang dicentang.' }; render(); return; }
+    let made = 0; const errs = [];
+    for(const k of keys){ const c = findCard(k); if(!c || c.wo || !c.trigger || c.block) continue; const r = await createPlanned(c, c.trigger);
+      if(r.ok && !r.dup) made++; else if(r.error || r.partial){ PB.fail[k] = (PB.fail[k] || 0) + 1; if(r.partial) made++; errs.push(c.name + ': ' + ((r.error && r.error.message) || 'gagal')); } }
+    PB.msg = { k:errs.length ? 'err' : 'ok', t:made + ' Planned WO dibuat dari ' + keys.length + ' yang dikonfirmasi' + (errs.length ? '; gagal: ' + errs.join(' | ') : '.') };
+    render();
+  },
   drag(e){ try{ e.dataTransfer.setData('text/plain', e.currentTarget.getAttribute('data-k')); e.dataTransfer.effectAllowed = 'move'; }catch(x){} },
   over(e){ e.preventDefault(); },
   async drop(e, lane){
@@ -16021,11 +16060,11 @@ const plan = {
     const r = await dbSetting(vid, { auto_create:!!on });
     if(r.error){ setMsg('err', 'Gagal menyimpan pengaturan: ' + r.error.message); return; }
     PB.settings[vid] = MEM.setting.find(s => s.kendaraan_id === vid);
-    if(on) await plan.sync(true); else setMsg('ok', 'Auto-create dinonaktifkan.');
+    if(on){ PB.pendOff = false; PB.msg = { k:'ok', t:'Auto-create diaktifkan. Periksa pratinjau di bawah lalu konfirmasi; belum ada WO yang dibuat.' }; render(); } else setMsg('ok', 'Auto-create dinonaktifkan.');
   },
   async sync(manual){
     if(manual) Object.keys(PB.fail).forEach(k => { delete PB.fail[k]; });
-    const r = await autoSync();
+    const r = await autoSync(false);
     PB.msg = { k:r.errors.length ? 'err' : 'ok', t:'Sinkron selesai: ' + r.created + ' Planned WO dibuat, ' + r.retried + ' Task dipulihkan' + (r.errors.length ? '; gagal: ' + r.errors.join(' | ') : '.') };
     render();
   },
@@ -21429,7 +21468,7 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:49,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:50,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
