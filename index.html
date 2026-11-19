@@ -990,6 +990,106 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
         <div class="row-actions"><button type="button" class="ghost" onclick="showPanel('risiko')">Buka Problem Analysis &rsaquo;</button><button type="button" class="ghost" onclick="showPanel('playbook')">Buka Lifecycle Playbook &rsaquo;</button></div>
       </div>
     </details>
+    <details class="doc-section" id="refIstilah">
+      <summary>6. Kamus Istilah Maintenance (Pocket Guide)</summary>
+      <div class="content">
+        <p><em>&ldquo;Kalau Anda tidak menjadwalkan waktu untuk perawatan, kendaraan akan menjadwalkannya sendiri untuk Anda.&rdquo;</em> Ringkasan 19 istilah yang paling sering dipakai (di infografis sumber ada 20 kotak, tetapi MTTR tercantum dua kali), lengkap dengan contoh di kendaraan. Tujuannya sama: perawatan aman, peralatan andal, produktivitas lebih tinggi.</p>
+        <div class="table-scroll keep-scroll"><table class="ctable">
+          <thead><tr><th>Istilah</th><th>Arti</th><th>Contoh di kendaraan</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Preventive Maintenance</strong></td><td>Perawatan rutin supaya peralatan tetap jalan dan mencegah henti tak terencana akibat kerusakan.</td><td>Ganti oli mesin, filter udara, dan busi sesuai jadwal.</td></tr>
+            <tr><td><strong>Time-based Maintenance (TBM)</strong></td><td>Pekerjaan dilakukan pada selang waktu tertentu, apa pun tingkat pemakaian aset.</td><td>Ganti minyak rem tiap 2 tahun walau jarang dipakai.</td></tr>
+            <tr><td><strong>Condition-based Maintenance (CBM)</strong></td><td>Pekerjaan dilakukan berdasarkan kondisi peralatan atau parameter tertentu.</td><td>Ganti aki bila tegangan dan hasil uji menurun, bukan sekadar karena umur.</td></tr>
+            <tr><td><strong>Reactive Maintenance</strong></td><td>Memperbaiki komponen ke kondisi kerja normal setelah rusak atau gagal.</td><td>Ganti bohlam lampu setelah mati.</td></tr>
+            <tr><td><strong>Breakdown Maintenance</strong></td><td>Perawatan darurat sebagai respons atas kerusakan mendadak yang tidak terduga.</td><td>Derek dan perbaikan karena mogok di jalan.</td></tr>
+            <tr><td><strong>Corrective Maintenance</strong></td><td>Perbaikan atas kegagalan yang sudah terjadi untuk mengembalikan peralatan ke kondisi kerja.</td><td>Mengganti kampas rem yang sudah habis setelah ditemukan saat inspeksi.</td></tr>
+            <tr><td><strong>Predictive Maintenance</strong></td><td>Perawatan berdasar analisis data dan model untuk memprediksi kegagalan sebelum terjadi, sehingga perbaikan tepat waktu.</td><td>Membaca tren tegangan aki, suhu mesin, dan km/L untuk memperkirakan kapan perlu tindakan (lihat Prediksi).</td></tr>
+            <tr><td><strong>Total Productive Maintenance (TPM)</strong></td><td>Strategi menyeluruh yang melibatkan seluruh tenaga kerja dalam merawat dan meningkatkan keandalan serta produktivitas.</td><td>Pemilik rutin memeriksa tekanan angin dan level cairan sendiri, bengkel mengerjakan sisanya.</td></tr>
+            <tr><td><strong>Reliability Centered Maintenance (RCM)</strong></td><td>Pendekatan sistematis: kenali komponen kritis dan pastikan keandalannya lewat strategi yang tepat.</td><td>Fokus ke rem, ban, kelistrikan, dan pendingin, karena paling berisiko bagi keselamatan.</td></tr>
+            <tr><td><strong>Mean Time To Repair (MTTR)</strong></td><td>Rata-rata waktu yang dibutuhkan untuk memperbaiki peralatan setelah gagal.</td><td>Rata-rata berapa hari motor di bengkel per kerusakan.</td></tr>
+            <tr><td><strong>Mean Time To Failure (MTTF)</strong></td><td>Rata-rata waktu operasi aset yang tidak dapat diperbaiki sebelum gagal.</td><td>Umur pakai rata-rata sebuah ban atau aki sebelum diganti.</td></tr>
+            <tr><td><strong>Mean Waiting Time (MWT)</strong></td><td>Rata-rata waktu peralatan menunggu untuk dirawat.</td><td>Menunggu part datang atau antrean bengkel.</td></tr>
+            <tr><td><strong>Total Breakdown Time</strong></td><td>Total waktu peralatan mati akibat kegagalan (kehilangan waktu produksi).</td><td>Jumlah hari kendaraan tidak bisa dipakai dalam setahun.</td></tr>
+            <tr><td><strong>Overall Equipment Effectiveness (OEE)</strong></td><td>Ukuran seberapa efektif sebuah peralatan dimanfaatkan.</td><td>Persentase waktu kendaraan siap pakai dibanding waktu yang dibutuhkan.</td></tr>
+            <tr><td><strong>Shutdown Maintenance</strong></td><td>Pekerjaan perawatan yang hanya bisa dilakukan setelah peralatan dimatikan.</td><td>Overhaul mesin, kuras tangki, atau ganti kopling.</td></tr>
+            <tr><td><strong>Level of Repair Analysis (LORA)</strong></td><td>Proses menentukan apakah dan kapan mengganti, memperbaiki, atau membuang suatu item itu hemat biaya.</td><td>Memperbaiki velg atau menggantinya? Lihat Purchase Appraisal dan Biaya (TCO).</td></tr>
+            <tr><td><strong>Run-to-Failure</strong></td><td>Aset sengaja dipakai sampai rusak, baru dilakukan perawatan reaktif.</td><td>Bohlam atau sekring murah yang tidak berisiko, dibiarkan sampai putus.</td></tr>
+            <tr><td><strong>Deferred Maintenance</strong></td><td>Penundaan perbaikan karena keterbatasan anggaran atau dana.</td><td>Menunda ganti ban sampai gajian. Hati-hati, risiko dan biaya susulan bisa naik.</td></tr>
+            <tr><td><strong>Lockout Tagout (LOTO)</strong></td><td>Prosedur keselamatan penting agar pekerja terlindung dari menyalanya mesin secara tak terduga saat servis.</td><td>Lepas terminal aki dan kunci kontak sebelum kerja di kelistrikan.</td></tr>
+          </tbody>
+        </table></div>
+        <p class="hint">Menurut infografis sumber, urutan bangunnya: <strong>Safe Maintenance = Reliable Equipment = Higher Productivity</strong>.</p>
+        <div class="row-actions"><button type="button" class="ghost" onclick="showPanel('mguide')">Buka Interval Umum &rsaquo;</button><button type="button" class="ghost" onclick="showPanel('program')">Buka Program &rsaquo;</button></div>
+      </div>
+    </details>
+
+    <details class="doc-section" id="refBiaya">
+      <summary>7. Biaya Tetap vs Variabel (Fixed vs Variable Costs)</summary>
+      <div class="content">
+        <p>Cara mengenali, menggolongkan, dan memakai biaya seperti seorang CFO. Untuk kendaraan, pemisahan ini menentukan biaya per km yang benar dan keputusan pertahankan atau ganti.</p>
+        <div class="table-scroll keep-scroll"><table class="ctable">
+          <thead><tr><th></th><th>Biaya tetap</th><th>Biaya variabel</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Arti</strong></td><td>Total relatif sama dalam rentang tertentu walau pemakaian naik atau turun. Per unit/km turun bila pemakaian naik.</td><td>Naik-turun mengikuti aktivitas: makin banyak dipakai, makin besar. Per unit/km relatif tetap.</td></tr>
+            <tr><td><strong>Contoh kendaraan</strong></td><td>Pajak tahunan (STNK), asuransi, cicilan, parkir/garasi bulanan, penyusutan, biaya langganan GPS atau servis berkala berbasis waktu.</td><td>BBM, oli dan filter per km, ban dan kampas yang habis karena pemakaian, tol, parkir per kunjungan.</td></tr>
+            <tr><td><strong>Contoh umum (sumber)</strong></td><td>Sewa, gaji staf tetap, asuransi, langganan perangkat lunak, penyusutan, layanan keamanan.</td><td>Bahan baku, kemasan, komisi penjualan, ongkos kirim, listrik yang terkait produksi, biaya transaksi.</td></tr>
+          </tbody>
+        </table></div>
+        <h3 style="font-size:15px;margin:16px 0 6px;">Ilustrasi perilaku biaya</h3>
+        <div class="table-scroll keep-scroll"><table class="ctable" style="min-width:420px;">
+          <thead><tr><th>Unit</th><th>Biaya tetap</th><th>Biaya variabel</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>1.000</td><td>300.000</td><td>200.000</td><td>500.000</td></tr>
+            <tr><td>2.000</td><td>300.000</td><td>400.000</td><td>700.000</td></tr>
+            <tr><td>3.000</td><td>300.000</td><td>600.000</td><td>900.000</td></tr>
+            <tr><td>4.000</td><td>300.000</td><td>800.000</td><td>1.100.000</td></tr>
+          </tbody>
+        </table></div>
+        <p class="hint">Bacanya: biaya tetap datar, biaya variabel naik lurus, total = tetap + variabel.</p>
+        <h3 style="font-size:15px;margin:16px 0 6px;">Mengapa pembedaan ini penting</h3>
+        <p><strong>Penetapan harga</strong> (tahu laba minimum), <strong>anggaran</strong> (perkiraan biaya di tingkat aktivitas berbeda), <strong>titik impas</strong> (hitung berapa penjualan yang dibutuhkan), dan <strong>kendali biaya</strong> (kurangi biaya yang tepat tanpa merusak).</p>
+        <p><strong>Margin kontribusi</strong> = Penjualan &minus; Biaya variabel. <strong>Titik impas (unit)</strong> = Biaya tetap &divide; margin kontribusi per unit.</p>
+        <h3 style="font-size:15px;margin:16px 0 6px;">Biaya campuran dan biaya bertingkat</h3>
+        <p><strong>Biaya campuran</strong> punya bagian tetap dan variabel, misalnya tagihan listrik dengan biaya dasar ditambah pemakaian, atau sewa mobil dengan biaya tetap ditambah per km. <strong>Biaya bertingkat</strong> tetap selama kapasitas cukup lalu melonjak, misalnya satu mekanik per 20 kendaraan, atau tambah gudang saat melewati 5.000 unit. Jangan memaksa semuanya masuk tetap atau variabel murni.</p>
+        <h3 style="font-size:15px;margin:16px 0 6px;">Tes cepat menggolongkan biaya</h3>
+        <ul>
+          <li>Apakah totalnya hampir sama walau pemakaian berubah sedikit? Bila ya, kemungkinan tetap.</li>
+          <li>Apakah tetap ada walau pemakaian nol? Bila ya, tetap.</li>
+          <li>Apakah naik langsung seiring tiap unit/km tambahan? Bila ya, variabel.</li>
+          <li>Ada bagian tetap ditambah bagian pemakaian? Campuran.</li>
+        </ul>
+        <h3 style="font-size:15px;margin:16px 0 6px;">Kesalahan yang sering terjadi</h3>
+        <ul>
+          <li>Menganggap semua gaji sebagai biaya tetap.</li>
+          <li>Mengabaikan komisi penjualan dalam penetapan harga.</li>
+          <li>Salah menggolongkan ongkos kirim.</li>
+          <li>Lupa kenaikan bertingkat musiman.</li>
+          <li>Memakai total biaya, bukan margin kontribusi, untuk keputusan.</li>
+          <li>Mengira biaya tetap tetap selamanya (padahal bisa naik saat kapasitas penuh).</li>
+        </ul>
+        <p class="hint">Salah menggolongkan biaya membuat titik impas dan harga ikut salah.</p>
+        <h3 style="font-size:15px;margin:16px 0 6px;">Contoh perhitungan (sumber, dalam rupiah)</h3>
+        <div class="table-scroll keep-scroll"><table class="ctable" style="min-width:420px;">
+          <tbody>
+            <tr><td>Harga jual per unit</td><td>Rp 500</td></tr>
+            <tr><td>Biaya variabel per unit</td><td>Rp 300</td></tr>
+            <tr><td>Margin kontribusi per unit</td><td>Rp 200</td></tr>
+            <tr><td>Biaya tetap bulanan</td><td>Rp 400.000</td></tr>
+            <tr><td><strong>Titik impas</strong></td><td><strong>2.000 unit</strong></td></tr>
+          </tbody>
+        </table></div>
+        <p class="hint">Setelah 2.000 unit, tiap unit tambahan menyumbang Rp 200 ke laba karena biaya tetap sudah tertutup.</p>
+        <h3 style="font-size:15px;margin:16px 0 6px;">Hitung untuk kendaraan Anda</h3>
+        <p class="hint">Isi biaya tetap per bulan dan biaya variabel per km. Contoh angka sudah terisi, ganti dengan angka Anda. Tidak ada yang disimpan.</p>
+        <div id="cvxBox" style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));max-width:720px;">
+          <label>Biaya tetap per bulan (Rp)<input id="cvxFix" type="text" inputmode="numeric" value="1.500.000" autocomplete="off"></label>
+          <label>Biaya variabel per km (Rp)<input id="cvxVar" type="text" inputmode="numeric" value="900" autocomplete="off"></label>
+          <label>Jarak tempuh per bulan (km)<input id="cvxKm" type="text" inputmode="numeric" value="1.000" autocomplete="off"></label>
+        </div>
+        <div id="cvxOut" class="msg show" style="margin-top:10px;"></div>
+        <div class="row-actions"><button type="button" class="ghost" onclick="showPanel('biaya')">Buka Biaya (TCO) &rsaquo;</button><button type="button" class="ghost" onclick="showPanel('usage')">Buka Pemakaian &rsaquo;</button></div>
+      </div>
+    </details>
   </div><!-- /panel-concepts -->
 
   <div id="panel-guide" hidden>
@@ -7809,7 +7909,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
-            <tr><td class="mono">2026-11-19</td><td>Rev 52: Ledger odometer menolak lonjakan tidak wajar (naik lebih dari 1.500 km per hari dan lebih dari 1.000 km), jadi satu salah ketik terlalu besar (mis. 1.094.453) tidak lagi menjadi KM terakhir dan tidak membuat bacaan benar berikutnya dianggap salah. Entri yang diabaikan diberi label dan bisa diperbaiki di tabel riwayat.</td></tr>
+            <tr><td class="mono">2026-11-19</td><td>Rev 53: Dua infografis ditanam di Library > Konsep: bagian 6 Kamus Istilah Maintenance (19 istilah unik; MTTR muncul dua kali di infografis sumber) (dengan contoh di kendaraan) dan bagian 7 Biaya Tetap vs Variabel (definisi, contoh, tes cepat, kesalahan umum, titik impas) plus kalkulator biaya per km.</td></tr>\n            <tr><td class="mono">2026-11-19</td><td>Rev 52: Ledger odometer menolak lonjakan tidak wajar (naik lebih dari 1.500 km per hari dan lebih dari 1.000 km), jadi satu salah ketik terlalu besar (mis. 1.094.453) tidak lagi menjadi KM terakhir dan tidak membuat bacaan benar berikutnya dianggap salah. Entri yang diabaikan diberi label dan bisa diperbaiki di tabel riwayat.</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 51: iPhone potret memakai tampilan padat: skala 0,84 dikunci (tanpa zoom sama sekali), teks isi 14 px CSS (11,8 px tampil), catatan 12,5 px, kolom isian 16 px tampil, tombol dan tab 44 px tampil, tidak ada teks di bawah 10,5 px tampil. Layar landscape dan perangkat lain memakai skala 1 dikunci.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 50: Plan Board mengikuti kendaraan yang dipilih di menu lain (pilihan manual di papan bertahan sampai kendaraan global diganti); tombol bulan satu baris di iPhone; Auto-create tidak lagi membuat Planned WO langsung: tampil pratinjau berisi kartu yang memenuhi syarat dengan kotak centang, dibuat hanya setelah dikonfirmasi.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 49: Rentang wajar (bawah, tengah, atas) untuk tegangan, suhu, dan km/L, dengan batas Estimasi yang dapat diubah per kendaraan. Suhu dan tegangan menjadi gerbang Tidak laik hanya bila Cek pada dua pengukuran berturut-turut; km/L hanya peringatan. Status baru Belum cukup data. Aki yang melewati umur baku tetapi tegangannya normal dipantau berdasarkan kondisi. Tambah/hapus (sembunyikan) template tugas, buat tugas dari kotak pencarian Task Template, dan zoom iPhone dikunci.</td></tr>
@@ -21531,7 +21631,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:52,date:'2026-11-19'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:53,date:'2026-11-19'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
+(function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
+function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
+function run(){var a=document.getElementById('cvxFix'),b=document.getElementById('cvxVar'),c=document.getElementById('cvxKm'),o=document.getElementById('cvxOut');if(!a||!b||!c||!o)return;
+var fx=n(a.value),vr=n(b.value),km=n(c.value);if(km<=0){o.textContent='Isi jarak tempuh per bulan lebih dari 0.';return;}
+var tot=fx+vr*km,pk=tot/km;o.innerHTML='Total per bulan <strong>Rp '+f(tot)+'</strong>. Biaya per km <strong>Rp '+f(pk)+'</strong>, terdiri dari tetap Rp '+f(fx/km)+' dan variabel Rp '+f(vr)+'. Bila jarak naik 50% ('+f(km*1.5)+' km), biaya per km turun menjadi Rp '+f((fx+vr*km*1.5)/(km*1.5))+', karena bagian tetap tersebar.';}
+document.addEventListener('input',function(e){if(e.target&&/^cvx(Fix|Var|Km)$/.test(e.target.id))run();});
+document.addEventListener('DOMContentLoaded',run);setTimeout(run,600);})();
+</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
