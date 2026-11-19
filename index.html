@@ -19,6 +19,21 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<script>/* Rev 51: iPhone potret memakai tampilan padat (skala 0,84, dikunci: tidak ada zoom sama sekali). Lainnya: skala 1 dikunci. */
+(function(){try{
+ var m=document.querySelector('meta[name=viewport]'),de=document.documentElement;
+ function apply(){
+  var coarse=matchMedia('(pointer:coarse)').matches,sw=Math.min(screen.width,screen.height),por=matchMedia('(orientation:portrait)').matches;
+  if(coarse&&sw<=500&&por){var s=Math.max(0.84,sw/480),w=Math.round(sw/s),f=s.toFixed(3);
+   m.setAttribute('content','width='+w+', initial-scale='+f+', minimum-scale='+f+', maximum-scale='+f+', user-scalable=no, viewport-fit=cover');
+   de.classList.add('ip-dense');de.style.setProperty('--ipS',f);
+   /* pengaman: bila peramban mengabaikan lebar viewport baru, batalkan mode padat (ukuran tetap skala 1, terkunci) */
+   setTimeout(function(){if(de.classList.contains('ip-dense')&&Math.abs(innerWidth-w)>8&&Math.abs(innerWidth-sw)<=8){de.classList.remove('ip-dense');de.style.removeProperty('--ipS');m.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover');if(window.__ipFloorOff)window.__ipFloorOff();}},700);}
+  else{m.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover');de.classList.remove('ip-dense');de.style.removeProperty('--ipS');if(window.__ipFloorOff)window.__ipFloorOff();}
+ }
+ apply();addEventListener('orientationchange',function(){setTimeout(apply,300);});
+}catch(e){}})();
+</script>
 <script>/* zoom dikunci: tanpa zoom otomatis saat mengisi, tanpa cubit; ketuk dua kali dicegah touch-action:manipulation (permintaan pemilik) */
 ["gesturestart","gesturechange","gestureend"].forEach(function(n){document.addEventListener(n,function(e){e.preventDefault();},{passive:false});});
 </script>
@@ -474,6 +489,27 @@
   .card{padding:14px;}
   .crumb{font-size:13px;}
 }
+</style>
+<style id="r51css">
+/* Rev 51: iPhone potret = tampilan padat. Ukuran CSS mengikuti tabel pemilik; tampil di layar = CSS x --ipS (0,84). Target sentuh 44 px dan kolom isian 16 px dihitung dari tampil di layar. */
+html.ip-dense{--ipS:.84;}
+html.ip-dense body{font-size:14px;line-height:1.45;}
+html.ip-dense h1.page-title{font-size:22px;}
+html.ip-dense .card h2{font-size:17px;} html.ip-dense .card h3{font-size:15px;}
+html.ip-dense .hint, html.ip-dense .page-desc{font-size:12.5px;line-height:1.5;}
+html.ip-dense .reftable th{font-size:12.5px;} html.ip-dense .reftable td{font-size:14px;line-height:1.4;}
+html.ip-dense button{font-size:13px;}
+html.ip-dense .field label, html.ip-dense label{font-size:12.5px;}
+html.ip-dense .crumb{font-size:12.5px;}
+html.ip-dense .card{padding:14px;}
+html.ip-dense button.ghost, html.ip-dense button.primary, html.ip-dense button.danger, html.ip-dense button.danger-solid, html.ip-dense .chip-btn, html.ip-dense .ptab-bar button, html.ip-dense .pnav-bar button, html.ip-dense .row-actions button, html.ip-dense details > summary, html.ip-dense .reftable td button, html.ip-dense .reftable td .ghost{min-height:calc(44px / var(--ipS));}
+html.ip-dense .reftable td button, html.ip-dense .reftable td .ghost{min-width:calc(44px / var(--ipS));}
+html.ip-dense input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]):not([type=button]):not([type=submit]):not([type=reset]):not([type=image]), html.ip-dense select, html.ip-dense textarea, html.ip-dense .ssx-in{font-size:calc(16px / var(--ipS)) !important;min-height:calc(44px / var(--ipS));}
+html.ip-dense button, html.ip-dense summary{min-height:calc(44px / var(--ipS)) !important;}
+html.ip-dense input[type=date], html.ip-dense input[type=time], html.ip-dense input[type=datetime-local], html.ip-dense input[type=month]{min-height:calc(44px / var(--ipS));}
+html.ip-dense .hint, html.ip-dense .page-desc, html.ip-dense .vw-note, html.ip-dense .vw-sub, html.ip-dense .vw-lbl{font-size:max(calc(10.5px / var(--ipS)), 1em);}
+html.ip-dense .pb-tag, html.ip-dense .dx-badge, html.ip-dense .overdue-badge, html.ip-dense .idchip, html.ip-dense .viz-title, html.ip-dense .lbl, html.ip-dense .sub, html.ip-dense .vw-pill, html.ip-dense .vz-cs, html.ip-dense .vz-cm, html.ip-dense .vw-cd, html.ip-dense .col-badge{font-size:calc(10.5px / var(--ipS)) !important;}
+html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"], html.ip-dense [style*="font-size:10.5px"], html.ip-dense [style*="font-size:11.5px"], html.ip-dense [style*="font-size:12px"]{font-size:calc(10.5px / var(--ipS)) !important;}
 </style>
 </head>
 <body>
@@ -7773,6 +7809,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-19</td><td>Rev 51: iPhone potret memakai tampilan padat: skala 0,84 dikunci (tanpa zoom sama sekali), teks isi 14 px CSS (11,8 px tampil), catatan 12,5 px, kolom isian 16 px tampil, tombol dan tab 44 px tampil, tidak ada teks di bawah 10,5 px tampil. Layar landscape dan perangkat lain memakai skala 1 dikunci.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 50: Plan Board mengikuti kendaraan yang dipilih di menu lain (pilihan manual di papan bertahan sampai kendaraan global diganti); tombol bulan satu baris di iPhone; Auto-create tidak lagi membuat Planned WO langsung: tampil pratinjau berisi kartu yang memenuhi syarat dengan kotak centang, dibuat hanya setelah dikonfirmasi.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 49: Rentang wajar (bawah, tengah, atas) untuk tegangan, suhu, dan km/L, dengan batas Estimasi yang dapat diubah per kendaraan. Suhu dan tegangan menjadi gerbang Tidak laik hanya bila Cek pada dua pengukuran berturut-turut; km/L hanya peringatan. Status baru Belum cukup data. Aki yang melewati umur baku tetapi tegangannya normal dipantau berdasarkan kondisi. Tambah/hapus (sembunyikan) template tugas, buat tugas dari kotak pencarian Task Template, dan zoom iPhone dikunci.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 48: Tugas &amp; Part Sendiri (mis. Check Spring) di Parts &rsaquo; Umur Pakai: interval KM atau waktu, ikut Program, Work Order, Komponen Terpasang, dan Prediksi. Rentang umur part (KM dan bulan, P10-P90) untuk part baru atau yang sudah ada; isian umur nyata saat part diganti (KM dan tanggal dilepas, alasan). Reliabilitas memakai umur nyata (&ge;3) atau rentang yang diisi. SQL opsional: migration_rev48.sql.</td></tr>
@@ -21468,7 +21505,24 @@ register();
 })();
 
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:50,date:'2026-11-18'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="ipFloor">/* Rev 51: lantai ukuran teks di tampilan padat: tidak ada teks yang tampil < 10,5 px di layar */
+(function(){
+var de=document.documentElement,mo=null,t=null,done=[];
+function floorPx(){var sc=parseFloat(getComputedStyle(de).getPropertyValue('--ipS'))||0.84;return 10.5/sc;}
+function run(){
+ if(!de.classList.contains('ip-dense'))return;var fl=floorPx(),els=document.body?document.body.querySelectorAll('*'):[],i,e,n,hasTxt,k;
+ for(i=0;i<els.length;i++){e=els[i];if(e.hasAttribute('data-ipfl')||e.closest('svg')||e.closest('[hidden]'))continue;
+  hasTxt=false;for(k=0;k<e.childNodes.length;k++){n=e.childNodes[k];if(n.nodeType===3&&n.nodeValue.trim()){hasTxt=true;break;}}
+  if(!hasTxt)continue;if(parseFloat(getComputedStyle(e).fontSize)<fl-0.05){e.style.setProperty('font-size',fl.toFixed(2)+'px','important');e.setAttribute('data-ipfl','1');done.push(e);}}
+}
+function sched(){clearTimeout(t);t=setTimeout(run,250);}
+window.__ipFloorOff=function(){done.forEach(function(e){e.style.removeProperty('font-size');e.removeAttribute('data-ipfl');});done=[];};
+function start(){if(mo||!document.body)return;mo=new MutationObserver(sched);mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});run();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
+})();
+</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:51,date:'2026-11-19'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
