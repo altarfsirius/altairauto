@@ -7809,6 +7809,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-19</td><td>Rev 52: Ledger odometer menolak lonjakan tidak wajar (naik lebih dari 1.500 km per hari dan lebih dari 1.000 km), jadi satu salah ketik terlalu besar (mis. 1.094.453) tidak lagi menjadi KM terakhir dan tidak membuat bacaan benar berikutnya dianggap salah. Entri yang diabaikan diberi label dan bisa diperbaiki di tabel riwayat.</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 51: iPhone potret memakai tampilan padat: skala 0,84 dikunci (tanpa zoom sama sekali), teks isi 14 px CSS (11,8 px tampil), catatan 12,5 px, kolom isian 16 px tampil, tombol dan tab 44 px tampil, tidak ada teks di bawah 10,5 px tampil. Layar landscape dan perangkat lain memakai skala 1 dikunci.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 50: Plan Board mengikuti kendaraan yang dipilih di menu lain (pilihan manual di papan bertahan sampai kendaraan global diganti); tombol bulan satu baris di iPhone; Auto-create tidak lagi membuat Planned WO langsung: tampil pratinjau berisi kartu yang memenuhi syarat dengan kotak centang, dibuat hanya setelah dikonfirmasi.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 49: Rentang wajar (bawah, tengah, atas) untuk tegangan, suhu, dan km/L, dengan batas Estimasi yang dapat diubah per kendaraan. Suhu dan tegangan menjadi gerbang Tidak laik hanya bila Cek pada dua pengukuran berturut-turut; km/L hanya peringatan. Status baru Belum cukup data. Aki yang melewati umur baku tetapi tegangannya normal dipantau berdasarkan kondisi. Tambah/hapus (sembunyikan) template tugas, buat tugas dari kotak pencarian Task Template, dan zoom iPhone dikunci.</td></tr>
@@ -14854,9 +14855,17 @@ function ledger(vid){
   const dated = all.filter(r => r.date).sort((a, b) => (a.date - b.date) || (a.km - b.km));
   const undated = all.filter(r => !r.date);
   let maxKm = -Infinity; const good = [];
+  /* Rev 52: selain angka yang turun, tandai juga LONJAKAN tidak wajar (naik > 1.500 km/hari dan > 1.000 km),
+     supaya satu salah ketik terlalu besar tidak menjadi "KM terakhir" dan tidak membuat bacaan benar berikutnya dianggap salah */
+  const SPIKE_KM = 1000, SPIKE_PER_DAY = 1500;
   dated.forEach(r => {
-    if(r.km < maxKm){ r.anomaly = true; }
-    else { maxKm = r.km; good.push(r); }
+    if(r.km < maxKm){ r.anomaly = true; r.why = 'turun'; return; }
+    const p = good.length ? good[good.length - 1] : null;
+    if(p){
+      const d = r.km - p.km, days = Math.max(1, (r.date - p.date) / 864e5);
+      if(d > SPIKE_KM && d / days > SPIKE_PER_DAY){ r.anomaly = true; r.why = 'lonjakan'; return; }
+    }
+    maxKm = r.km; good.push(r);
   });
   const last = good.length ? good[good.length - 1] : (undated.length ? undated.sort((a, b) => b.km - a.km)[0] : null);
   return { all:dated.concat(undated), good, last, first:good[0] || null, undated, anomalies:dated.filter(r => r.anomaly) };
@@ -15098,7 +15107,7 @@ function head(vid){
     <div class="grid2" style="gap:8px;">${cells.map(c => `<div class="mini-stat" style="border:1px solid var(--border);border-radius:10px;padding:8px 10px;"><div style="font-size:11.5px;color:var(--text-dim);">Rata-rata ${esc(c[0])}</div><div style="font-weight:700;">${fk(c[1])} km</div></div>`).join('')}</div>
     <p class="hint" style="margin:8px 0 0;">${P.src === 'ledger' ? 'Laju dihitung dari ' + L.good.length + ' pembacaan odometer (periode ' + P.days + ' hari) dan dipakai untuk memprediksi tanggal jatuh tempo.' : 'Pembacaan belum cukup untuk menghitung laju; sementara memakai asumsi ' + fk(defaultAnnual(v)) + ' km/tahun untuk jenis kendaraan ini. Catat km minimal dua kali berjarak ≥ 7 hari.'}</p>
     ${win.length ? `<div class="table-scroll keep-scroll" style="margin-top:8px;"><table class="reftable"><thead><tr><th>Periode</th><th>Selisih km</th><th>Per hari</th><th>Per minggu</th><th>Per bulan</th><th>Per tahun</th></tr></thead><tbody>${win.map(w => w[1] ? `<tr><td>${esc(w[0])} <span class="hint">(${w[1].days} hari)</span></td><td>${fk(w[1].km)}</td><td>${fk(w[1].perDay)}</td><td>${fk(w[1].perDay * 7)}</td><td>${fk(w[1].perDay * 30.4375)}</td><td>${fk(w[1].perDay * 365.25)}</td></tr>` : `<tr><td>${esc(w[0])}</td><td colspan="5" class="hint">belum cukup data (butuh rentang ≥ 7 hari)</td></tr>`).join('')}</tbody></table></div>` : ''}
-    ${L.anomalies.length ? `<div class="msg show err" style="margin-top:8px;">${L.anomalies.length} pembacaan lebih kecil dari pembacaan sebelumnya dan diabaikan dalam perhitungan (kemungkinan salah ketik). Periksa tabel riwayat di bawah.</div>` : ''}
+    ${L.anomalies.length ? `<div class="msg show err" style="margin-top:8px;">${L.anomalies.length} pembacaan tidak wajar (${L.anomalies.filter(a => a.why === 'lonjakan').length} terlalu melonjak, ${L.anomalies.filter(a => a.why !== 'lonjakan').length} lebih kecil dari sebelumnya) diabaikan dalam perhitungan, kemungkinan salah ketik. Perbaiki atau hapus entri itu pada tabel riwayat di bawah.</div>` : ''}
   </div>`;
 }
 function profileCard(vid){
@@ -15190,7 +15199,7 @@ function ledgerCard(vid){
   const years = Y.length ? `<p class="hint" style="margin-top:8px;">Per tahun: ${Y.map(y => esc(y.label) + ' ≈ ' + (y.km == null ? '–' : fk(y.km) + ' km')).join(' · ')}</p>` : '';
   const rows = L.all.slice().reverse().slice(0, 40).map(r => {
     const s = SRC[r.src] || SRC.wo;
-    return `<tr${r.anomaly ? ' style="opacity:.6;"' : ''}><td>${r.date ? esc(fd(r.date)) : '–'}</td><td><strong>${fk(r.km)}</strong> km</td><td><span class="${s.cls}">${esc(s.label)}</span></td><td>${esc(r.label || '')}${r.anomaly ? ' <span class="status-pill danger">diabaikan: lebih kecil dari sebelumnya</span>' : ''}</td></tr>`;
+    return `<tr${r.anomaly ? ' style="opacity:.6;"' : ''}><td>${r.date ? esc(fd(r.date)) : '–'}</td><td><strong>${fk(r.km)}</strong> km</td><td><span class="${s.cls}">${esc(s.label)}</span></td><td>${esc(r.label || '')}${r.anomaly ? ' <span class="status-pill danger">' + (r.why === 'lonjakan' ? 'diabaikan: lonjakan tidak wajar' : 'diabaikan: lebih kecil dari sebelumnya') + '</span>' : ''}</td></tr>`;
   }).join('');
   return `<div class="card"><div class="card-head"><h2>Riwayat odometer</h2><span class="count">${L.all.length}</span></div>
     <p class="hint">Empat sumber digabung: registrasi awal, isi BBM / angin ban, inspeksi, dan Work Order selesai. Pembacaan terbaru (berdasar tanggal) menjadi KM terakhir.</p>
@@ -21522,7 +21531,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:51,date:'2026-11-19'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:52,date:'2026-11-19'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
    Tidak mengganti elemen: <select> asli tetap ada, nilainya tetap dibaca/ditulis oleh kode lama, dan event input/change tetap
