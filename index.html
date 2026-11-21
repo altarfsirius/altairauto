@@ -7913,6 +7913,8 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 71: tabel Jatuh Tempo (Usage &amp; Interval) menampilkan Part Number terpasang di bawah nama komponen; bila kosong tersedia kolom isian + tombol Set Part Number (membuat atau memperbarui catatan Installed Component yang terhubung ke tugas itu), dan tombol Change untuk mengubahnya.</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 70: Installed Component Configuration kini menampilkan seluruh part dari master list kendaraan (ADV150, Ertiga, D66A) sebagai baris &ldquo;Not recorded&rdquo; di samping komponen yang sudah tercatat. Setiap part tanpa Part Number punya kolom isian + tombol Set Part Number (part master otomatis tercatat sebagai terpasang saat Part Number diisi, atau lewat Record as installed). Filter: All, Active, Replaced, Not recorded, plus pencarian.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 69: lebar kolom Component di tabel Jatuh Tempo dirapikan (nama dan catatan boleh turun baris) sehingga kolom Action tidak terpotong.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 68: tabel Jatuh Tempo (Usage &amp; Interval) mendapat kolom Action per part: <strong>+ Task</strong> membuka Work Order terisi dari jadwal part (terhubung task_key, menggeser Last Done saat selesai) dan <strong>Inspect</strong> membuka Work Order inspeksi tanpa mereset jadwal servis.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 67: Master Register untuk Suzuki All New Ertiga 2021 (399 item, scope ganda) dan U-Winfly D66A (205 part + 46 klasifikasi aktivitas). Item ber-interval kini menjadi template sungguhan: terhubung ke Job Card/Work Order (task_key), Parts, forecast &amp; prediksi, serta Work Type Problem Handling / Analysis / Repair. Nama baku dari daftar rujukan diterapkan pada tugas generik yang obyeknya sama.</td></tr>
@@ -9560,14 +9562,15 @@ function renderPartsPage(){
 
 /* ---- Configuration / Komponen Terpasang (Modul 2) ---- */
 let installedComponents = [];
-let icFilter = 'aktif';
+let icFilter = 'semua'; let icQ = ''; let icLim = 100; let icVirt = {};
 let icPendingDeleteId = null;
 let pendingIcJobCardId = null;
 const IC_STATUS_LABEL = { aktif:'Active', diganti:'Replaced' };
 const IC_FILTERS = [
-  { key:'aktif', label:'Active' },
   { key:'semua', label:'All' },
-  { key:'diganti', label:'Replaced' }
+  { key:'aktif', label:'Active' },
+  { key:'diganti', label:'Replaced' },
+  { key:'master', label:'Not recorded' }
 ];
 const IC_RELIABILITY_LABEL = { baik:'Baik', menurun:'Menurun', gagal:'Gagal' };
 
@@ -9620,7 +9623,7 @@ function renderInstalledComponentsPage(){
   const tbody = document.getElementById('installedComponentTableBody');
   if(!tbody) return; // panel not in DOM yet
   const filterRow = document.getElementById('icFilterRow');
-  filterRow.innerHTML = IC_FILTERS.map(f => `<button type="button" class="chip-btn${icFilter === f.key ? ' active' : ''}" onclick="setIcFilter('${f.key}')">${escapeHtml(f.label)}</button>`).join('');
+  filterRow.innerHTML = IC_FILTERS.map(f => `<button type="button" class="chip-btn${icFilter === f.key ? ' active' : ''}" onclick="setIcFilter('${f.key}')">${escapeHtml(f.label)}</button>`).join('') + `<input type="search" id="icSearch" placeholder="Search component" value="${escapeHtml(icQ)}" oninput="setIcSearch(this.value)" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text);min-width:0;max-width:100%;">`;
 
   const replacesSel = document.getElementById('ic_replaces');
   if(replacesSel){
@@ -9635,15 +9638,33 @@ function renderInstalledComponentsPage(){
   }
 
   const list = installedComponents.filter(c => c.kendaraan_id === programVehicleId);
+  const qn = icQ.trim().toLowerCase();
   const filtered = list.filter(c => {
+    if(qn && (String(c.nama_komponen || '') + ' ' + String(c.part_nomor || '') + ' ' + String(c.kategori || '')).toLowerCase().indexOf(qn) < 0) return false;
+    if(icFilter === 'master') return false;
     if(icFilter === 'semua') return true;
     return c.status === icFilter;
   }).sort((a, b) => new Date(b.tanggal_pasang || b.created_at) - new Date(a.tanggal_pasang || a.created_at));
 
-  document.getElementById('icCount').textContent = list.length + ' components';
-
   const v = vehicles.find(x => x.id === programVehicleId);
-  tbody.innerHTML = filtered.length ? filtered.map(c => {
+  let virtAll = [];
+  try{ if(window.ADVM && v) virtAll = ADVM.parts(v, list); }catch(_){}
+  document.getElementById('icCount').textContent = list.length + ' recorded' + (virtAll.length ? ' · ' + virtAll.length + ' not recorded' : '');
+  const virtShown = (icFilter === 'semua' || icFilter === 'master') ? virtAll.filter(x => !qn || (x.nama + ' ' + x.grp).toLowerCase().indexOf(qn) >= 0) : [];
+  const virtPage = virtShown.slice(0, icLim); icVirt = {}; virtPage.forEach(x => { icVirt[x.key] = x; });
+  const virtHtml = virtPage.map(x => `<tr>
+      <td class="mono">${escapeHtml(x.key.replace(/^[a-z0-9]+m_/, '#'))}</td>
+      <td>${escapeHtml(x.grp)}</td>
+      <td><strong>${escapeHtml(x.nama)}</strong><div class="bsub" style="margin-top:2px;">Master list &middot; ${escapeHtml(x.scope)}</div>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;"><input type="text" class="inline-input" id="icpn_${x.key}" placeholder="Part number" style="min-width:120px;max-width:180px;"><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="icRecordMaster('${x.key}')">Set Part Number</button></div></td>
+      <td>${x.scheduled ? '<span class="pb-tag iso">Scheduled</span>' : '<span class="hint">&ndash;</span>'}</td>
+      <td>&ndash;</td>
+      <td><span class="status-pill muted"><span class="dot"></span>Not recorded</span></td>
+      <td class="hint">&ndash;</td><td class="hint">&ndash;</td>
+      <td><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="icRecordMaster('${x.key}', true)">Record as installed</button></td>
+    </tr>`).join('') + (virtShown.length > virtPage.length ? `<tr><td colspan="9" class="hint">${virtPage.length} of ${virtShown.length} not-recorded parts <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="icLim += 100; renderInstalledComponentsPage()">Show 100 more</button></td></tr>` : '');
+  const pnBox = c => c.part_nomor ? '' : `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;"><input type="text" class="inline-input" id="icpn_${c.id}" placeholder="Part number" style="min-width:120px;max-width:180px;"><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="icSetPn('${c.id}')">Set Part Number</button></div>`;
+  tbody.innerHTML = (filtered.length || virtPage.length) ? filtered.map(c => {
     const metaParts = [];
     if(c.tanggal_pasang) metaParts.push(fmtDate(new Date(c.tanggal_pasang)));
     if(c.km_saat_pasang != null) metaParts.push(fmtKm(c.km_saat_pasang) + ' km');
@@ -9666,7 +9687,7 @@ function renderInstalledComponentsPage(){
     return `<tr>
       <td class="mono">${escapeHtml(c.nomor_ic || '&ndash;')}</td>
       <td>${escapeHtml(c.kategori || '&ndash;')}</td>
-      <td><strong>${window.PARTS ? PARTS.cell(c) : escapeHtml(c.nama_komponen)}</strong>${sub}${noteHtml}${window.PARTS ? PARTS.badge(c) : ''}</td>
+      <td><strong>${window.PARTS ? PARTS.cell(c) : escapeHtml(c.nama_komponen)}</strong>${sub}${noteHtml}${window.PARTS ? PARTS.badge(c) : ''}${pnBox(c)}</td>
       <td>${scheduleCell}</td>
       <td>${meta}</td>
       <td>${icStatusBadge(c.status)}</td>
@@ -9685,9 +9706,24 @@ function renderInstalledComponentsPage(){
       </td>
       <td><div class="row-actions" style="margin-top:0;">${actions}</div></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="9" class="viz-empty">Belum ada komponen untuk filter ini</td></tr>`;
+  }).join('') + virtHtml : `<tr><td colspan="9" class="viz-empty">Belum ada komponen untuk filter ini</td></tr>`;
 
   renderIcConsistency();
+}
+function setIcSearch(q){ icQ = q || ''; icLim = 100; const pos = (document.getElementById('icSearch') || {}).selectionStart; renderInstalledComponentsPage(); const e = document.getElementById('icSearch'); if(e){ e.focus(); try{ e.setSelectionRange(pos, pos); }catch(_){} } }
+async function icSetPn(id){
+  const e = document.getElementById('icpn_' + id), val = e ? e.value.trim() : ''; if(!val){ if(e) e.focus(); return; }
+  await updateInstalledComponentField(id, 'part_nomor', val);
+}
+async function icRecordMaster(key, noPn){
+  const x = icVirt[key]; if(!x || !sb) return;
+  const e = document.getElementById('icpn_' + key), pn = e ? e.value.trim() : '';
+  if(!noPn && !pn){ if(e) e.focus(); return; }
+  const payload = { kendaraan_id: programVehicleId, kategori: x.grp, nama_komponen: x.nama, part_nomor: pn || null, task_key: x.task, status: 'aktif', reliability_status: 'baik', catatan: 'Dari master list: ' + x.scope };
+  { const gd = window.SVCPKG ? SVCPKG.guardTask(vehicles.find(v => v.id === programVehicleId), x.task) : null; if(gd){ alert(gd); return; } }
+  const { error } = await sb.from('installed_component').insert([payload]);
+  if(error){ alert('Gagal menyimpan: ' + dbErrorMessage(error, IC_PART_NOMOR_HINT)); return; }
+  loadInstalledComponents();
 }
 
 async function updateInstalledComponentField(id, field, value){
@@ -15271,6 +15307,17 @@ function advice(vid){
   const items = idleAdvice(vid); if(!items.length) return '';
   return `<div class="card"><div class="card-head"><h2>Kendaraan jarang dipakai</h2></div>${items.map(a => `<div class="msg show ${a.lvl === 'warn' ? 'err' : 'info'}" style="margin-bottom:6px;">${esc(a.t)}</div>`).join('')}</div>`;
 }
+function icFor(vid, tplId){
+  const L = (typeof installedComponents !== 'undefined' ? installedComponents : []).filter(c => c.kendaraan_id === vid && c.task_key === tplId && c.status !== 'diganti');
+  L.sort((a, b) => new Date(b.tanggal_pasang || b.created_at || 0) - new Date(a.tanggal_pasang || a.created_at || 0));
+  return L.filter(c => c.part_nomor)[0] || L[0] || null;
+}
+function pnCell(vid, tpl){
+  const c = icFor(vid, tpl.id), has = c && c.part_nomor, id = 'usgpn_' + esc(tpl.id);
+  const box = (val, label) => `<div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;"><input type="text" id="${id}" class="inline-input" placeholder="Part number" value="${esc(val || '')}" style="min-width:110px;max-width:170px;"><button type="button" class="ghost" style="padding:3px 9px;font-size:12px;" onclick="USAGE.setPn('${esc(tpl.id)}')">${label}</button></div>`;
+  if(has && UI.editPn !== tpl.id) return `<div class="hint" style="margin-top:3px;font-weight:400;">PN <span class="mono">${esc(c.part_nomor)}</span> <button type="button" class="pl-link" style="font-size:12px;" onclick="USAGE.editPn('${esc(tpl.id)}')">Change</button></div>`;
+  return box(has ? c.part_nomor : '', has ? 'Save' : 'Set Part Number');
+}
 function dueCard(vid, E){
   const shown = UI.showAll ? E.rows : E.rows.filter(r => r.status !== 'aman');
   const n = { terlambat:0, cek:0, segera:0, aman:0 }; E.rows.forEach(r => n[r.status]++);
@@ -15283,7 +15330,7 @@ function dueCard(vid, E){
     const tgTxt = r.dueDate ? esc(fd(r.dueDate)) + (r.dueDate <= new Date() ? ' <span class="hint">(lewat)</span>' : '') : '–';
     const iv = (r.intKmEff ? fk(r.intKmEff) + ' km' + (r.factor < 1 ? ' <span class="hint">(dari ' + fk(r.intKm) + ', ×' + r.factor + ')</span>' : '') : '') + (r.intKmEff && r.intMo ? ' / ' : '') + (r.intMo ? r.intMo + ' bln' : '');
     const risk = r.rule ? `<tr><td colspan="8" style="padding-top:0;border-top:0;"><details><summary class="hint" style="cursor:pointer;">Risiko bila ditunda (${esc(r.rule.dampak)}) &amp; dasar interval</summary><div class="hint" style="margin:4px 0 0;"><strong>Merembet ke:</strong> ${esc(r.rule.rembet)}</div><div class="hint">Dasar: ${esc(window.AC6 ? AC6.basisText(r.cls, vid, r.tpl) : (r.rule.basis + ' — ' + r.rule.sumber))}</div></details></td></tr>` : '';
-    return `<tr><td style="min-width:150px;"><strong>${esc(r.tpl.nama)}</strong>${r.why.length ? '<div class="hint">Dipersingkat: ' + esc(r.why.join(', ')) + '</div>' : ''}</td><td>${lastTxt}</td><td>${iv}</td><td>${kmTxt}</td><td>${tgTxt}</td><td><span class="pb-tag${r.by === 'tanggal' ? ' iso' : ''}">${r.by === 'tanggal' ? 'Tanggal' : 'KM'}</span></td><td><span class="${su.c}">${su.t}</span></td><td style="white-space:nowrap;"><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="USAGE.toWo('${esc(r.tpl.id)}','task','${r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : ''}',${r.dueKm != null ? Math.round(r.dueKm) : 'null'})" title="Buat Work Order + Task untuk part ini (terhubung ke jadwal)">+ Task</button> <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="USAGE.toWo('${esc(r.tpl.id)}','inspect','${r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : ''}',${r.dueKm != null ? Math.round(r.dueKm) : 'null'})" title="Buat Work Order inspeksi untuk part ini (tidak mereset jadwal servis)">Inspect</button></td></tr>${risk}`;
+    return `<tr><td style="min-width:150px;"><strong>${esc(r.tpl.nama)}</strong>${pnCell(vid, r.tpl)}${r.why.length ? '<div class="hint">Dipersingkat: ' + esc(r.why.join(', ')) + '</div>' : ''}</td><td>${lastTxt}</td><td>${iv}</td><td>${kmTxt}</td><td>${tgTxt}</td><td><span class="pb-tag${r.by === 'tanggal' ? ' iso' : ''}">${r.by === 'tanggal' ? 'Tanggal' : 'KM'}</span></td><td><span class="${su.c}">${su.t}</span></td><td style="white-space:nowrap;"><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="USAGE.toWo('${esc(r.tpl.id)}','task','${r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : ''}',${r.dueKm != null ? Math.round(r.dueKm) : 'null'})" title="Buat Work Order + Task untuk part ini (terhubung ke jadwal)">+ Task</button> <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="USAGE.toWo('${esc(r.tpl.id)}','inspect','${r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : ''}',${r.dueKm != null ? Math.round(r.dueKm) : 'null'})" title="Buat Work Order inspeksi untuk part ini (tidak mereset jadwal servis)">Inspect</button></td></tr>${risk}`;
   }).join('') : '<tr><td colspan="8" class="viz-empty">Tidak ada komponen yang perlu perhatian. Aktifkan “Tampilkan semua” untuk melihat seluruh jadwal.</td></tr>';
   return `<div class="card"><div class="card-head"><h2>Jatuh tempo ganda: KM atau tanggal, mana yang lebih dulu</h2></div>
     <p class="hint">Setiap komponen dinilai dengan dua jam: kilometer (umur pakai) dan tanggal (umur bahan/karet). Yang lebih dulu tercapai menjadi <strong>penentu</strong>. Tanggal dari km diprediksi dengan laju pemakaian terakhir. Faktor pemendekan interval adalah <em>perkiraan Altair Auto</em> berdasarkan kondisi severe-usage pabrikan, bukan angka resmi — ikuti buku manual bila berbeda.</p>
@@ -15399,6 +15446,23 @@ window.USAGE = {
   render, summary, saveProfile, quick, kmWarning,
   pick(id){ setVid(id); render(); },
   toggleAll(on){ UI.showAll = !!on; render(); },
+  editPn(id){ UI.editPn = id; render(); setTimeout(() => { const e = document.getElementById('usgpn_' + id); if(e) e.focus(); }, 30); },
+  async setPn(id){
+    const e = document.getElementById('usgpn_' + id), val = e ? e.value.trim() : ''; if(!val){ if(e) e.focus(); return; }
+    const vid = curVid(), v = rawVeh(vid); if(!v || typeof sb === 'undefined' || !sb) return;
+    const c = icFor(vid, id), now = new Date().toISOString();
+    let res;
+    if(c) res = await sb.from('installed_component').update({ part_nomor:val, updated_at:now }).eq('id', c.id);
+    else{
+      const tpl = (typeof getEffectiveMaintTemplates === 'function' ? getEffectiveMaintTemplates(v) : []).find(t => t.id === id);
+      const gd = window.SVCPKG ? SVCPKG.guardTask(v, id) : null; if(gd){ alert(gd); return; }
+      res = await sb.from('installed_component').insert([{ kendaraan_id:vid, kategori:'Maintenance Part', nama_komponen: tpl ? tpl.nama : id, part_nomor:val, task_key:id, status:'aktif', reliability_status:'baik', catatan:'Dari Usage & Interval' }]);
+    }
+    if(res && res.error){ alert('Gagal menyimpan: ' + (res.error.message || res.error)); return; }
+    UI.editPn = null;
+    try{ if(typeof loadInstalledComponents === 'function') await loadInstalledComponents(); }catch(_){}
+    render();
+  },
   toWo(taskId, mode, iso, km){
     try{ programVehicleId = curVid(); }catch(_){}
     if(mode === 'task'){ prefillWorkOrderFromPlan(taskId, iso, km); return; }
@@ -21690,7 +21754,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:69,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:71,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -25853,6 +25917,25 @@ function syncCatalog(){
   var cat = g('PARTS_CATALOG'); if(!cat) return; var have = {}; cat.forEach(function(p){ have[p.id] = 1; });
   KEYS.forEach(function(k){ EXTRA[k].forEach(function(t){ var pid = 'part_' + t.id; if(!have[pid]) cat.push({ id:pid, nama:t.nama, taskId:t.id, master:true }); }); });
 }
+/* daftar part dari master untuk halaman Installed Component: item yang belum punya catatan terpasang */
+function normN(x){ return String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+function isPart(it){ if(it.comp) return false; if(it.M === 'adv150' && (it.g === 'Q' || it.sc === 'Problem Handling')) return false; return true; }
+function parts(v, comps){
+  var m = modelOf(v); if(!m) return [];
+  var have = {}, names = [];
+  (comps || []).forEach(function(c){ if(c.task_key) have[c.task_key] = 1; var n = normN(c.nama_komponen); if(n) names.push(n); });
+  var seenT = {}, seenN = {}, out = [];
+  m.data.forEach(function(it){
+    if(!isPart(it)) return;
+    var task = m.link[it.n] || idOf(it), nn = normN(it.e);
+    if(seenT[task] && m.link[it.n]) return; if(seenN[nn]) return;
+    seenT[task] = 1; seenN[nn] = 1;
+    if(have[task] || have[idOf(it)]) return;
+    if(nn.length >= 5 && names.some(function(n){ return n === nn || (n.length >= 5 && (n.indexOf(nn) >= 0 || nn.indexOf(n) >= 0)); })) return;
+    out.push({ it:it, key:idOf(it), task:task, nama:it.e, grp:m.gn[it.g] || it.g, scope:scopeTxt(it), scheduled:EXTRA[m.key].some(function(t){ return t.id === idOf(it); }) || !!m.link[it.n] });
+  });
+  return out;
+}
 function readings(v){
   var S = (g('inspectionSessions') || []).filter(function(s){ return s.kendaraan_id === v.id; });
   function lastOfKey(f){ var a = S.filter(function(s){ return s[f] != null && s[f] !== ''; }).sort(function(x, y){ return String(y.tanggal || y.created_at || '') < String(x.tanggal || x.created_at || '') ? -1 : 1; }); return a.length ? { v:Number(a[0][f]), d:String(a[0].tanggal || a[0].created_at || '').slice(0, 10), n:a.length } : null; }
@@ -25947,7 +26030,7 @@ function boot(){
   var o = window.showPanel; if(typeof o === 'function' && !o.__advm){ var w = function(name){ var r = o.apply(this, arguments); try{ onShow(name); }catch(_){} return r; }; w.__advm = 1; for(var k in o) try{ w[k] = o[k]; }catch(_){} window.showPanel = w; }
   try{ if(g('currentPanel') === 'planboard') render(); }catch(_){}
 }
-window.ADVM = { data:MODELS.adv150.data, link:MODELS.adv150.link, groups:GN_ADV, models:MODELS, modelOf:modelOf, extra:extraFor, audit:audit, byId:byId, idOf:idOf, dueOf:dueOf, lastOf:lastOf, render:render, filtered:filtered, jenis:JENIS, syncCatalog:syncCatalog, _st:ST };
+window.ADVM = { data:MODELS.adv150.data, link:MODELS.adv150.link, groups:GN_ADV, models:MODELS, modelOf:modelOf, extra:extraFor, parts:parts, audit:audit, byId:byId, idOf:idOf, dueOf:dueOf, lastOf:lastOf, render:render, filtered:filtered, jenis:JENIS, syncCatalog:syncCatalog, _st:ST };
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 800); }); else setTimeout(boot, 800);
 })();
 
