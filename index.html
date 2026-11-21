@@ -544,7 +544,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   <div class="wrap">
 
   <div id="panel-home">
-    <div class="crumb">Home <span class="sep">/</span> <span class="current">Vehicles</span></div>
+    <div class="crumb">Beranda <span class="sep">/</span> <span class="current">Vehicles</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Altair Auto</h1>
@@ -638,9 +638,9 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
       </div>
 
       <div class="action-bar">
-        <button class="primary" onclick="handleNewInput()">+ New Entry</button>
-        <button class="ghost" id="editBtn" disabled onclick="handleEditData()">Edit Data</button>
-        <button class="danger" id="deleteBtn" disabled onclick="handleDeleteData()">Delete Data</button>
+        <button class="primary" onclick="handleNewInput()">+ Entri Baru</button>
+        <button class="ghost" id="editBtn" disabled onclick="handleEditData()">Ubah Data</button>
+        <button class="danger" id="deleteBtn" disabled onclick="handleDeleteData()">Hapus Data</button>
         <button class="ghost" id="qeFuelAirBtn" disabled onclick="openQuickEntry()">+ Fuel &amp; Tire Air/Nitrogen</button>
         <span class="selection-note" id="selectionNote">Belum ada kendaraan dipilih</span>
       </div>
@@ -654,19 +654,19 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
     <div class="card" id="quickEntryCard" hidden>
       <div class="card-title-row">
         <h2 id="qeTitle">Quick Entry: Fuel &amp; Tire Air/Nitrogen</h2>
-        <button class="link-close" onclick="closeQuickEntry()">Close &times;</button>
+        <button class="link-close" onclick="closeQuickEntry()">Tutup &times;</button>
       </div>
       <p class="hint">Catat pembelian bahan bakar dan/atau pengisian angin/nitrogen ban untuk kendaraan terpilih dalam satu kunjungan &mdash; isi minimal salah satu bagian di bawah, biarkan kosong bagian yang tidak dipakai. Otomatis tersimpan sebagai Work Order berstatus Selesai.</p>
       <form id="quickEntryForm">
         <div class="grid2">
-          <div class="field"><label for="qe_tanggal">Date *</label><input id="qe_tanggal" type="date" required></div>
-          <div class="field"><label for="qe_km">Current KM</label><input id="qe_km" type="number" min="0" placeholder="opsional, kosongkan jika KM tidak berubah sejak terakhir dicatat"></div>
+          <div class="field"><label for="qe_tanggal">Tanggal *</label><input id="qe_tanggal" type="date" required></div>
+          <div class="field"><label for="qe_km">KM saat ini</label><input id="qe_km" type="number" min="0" placeholder="opsional, kosongkan jika KM tidak berubah sejak terakhir dicatat"></div>
         </div>
-        <h3 style="margin:18px 0 4px;font-size:14px;">Fuel Purchase</h3>
+        <h3 style="margin:18px 0 4px;font-size:14px;">Pembelian BBM</h3>
         <div class="grid2">
-          <div class="field"><label for="qe_bbm_jumlah">Amount (Rp)</label><input id="qe_bbm_jumlah" type="number" min="0" placeholder="opsional, isi jika beli bahan bakar"></div>
+          <div class="field"><label for="qe_bbm_jumlah">Jumlah (Rp)</label><input id="qe_bbm_jumlah" type="number" min="0" placeholder="opsional, isi jika beli bahan bakar"></div>
           <div class="field">
-            <label for="qe_jenis_bbm">Fuel Type</label>
+            <label for="qe_jenis_bbm">Jenis BBM</label>
             <input id="qe_jenis_bbm" list="qeFuelTypeList" placeholder="mis. Pertalite, Pertamax, atau jenis lain">
             <datalist id="qeFuelTypeList">
               <option value="Pertalite"></option>
@@ -680,10 +680,10 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
           </div>
         </div>
         <div class="field"><label for="qe_bbm_volume">Volume (Liter)</label><input id="qe_bbm_volume" inputmode="decimal" placeholder="mis. 8"></div>
-        <div class="field"><label for="qe_tank_fill">Tank fill</label><select id="qe_tank_fill"><option value="">Unknown (dihitung sebagai Estimasi)</option><option value="full">Full (isi sampai penuh)</option><option value="partial">Partial (tidak sampai penuh)</option></select><div class="hint" style="margin-top:4px;font-size:12px;">Dipakai untuk menghitung KM/L metode full-to-full. Membutuhkan SQL langkah 39 bila diisi.</div></div>
-        <h3 style="margin:18px 0 4px;font-size:14px;">Tire Air/Nitrogen</h3>
+        <div class="field"><label for="qe_tank_fill">Isi tangki</label><select id="qe_tank_fill"><option value="">Unknown (dihitung sebagai Estimasi)</option><option value="full">Full (isi sampai penuh)</option><option value="partial">Partial (tidak sampai penuh)</option></select><div class="hint" style="margin-top:4px;font-size:12px;">Dipakai untuk menghitung KM/L metode full-to-full. Membutuhkan SQL langkah 39 bila diisi.</div></div>
+        <h3 style="margin:18px 0 4px;font-size:14px;">Angin/Nitrogen ban</h3>
         <div class="grid2">
-          <div class="field"><label for="qe_angin_jumlah">Amount (Rp)</label><input id="qe_angin_jumlah" type="number" min="0" placeholder="opsional, isi jika isi angin/nitrogen"></div>
+          <div class="field"><label for="qe_angin_jumlah">Jumlah (Rp)</label><input id="qe_angin_jumlah" type="number" min="0" placeholder="opsional, isi jika isi angin/nitrogen"></div>
           <div class="field">
             <label for="qe_jenis_angin">Air Type</label>
             <select id="qe_jenis_angin">
@@ -752,7 +752,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div><!-- /panel-home -->
 
   <div id="panel-partlib" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Part Library</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Part Library</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Part Library</h1>
       <p class="page-desc">Identitas part di satu tempat: nomor part, gambar, instruksi, umur pakai, dan kecocokan dengan jenis kendaraan (mis. kendaraan listrik tidak menerima busi atau oli mesin). Dari sini part dipasang per kendaraan dan dipesan sebelum jatuh tempo.</p>
@@ -761,7 +761,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div>
 
   <div id="panel-laporan" hidden>
-    <div class="crumb">Insight <span class="sep">/</span> <span class="current">Laporan</span></div>
+    <div class="crumb">Analitik <span class="sep">/</span> <span class="current">Laporan</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Laporan PDF</h1>
       <p class="page-desc">Cetak Work Order beserta Task, atau buat laporan Maintenance, Repair, dan Problem Solving per kendaraan dan periode. Hasilnya dokumen A4 yang disimpan sebagai PDF lewat dialog cetak peramban.</p>
@@ -770,7 +770,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div>
 
   <div id="panel-planboard" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Plan Board</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Plan Board</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Maintenance Plan Board</h1>
       <p class="page-desc">Papan jadwal perawatan per Vehicle Type dan unit fisik: lane Week 1&ndash;5, Upcoming, Unscheduled, dan Overdue. Planned WO + Task dibuat hanya untuk kendaraan yang Auto-create-nya diaktifkan dan berwenang; jadwal boleh bergeser terbatas dan selalu tercatat.</p>
@@ -779,7 +779,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div>
 
   <div id="panel-mguide" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Maintenance Guide</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Maintenance Guide</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Maintenance Guide</h1>
       <p class="page-desc">Panduan interval generik (Monthly sampai Long-Term), strategi perawatan, dan hierarki perencanaan. Semua isi di sini adalah <em>Generic Reference</em>; jadwal pabrikan per kendaraan ada di Usage &amp; Interval.</p>
@@ -788,7 +788,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div>
 
   <div id="panel-svcpkg" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Service Packages</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Service Packages</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Service Packages</h1>
       <p class="page-desc">Paket service berkala dan template perawatan dipetakan per <em>tipe kendaraan</em> (kategori &times; powertrain &times; transmisi). Template, part, dan paket motor tidak bercampur dengan mobil, matic dengan manual, atau listrik dengan mesin pembakaran.</p>
@@ -797,7 +797,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div>
 
   <div id="panel-usage" hidden>
-    <div class="crumb">Insight <span class="sep">/</span> <span class="current">Usage &amp; Interval</span></div>
+    <div class="crumb">Analitik <span class="sep">/</span> <span class="current">Usage &amp; Interval</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Usage &amp; Interval</h1>
       <p class="page-desc">Odometer terpadu dari empat sumber, laju pemakaian harian sampai tahunan, dan jatuh tempo komponen berdasarkan km <em>atau</em> tanggal &mdash; mana yang lebih dulu. Tujuannya menjaga laik jalan dan keandalan, bukan menambah pekerjaan.</p>
@@ -806,7 +806,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div>
 
   <div id="panel-dasar" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Dasar &amp; Guidance</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Dasar &amp; Guidance</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Dasar &amp; Guidance</h1>
       <p class="page-desc">Regulasi, standar, dan pendekatan penerbangan yang menjadi landasan Altair Auto &mdash; masing-masing dipetakan ke modul tempat ia dipakai. Bukan nasihat hukum; selalu rujuk teks resmi.</p>
@@ -854,7 +854,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div>
 
   <div id="panel-concepts" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Maintenance Concepts</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Maintenance Concepts</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Maintenance Concepts</h1>
       <p class="page-desc">Konsep dan metode maintenance yang menjadi dasar Altair Auto &mdash; ditulis ulang untuk konteks kendaraan, lengkap dengan letaknya di aplikasi.</p>
@@ -1093,7 +1093,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div><!-- /panel-concepts -->
 
   <div id="panel-guide" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Guide</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Guide</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Guide</h1>
       <p class="page-desc">Panduan mengisi transaksi, urutan proses maintenance, dan cara menjalankan maintenance berkinerja tinggi.</p>
@@ -1229,7 +1229,7 @@ html.ip-dense [style*="font-size:10px"], html.ip-dense [style*="font-size:11px"]
   </div><!-- /panel-guide -->
 
   <div id="panel-settings" hidden>
-    <div class="crumb">Settings <span class="sep">/</span> <span class="current">Database, AI &amp; Integrasi</span></div>
+    <div class="crumb">Pengaturan <span class="sep">/</span> <span class="current">Database, AI &amp; Integrasi</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Settings</h1>
       <p class="page-desc">Semua setting dan setup API ada di sini: koneksi database Supabase, setup AI, koneksi Polaris One, penerimaan Project dari Altair Project Management, dan log. Halaman lain hanya menampilkan data dan memberi tautan kembali ke sini.</p>
@@ -5695,7 +5695,7 @@ Deno.serve(async (req: Request) =&gt; {
   </div><!-- /panel-settings -->
 
   <div id="panel-appraisal" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Purchase Appraisal</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Purchase Appraisal</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Purchase Appraisal</h1>
@@ -5807,7 +5807,7 @@ Deno.serve(async (req: Request) =&gt; {
   </div><!-- /panel-appraisal -->
 
   <div id="panel-playbook" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Lifecycle Playbook</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Lifecycle Playbook</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Lifecycle Playbook</h1>
@@ -5857,7 +5857,7 @@ Deno.serve(async (req: Request) =&gt; {
   </div><!-- /panel-playbook -->
 
   <div id="panel-governance" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Governance Library</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Governance Library</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Governance Library</h1>
@@ -5951,7 +5951,7 @@ Deno.serve(async (req: Request) =&gt; {
   </div><!-- /panel-governance -->
 
   <div id="panel-event" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Touring / Event Planner</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Touring / Event Planner</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Touring / Event Planner</h1>
@@ -6017,7 +6017,7 @@ Deno.serve(async (req: Request) =&gt; {
   </div><!-- /panel-event -->
 
   <div id="panel-program" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Maintenance Program &amp; Planning</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Maintenance Program &amp; Planning</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Maintenance Program</h1>
@@ -6083,7 +6083,7 @@ Deno.serve(async (req: Request) =&gt; {
   </div><!-- /panel-program -->
 
   <div id="panel-parts" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Spare Part Information</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Spare Part Information</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Spare Part</h1>
@@ -6398,7 +6398,7 @@ Dimensi
   </div><!-- /panel-parts -->
 
   <div id="panel-project" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Project</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Project</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Project</h1>
       <p class="page-desc">Paket maintenance A##-Check, C##-Check, dan D##-Check. Programnya diterima dari Altair Project Management (cari Project), lalu dipecah menjadi Work Order (Activity) dan Task (Action) &mdash; bisa disinkronkan ke Polaris One.</p>
@@ -6407,7 +6407,7 @@ Dimensi
   </div><!-- /panel-project -->
 
   <div id="panel-workorder" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Maintenance Work Order</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Maintenance Work Order</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Work Order</h1>
@@ -6707,7 +6707,7 @@ Dimensi
   </div><!-- /panel-workorder -->
 
   <div id="panel-kerusakan" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Defect Log &amp; Troubleshooting</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Defect Log &amp; Troubleshooting</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Defects</h1>
@@ -6775,7 +6775,7 @@ Dimensi
   </div><!-- /panel-kerusakan -->
 
   <div id="panel-risiko" hidden>
-    <div class="crumb">Insight <span class="sep">/</span> <span class="current" id="pcCrumb">Problem Case List</span></div>
+    <div class="crumb">Analitik <span class="sep">/</span> <span class="current" id="pcCrumb">Problem Case List</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Problem Analysis</h1>
@@ -7074,7 +7074,7 @@ Dimensi
   </div><!-- /panel-risiko -->
 
   <div id="panel-ela" hidden>
-    <div class="crumb">Insight <span class="sep">/</span> <span class="current">Beban &amp; Kapasitas Kelistrikan</span></div>
+    <div class="crumb">Analitik <span class="sep">/</span> <span class="current">Beban &amp; Kapasitas Kelistrikan</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Electrical Load Analysis</h1>
@@ -7160,7 +7160,7 @@ Dimensi
   </div><!-- /panel-ela -->
 
   <div id="panel-biaya" hidden>
-    <div class="crumb">Insight <span class="sep">/</span> <span class="current">Total Cost of Ownership</span></div>
+    <div class="crumb">Analitik <span class="sep">/</span> <span class="current">Total Cost of Ownership</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Cost (TCO)</h1>
@@ -7261,7 +7261,7 @@ Dimensi
   </div><!-- /panel-biaya -->
 
   <div id="panel-inspeksi" hidden>
-    <div class="crumb">Service <span class="sep">/</span> <span class="current">Periodic Inspection &amp; Quality Checklist</span></div>
+    <div class="crumb">Servis <span class="sep">/</span> <span class="current">Periodic Inspection &amp; Quality Checklist</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Inspection</h1>
@@ -7394,7 +7394,7 @@ Dimensi
   </div><!-- /panel-inspeksi -->
 
   <div id="panel-kpi" hidden>
-    <div class="crumb">Insight <span class="sep">/</span> <span class="current">Fleet Analytics</span></div>
+    <div class="crumb">Analitik <span class="sep">/</span> <span class="current">Fleet Analytics</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Analytics</h1>
@@ -7508,7 +7508,7 @@ Dimensi
   </div><!-- /panel-kpi -->
 
   <div id="panel-tool" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Tool Inventory</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Tool Inventory</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Tool Inventory</h1>
@@ -7572,7 +7572,7 @@ Dimensi
   </div><!-- /panel-tool -->
 
   <div id="panel-mitra" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Workshop &amp; Mechanic Directory</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Workshop &amp; Mechanic Directory</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Partner Directory</h1>
@@ -7630,7 +7630,7 @@ Dimensi
   </div><!-- /panel-mitra -->
 
   <div id="panel-dokumen" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Document &amp; Reference Center</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Document &amp; Reference Center</span></div>
 
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Document &amp; Reference Center</h1>
@@ -7738,7 +7738,7 @@ Dimensi
   </div><!-- /panel-dokumen -->
 
   <div id="panel-support" hidden>
-    <div class="crumb">Library <span class="sep">/</span> <span class="current">Application Concept</span></div>
+    <div class="crumb">Pustaka <span class="sep">/</span> <span class="current">Application Concept</span></div>
     <header style="margin-bottom:18px;">
       <h1 class="page-title">Application Concept: Auto Maintenance Repair Management</h1>
       <p class="page-desc">Ringkasan strategi dan arah pengembangan Altair Auto. Dokumen lengkap &amp; dapat diedit ada di Claude Docs terpisah.</p>
@@ -7909,7 +7909,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
-            <tr><td class="mono">2026-11-21</td><td>Rev 54: Fase B Versi 2. Penyaring odometer di Prediksi memakai aturan lonjakan yang sama dengan ledger (naik lebih dari 1.000 km dan 1.500 km/hari). Sumbu grafik odometer memakai angka bulat, tidak lagi negatif atau terbalik, garis proyeksi dipotong di area grafik. Kesehatan data O1 kini mendeteksi lonjakan dan bacaan inspeksi, dan tiap temuan bisa Ditandai ditinjau (tersimpan di perangkat, dapat dibatalkan).</td></tr>
+            <tr><td class="mono">2026-11-21</td><td>Rev 55: Fase D Versi 2. Papan kendaraan tetap tampil dari salinan tersimpan saat offline (sebelumnya tertimpa pesan Gagal memuat data). Quick Entry: jenis BBM dan isi tangki terisi dari catatan terakhir, ada keterangan KM terakhir dan harga per liter. Label utama berbahasa Indonesia (Beranda, Servis, Analitik, Pustaka, Pengaturan, Entri Baru, pencarian). Template baku yang disembunyikan tersimpan di database (migration_rev55.sql, opsional).</td></tr>\n            <tr><td class="mono">2026-11-21</td><td>Rev 54: Fase B Versi 2. Penyaring odometer di Prediksi memakai aturan lonjakan yang sama dengan ledger (naik lebih dari 1.000 km dan 1.500 km/hari). Sumbu grafik odometer memakai angka bulat, tidak lagi negatif atau terbalik, garis proyeksi dipotong di area grafik. Kesehatan data O1 kini mendeteksi lonjakan dan bacaan inspeksi, dan tiap temuan bisa Ditandai ditinjau (tersimpan di perangkat, dapat dibatalkan).</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 53: Dua infografis ditanam di Library > Konsep: bagian 6 Kamus Istilah Maintenance (19 istilah unik; MTTR muncul dua kali di infografis sumber) (dengan contoh di kendaraan) dan bagian 7 Biaya Tetap vs Variabel (definisi, contoh, tes cepat, kesalahan umum, titik impas) plus kalkulator biaya per km.</td></tr>\n            <tr><td class="mono">2026-11-19</td><td>Rev 52: Ledger odometer menolak lonjakan tidak wajar (naik lebih dari 1.500 km per hari dan lebih dari 1.000 km), jadi satu salah ketik terlalu besar (mis. 1.094.453) tidak lagi menjadi KM terakhir dan tidak membuat bacaan benar berikutnya dianggap salah. Entri yang diabaikan diberi label dan bisa diperbaiki di tabel riwayat.</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 51: iPhone potret memakai tampilan padat: skala 0,84 dikunci (tanpa zoom sama sekali), teks isi 14 px CSS (11,8 px tampil), catatan 12,5 px, kolom isian 16 px tampil, tombol dan tab 44 px tampil, tidak ada teks di bawah 10,5 px tampil. Layar landscape dan perangkat lain memakai skala 1 dikunci.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 50: Plan Board mengikuti kendaraan yang dipilih di menu lain (pilihan manual di papan bertahan sampai kendaraan global diganti); tombol bulan satu baris di iPhone; Auto-create tidak lagi membuat Planned WO langsung: tampil pratinjau berisi kartu yang memenuhi syarat dengan kotak centang, dibuat hanya setelah dikonfirmasi.</td></tr>
@@ -8016,11 +8016,11 @@ const NAV_GROUPS = [
   { key:'settings', navBtnId:'navSettingsBtn', panels:['settings'] }
 ];
 const GROUP_META = {
-  home:{ label:'Home', icon:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>' },
-  service:{ label:'Service', icon:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>' },
-  insight:{ label:'Insight', icon:'<path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/>' },
-  library:{ label:'Library', icon:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>' },
-  settings:{ label:'Settings', icon:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>' }
+  home:{ label:'Beranda', icon:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>' },
+  service:{ label:'Servis', icon:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>' },
+  insight:{ label:'Analitik', icon:'<path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/>' },
+  library:{ label:'Pustaka', icon:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>' },
+  settings:{ label:'Pengaturan', icon:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>' }
 };
 // Kunci grup lama (sebelum menu diringkas) tetap diterima supaya pemanggil lama tidak rusak
 const LEGACY_GROUP_KEYS = { appraisal:'home', event:'service', maintenance:'service', analisis:'insight', playbook:'library', sumberdaya:'library', referensi:'library' };
@@ -8624,14 +8624,30 @@ async function loadVehicles(){
   const boardEl = document.getElementById('boardEl');
   const { data, error } = await sb.from('kendaraan').select('*').order('created_at', { ascending:false });
   window.__vehLoaded = true;
+  const snapNote = document.getElementById('snapNote');
   if(error){
+    /* Rev 55: offline/jaringan gagal -> tampilkan salinan data tersimpan (baca saja), jangan kosongkan papan */
+    const netErr = (typeof navigator !== 'undefined' && navigator.onLine === false) || /failed to fetch|load failed|networkerror|network request|fetch/i.test(String(dbErrorMessage(error)));
+    if(netErr){
+      try{ if(!(vehicles && vehicles.length)) snapLoad(); }catch(_){}
+      if(vehicles && vehicles.length){
+        renderBoard();
+        let n = snapNote; if(!n){ n = document.createElement('p'); n.id = 'snapNote'; n.className = 'hint'; n.style.cssText = 'margin:0 0 8px;'; boardEl.parentNode.insertBefore(n, boardEl); }
+        const t = window.__fromSnap ? new Date(window.__fromSnap) : null;
+        n.textContent = 'Tanpa koneksi: menampilkan data tersimpan' + (t ? ' (' + t.toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' }) + ')' : '') + '. Catatan baru (BBM, Work Order, inspeksi, kerusakan) tetap bisa dibuat dan terkirim saat online.';
+        return;
+      }
+    }
     boardEl.innerHTML = '<div class="board-empty" style="flex:1;">Gagal memuat data: ' + escapeHtml(dbErrorMessage(error)) + '</div>';
     return;
   }
+  if(snapNote) snapNote.remove();
+  window.__fromSnap = 0;
   vehicles = data || [];
   if(selectedId && !vehicles.find(v => v.id === selectedId)) selectedId = null;
   document.getElementById('vCount').textContent = vehicles.length + ' units total';
   renderBoard();
+  setTimeout(() => { try{ snapSave(); }catch(_){} }, 2500);
 }
 
 function renderBoard(){
@@ -10005,7 +10021,7 @@ const WO_FILTERS = [
 async function loadWorkOrders(){
   if(!sb) return;
   const { data, error } = await sb.from('work_order').select('*').order('created_at', { ascending:false });
-  if(!error) workOrders = data || [];
+  if(!error){ workOrders = data || []; setTimeout(() => { try{ snapSave(); }catch(_){} }, 2500); }
   renderWorkOrderPage();
 }
 
@@ -21632,7 +21648,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:54,date:'2026-11-21'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:55,date:'2026-11-21'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -21641,6 +21657,27 @@ var fx=n(a.value),vr=n(b.value),km=n(c.value);if(km<=0){o.textContent='Isi jarak
 var tot=fx+vr*km,pk=tot/km;o.innerHTML='Total per bulan <strong>Rp '+f(tot)+'</strong>. Biaya per km <strong>Rp '+f(pk)+'</strong>, terdiri dari tetap Rp '+f(fx/km)+' dan variabel Rp '+f(vr)+'. Bila jarak naik 50% ('+f(km*1.5)+' km), biaya per km turun menjadi Rp '+f((fx+vr*km*1.5)/(km*1.5))+', karena bagian tetap tersebar.';}
 document.addEventListener('input',function(e){if(e.target&&/^cvx(Fix|Var|Km)$/.test(e.target.id))run();});
 document.addEventListener('DOMContentLoaded',run);setTimeout(run,600);})();
+</script>
+<script id="qe55">/* Rev 55: Quick Entry lebih cepat. Jenis BBM dan Tank fill terisi dari catatan terakhir kendaraan, ada keterangan KM terakhir, dan harga per liter dihitung langsung (pemeriksa angka). */
+(function(){'use strict';
+function g(n){try{return new Function('return typeof '+n+" !== 'undefined' ? "+n+' : undefined')();}catch(_){return undefined;}}
+function lastFuel(vid){var W=(g('workOrders')||[]).filter(function(w){return w.kendaraan_id===vid&&w.task_key==='quick_bbm'&&w.status==='selesai'&&w.tanggal_selesai;});W.sort(function(a,b){return new Date(b.tanggal_selesai)-new Date(a.tanggal_selesai);});return W[0]||null;}
+function fmt(n){return Number(n).toLocaleString('id-ID',{maximumFractionDigits:0});}
+function ensureNote(){var n=document.getElementById('qeSmart');if(n)return n;var f=document.getElementById('qe_bbm_volume');if(!f||!f.parentNode)return null;n=document.createElement('p');n.id='qeSmart';n.className='hint';n.style.margin='4px 0 0';f.parentNode.appendChild(n);return n;}
+function calc(){var n=ensureNote();if(!n)return;var amt=parseFloat(String((document.getElementById('qe_bbm_jumlah')||{}).value||'').replace(',','.')),vol=parseFloat(String((document.getElementById('qe_bbm_volume')||{}).value||'').replace(',','.'));
+ if(amt>0&&vol>0){var pl=amt/vol;n.textContent='Harga per liter: Rp '+fmt(pl)+(pl<5000||pl>40000?' (tidak lazim, periksa jumlah atau volume)':'');}else n.textContent='';}
+function prefill(){try{var sel=g('selectedId'),v=(g('vehicles')||[]).find(function(x){return x.id===sel;});if(!v)return;var lf=lastFuel(v.id);
+ var j=document.getElementById('qe_jenis_bbm'),t=document.getElementById('qe_tank_fill');
+ if(lf){var m=/\(([^)]+)\)/.exec(lf.judul||'');if(j&&m&&!j.value)j.value=m[1];if(t&&!t.value&&typeof lf.isi_penuh==='boolean')t.value=lf.isi_penuh?'full':'partial';}
+ var kmEl=document.getElementById('qe_km');if(kmEl&&kmEl.parentNode){var h=document.getElementById('qeKmHint');if(!h){h=document.createElement('p');h.id='qeKmHint';h.className='hint';h.style.margin='4px 0 0';kmEl.parentNode.appendChild(h);}
+  var ek=null;try{ek=effectiveKmInfo(v);}catch(_){}h.textContent=ek&&ek.km!=null?'KM terakhir tercatat: '+fmt(ek.km)+' km. Ubah bila odometer sekarang berbeda.':'';}
+ var lh=document.getElementById('qeLastFuel');if(!lh){var jp=document.getElementById('qe_jenis_bbm');if(jp&&jp.parentNode){lh=document.createElement('p');lh.id='qeLastFuel';lh.className='hint';lh.style.margin='4px 0 0';jp.parentNode.appendChild(lh);}}
+ if(lh)lh.textContent=lf?'Terakhir: '+fmt(Number(lf.biaya_part)||0)+' rupiah, '+(lf.parts_terpakai||'volume tidak dicatat')+'.':'';
+ calc();}catch(_){}}
+var orig=window.openQuickEntry;
+if(typeof orig==='function'){window.openQuickEntry=function(){var r=orig.apply(this,arguments);setTimeout(prefill,0);return r;};}
+document.addEventListener('input',function(e){if(e.target&&(e.target.id==='qe_bbm_jumlah'||e.target.id==='qe_bbm_volume'))calc();});
+})();
 </script>
 <script id="ssxScript">
 /* Altair Auto \u2014 pencarian ketik untuk SEMUA option box (<select>).
@@ -21720,13 +21757,13 @@ document.addEventListener('DOMContentLoaded',run);setTimeout(run,600);})();
       if (m.disabled) li.setAttribute('aria-disabled', 'true');
       hilite(li, m.text, toks); list.appendChild(li); S.rows.push(li); if (m.sel && firstSel < 0) firstSel = idx; idx++;
     });
-    if (!shown.length) { var n = el('li', 'ssx-none', q ? 'No results for \u201c' + S.input.value.trim() + '\u201d' : 'No options'); n.setAttribute('role', 'presentation'); list.appendChild(n); }
+    if (!shown.length) { var n = el('li', 'ssx-none', q ? 'Tidak ada hasil untuk \u201c' + S.input.value.trim() + '\u201d' : 'Tidak ada pilihan'); n.setAttribute('role', 'presentation'); list.appendChild(n); }
     S.cr = null;
     if (!shown.length && q && typeof window.SSX_CREATE === 'function') {   /* pengait: halaman boleh menawarkan "buat baru" dari kata yang dicari */
       try { S.cr = window.SSX_CREATE(S.sel, S.input.value.trim()); } catch (e) { S.cr = null; }
       if (S.cr && S.cr.label) { var cb = el('li', 'ssx-opt ssx-create', S.cr.label); cb.setAttribute('role', 'option'); cb.id = UID + '-create'; list.appendChild(cb); }
     }
-    S.foot.textContent = matches.length > MAXROWS ? 'Showing ' + MAXROWS + ' of ' + matches.length + ' \u2014 narrow your search' : (q ? matches.length + ' of ' + S.opts.length + ' options' : S.opts.length + (S.opts.length === 1 ? ' option' : ' options'));
+    S.foot.textContent = matches.length > MAXROWS ? 'Menampilkan ' + MAXROWS + ' dari ' + matches.length + ' \u2014 persempit pencarian' : (q ? matches.length + ' dari ' + S.opts.length + ' pilihan' : S.opts.length + ' pilihan');
     var want = keepAct && S.act >= 0 && S.act < S.rows.length ? S.act : (q ? firstEnabled(0) : (firstSel >= 0 ? firstSel : firstEnabled(0)));
     setAct(want, true);
   }
@@ -21759,7 +21796,7 @@ document.addEventListener('DOMContentLoaded',run);setTimeout(run,600);})();
     if (S) { if (S.sel === sel) { if (seed) { S.input.value += seed; render(false); } return true; } close(false); }
     var root = el('div', 'ssx'), bar = el('div', 'ssx-bar'), input = el('input', 'ssx-in'), list = el('ul', 'ssx-list'), foot = el('div', 'ssx-foot');
     input.type = 'search'; input.setAttribute('role', 'combobox'); input.setAttribute('aria-expanded', 'true'); input.setAttribute('aria-controls', UID + '-list'); input.setAttribute('aria-autocomplete', 'list');
-    input.setAttribute('autocomplete', 'off'); input.setAttribute('autocapitalize', 'off'); input.setAttribute('spellcheck', 'false'); input.placeholder = 'Type to search\u2026';
+    input.setAttribute('autocomplete', 'off'); input.setAttribute('autocapitalize', 'off'); input.setAttribute('spellcheck', 'false'); input.placeholder = 'Ketik untuk mencari\u2026';
     var lab = sel.getAttribute('aria-label') || (sel.id && document.querySelector('label[for="' + (window.CSS && CSS.escape ? CSS.escape(sel.id) : sel.id) + '"]') ? document.querySelector('label[for="' + (window.CSS && CSS.escape ? CSS.escape(sel.id) : sel.id) + '"]').textContent : '') || 'opsi';
     input.setAttribute('aria-label', 'Search ' + String(lab).replace(/\s+/g, ' ').trim());
     list.id = UID + '-list'; list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', 'Options');
@@ -25353,7 +25390,19 @@ async function load(){
   if(sb){
     try{ var r = await sb.from('maint_task_custom').select('*'); if(!r.error){ CT.mode = 'db'; CT.items = r.data || []; } }catch(_){}
   }
+  await loadHidden();
   CT.loaded = true; syncCatalog(); return CT.items;
+}
+/* Rev 55: template tersembunyi disimpan di tabel maint_tpl_hidden bila ada (jika tidak: di perangkat saja) */
+async function loadHidden(){
+  var sb = g('sb'); CT.hmode = 'lokal'; CT.hid = null; if(!sb) return;
+  try{ var r = await sb.from('maint_tpl_hidden').select('kendaraan_id,template_id'); if(r.error) return;
+    CT.hmode = 'db'; var m = {}; (r.data || []).forEach(function(x){ (m[x.kendaraan_id] = m[x.kendaraan_id] || []).push(x.template_id); });
+    var loc = ls(LSH, {}) || {}, up = [];
+    Object.keys(loc).forEach(function(vid){ (loc[vid] || []).forEach(function(id){ if(!(m[vid] || []).includes(id)){ (m[vid] = m[vid] || []).push(id); up.push({ kendaraan_id:vid, template_id:id }); } }); });
+    CT.hid = m; sv(LSH, m);
+    if(up.length){ try{ await sb.from('maint_tpl_hidden').upsert(up, { onConflict:'kendaraan_id,template_id', ignoreDuplicates:true }); }catch(_){} }
+  }catch(_){ CT.hmode = 'lokal'; CT.hid = null; }
 }
 function persistLocal(){ sv(LS, CT.items); }
 async function saveItem(it){
@@ -25375,8 +25424,11 @@ async function removeItem(id){
 
 /* ---------- sembunyikan template baku (per kendaraan; data tidak dihapus) ---------- */
 var LSH = 'ik_tplhide_v1';
-function hiddenFor(vid){ var m = ls(LSH, {}); return (m && m[vid]) || []; }
-function setHidden(vid, id, on){ var m = ls(LSH, {}) || {}, a = (m[vid] || []).filter(function(x){ return x !== id; }); if(on) a.push(id); m[vid] = a; sv(LSH, m); }
+function hiddenFor(vid){ var m = (CT.hmode === 'db' && CT.hid) ? CT.hid : ls(LSH, {}); return (m && m[vid]) || []; }
+function setHidden(vid, id, on){
+  var m = (CT.hmode === 'db' && CT.hid) ? CT.hid : (ls(LSH, {}) || {}), a = (m[vid] || []).filter(function(x){ return x !== id; }); if(on) a.push(id); m[vid] = a; if(CT.hmode === 'db') CT.hid = m; sv(LSH, m);
+  var sb = g('sb'); if(CT.hmode === 'db' && sb){ try{ var q = on ? sb.from('maint_tpl_hidden').upsert([{ kendaraan_id:vid, template_id:id }], { onConflict:'kendaraan_id,template_id', ignoreDuplicates:true }) : sb.from('maint_tpl_hidden').delete().eq('kendaraan_id', vid).eq('template_id', id); Promise.resolve(q).then(function(r){ if(r && r.error){ CT.msg = { k:'err', t:'Pengaturan tersimpan di perangkat, tetapi gagal ke database: ' + r.error.message }; } }, function(){}); }catch(_){} }
+}
 function baseTpl(v){ var o = CT.baseFn; try{ return o ? o(v) : []; }catch(_){ return []; } }
 
 /* ---------- integrasi ke mesin jadwal ---------- */
@@ -25450,7 +25502,7 @@ function html(){
   var cv = curVeh();
   if(cv && CT.baseFn){
     var hid = hiddenFor(cv.id), base = baseTpl(cv).filter(function(t){ return !t.custom; });
-    h += '<h3 style="margin:16px 0 4px;font-size:15px">Template baku untuk ' + esc(cv.model || cv.merk || '') + ' (' + base.length + ')</h3><p class="hint">Template yang tidak Anda pakai bisa disembunyikan: hilang dari Program, pilihan Work Order, dan Prediksi untuk kendaraan ini. Riwayat tidak terhapus dan bisa ditampilkan lagi.</p>' +
+    h += '<h3 style="margin:16px 0 4px;font-size:15px">Template baku untuk ' + esc(cv.model || cv.merk || '') + ' (' + base.length + ')</h3><p class="hint">Template yang tidak Anda pakai bisa disembunyikan: hilang dari Program, pilihan Work Order, dan Prediksi untuk kendaraan ini. Riwayat tidak terhapus dan bisa ditampilkan lagi. ' + (CT.hmode === 'db' ? 'Pengaturan ini tersimpan di database dan sama di semua perangkat.' : 'Pengaturan ini tersimpan di perangkat ini saja; jalankan <code>migration_rev55.sql</code> agar ikut ke database.') + '</p>' +
       base.map(function(t){ var off = hid.indexOf(t.id) >= 0; return '<div class="ct-row"><span style="min-width:0">' + esc(t.nama) + (off ? ' <span class="ct-pill">disembunyikan</span>' : '') + '</span><button type="button" class="ghost" data-ct="' + (off ? 'show' : 'hide') + '" data-id="' + esc(t.id) + '">' + (off ? 'Tampilkan lagi' : 'Sembunyikan') + '</button></div>'; }).join('');
   }
   return h;
