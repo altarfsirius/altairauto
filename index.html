@@ -7909,6 +7909,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 68: tabel Jatuh Tempo (Usage &amp; Interval) mendapat kolom Action per part: <strong>+ Task</strong> membuka Work Order terisi dari jadwal part (terhubung task_key, menggeser Last Done saat selesai) dan <strong>Inspect</strong> membuka Work Order inspeksi tanpa mereset jadwal servis.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 67: Master Register untuk Suzuki All New Ertiga 2021 (399 item, scope ganda) dan U-Winfly D66A (205 part + 46 klasifikasi aktivitas). Item ber-interval kini menjadi template sungguhan: terhubung ke Job Card/Work Order (task_key), Parts, forecast &amp; prediksi, serta Work Type Problem Handling / Analysis / Repair. Nama baku dari daftar rujukan diterapkan pada tugas generik yang obyeknya sama.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 66: ADV150 Master Register. 545 item dari Table Master Part Replacement &amp; Maintenance ADV 150 ABS 2019 menjadi Task Template khusus ADV150 (Job Card), dengan scope Replacement / Part Care / Inspection / Monitoring / Problem Handling / Modification, plus kartu Master Register di Plan Board (riwayat, status jatuh tempo, pembacaan Volt off/on, Temperature, KM/L).</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 65: 12 tugas generik ADV150 memakai nama Part English dari Table Master Part Replacement &amp; Maintenance ADV 150 ABS 2019 (mis. Engine Oil, Oil Strainer, Cam Chain). Interval belum diubah.</td></tr>
@@ -15276,9 +15277,9 @@ function dueCard(vid, E){
     const kmTxt = r.dueKm != null ? fk(r.dueKm) + ' km' + (r.remKm != null ? (r.remKm <= 0 ? ' <span class="hint">(lewat ' + fk(-r.remKm) + ' km)</span>' : ' <span class="hint">(' + fk(r.remKm) + ' km lagi · ±' + esc(fd(r.predKm)) + ')</span>') : '') : '–';
     const tgTxt = r.dueDate ? esc(fd(r.dueDate)) + (r.dueDate <= new Date() ? ' <span class="hint">(lewat)</span>' : '') : '–';
     const iv = (r.intKmEff ? fk(r.intKmEff) + ' km' + (r.factor < 1 ? ' <span class="hint">(dari ' + fk(r.intKm) + ', ×' + r.factor + ')</span>' : '') : '') + (r.intKmEff && r.intMo ? ' / ' : '') + (r.intMo ? r.intMo + ' bln' : '');
-    const risk = r.rule ? `<tr><td colspan="7" style="padding-top:0;border-top:0;"><details><summary class="hint" style="cursor:pointer;">Risiko bila ditunda (${esc(r.rule.dampak)}) &amp; dasar interval</summary><div class="hint" style="margin:4px 0 0;"><strong>Merembet ke:</strong> ${esc(r.rule.rembet)}</div><div class="hint">Dasar: ${esc(window.AC6 ? AC6.basisText(r.cls, vid, r.tpl) : (r.rule.basis + ' — ' + r.rule.sumber))}</div></details></td></tr>` : '';
-    return `<tr><td style="min-width:150px;"><strong>${esc(r.tpl.nama)}</strong>${r.why.length ? '<div class="hint">Dipersingkat: ' + esc(r.why.join(', ')) + '</div>' : ''}</td><td>${lastTxt}</td><td>${iv}</td><td>${kmTxt}</td><td>${tgTxt}</td><td><span class="pb-tag${r.by === 'tanggal' ? ' iso' : ''}">${r.by === 'tanggal' ? 'Tanggal' : 'KM'}</span></td><td><span class="${su.c}">${su.t}</span></td></tr>${risk}`;
-  }).join('') : '<tr><td colspan="7" class="viz-empty">Tidak ada komponen yang perlu perhatian. Aktifkan “Tampilkan semua” untuk melihat seluruh jadwal.</td></tr>';
+    const risk = r.rule ? `<tr><td colspan="8" style="padding-top:0;border-top:0;"><details><summary class="hint" style="cursor:pointer;">Risiko bila ditunda (${esc(r.rule.dampak)}) &amp; dasar interval</summary><div class="hint" style="margin:4px 0 0;"><strong>Merembet ke:</strong> ${esc(r.rule.rembet)}</div><div class="hint">Dasar: ${esc(window.AC6 ? AC6.basisText(r.cls, vid, r.tpl) : (r.rule.basis + ' — ' + r.rule.sumber))}</div></details></td></tr>` : '';
+    return `<tr><td style="min-width:150px;"><strong>${esc(r.tpl.nama)}</strong>${r.why.length ? '<div class="hint">Dipersingkat: ' + esc(r.why.join(', ')) + '</div>' : ''}</td><td>${lastTxt}</td><td>${iv}</td><td>${kmTxt}</td><td>${tgTxt}</td><td><span class="pb-tag${r.by === 'tanggal' ? ' iso' : ''}">${r.by === 'tanggal' ? 'Tanggal' : 'KM'}</span></td><td><span class="${su.c}">${su.t}</span></td><td style="white-space:nowrap;"><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="USAGE.toWo('${esc(r.tpl.id)}','task','${r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : ''}',${r.dueKm != null ? Math.round(r.dueKm) : 'null'})" title="Buat Work Order + Task untuk part ini (terhubung ke jadwal)">+ Task</button> <button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="USAGE.toWo('${esc(r.tpl.id)}','inspect','${r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : ''}',${r.dueKm != null ? Math.round(r.dueKm) : 'null'})" title="Buat Work Order inspeksi untuk part ini (tidak mereset jadwal servis)">Inspect</button></td></tr>${risk}`;
+  }).join('') : '<tr><td colspan="8" class="viz-empty">Tidak ada komponen yang perlu perhatian. Aktifkan “Tampilkan semua” untuk melihat seluruh jadwal.</td></tr>';
   return `<div class="card"><div class="card-head"><h2>Jatuh tempo ganda: KM atau tanggal, mana yang lebih dulu</h2></div>
     <p class="hint">Setiap komponen dinilai dengan dua jam: kilometer (umur pakai) dan tanggal (umur bahan/karet). Yang lebih dulu tercapai menjadi <strong>penentu</strong>. Tanggal dari km diprediksi dengan laju pemakaian terakhir. Faktor pemendekan interval adalah <em>perkiraan Altair Auto</em> berdasarkan kondisi severe-usage pabrikan, bukan angka resmi — ikuti buku manual bila berbeda.</p>
     <div class="pb-tags" style="margin-bottom:8px;"><span class="status-pill danger">Terlambat ${n.terlambat}</span><span class="status-pill muted">Belum tercatat ${n.cek}</span><span class="status-pill">Segera ${n.segera}</span><span class="status-pill ok">Aman ${n.aman}</span></div>
@@ -15287,7 +15288,7 @@ function dueCard(vid, E){
       <label style="display:flex;gap:6px;align-items:center;font-size:13px;">Rencana perjalanan <input type="number" min="0" step="50" value="${UI.trip}" style="width:90px;padding:5px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);" onchange="USAGE.setTrip(this.value)"> km</label>
     </div>
     ${trip > 0 && tripRows.length ? `<div class="msg show err" style="margin-bottom:8px;">Untuk perjalanan ${fk(trip)} km, ${tripRows.length} komponen akan jatuh tempo di tengah jalan: ${esc(tripRows.slice(0, 6).map(r => r.tpl.nama).join(', '))}${tripRows.length > 6 ? ', …' : ''}. Kerjakan sebelum berangkat.</div>` : ''}
-    <div class="table-scroll keep-scroll"><table class="reftable"><thead><tr><th>Component</th><th>Last Done</th><th>Interval</th><th>Due Odometer</th><th>Due Date</th><th>Trigger</th><th>Status</th></tr></thead><tbody>${body}</tbody></table></div>
+    <div class="table-scroll keep-scroll"><table class="reftable"><thead><tr><th>Component</th><th>Last Done</th><th>Interval</th><th>Due Odometer</th><th>Due Date</th><th>Trigger</th><th>Status</th><th>Action</th></tr></thead><tbody>${body}</tbody></table></div>
     <div class="row-actions"><button class="ghost" onclick="showPanel('program')">Buka Program &rsaquo;</button><button class="ghost" onclick="showPanel('workorder')">Buat Work Order &rsaquo;</button></div></div>`;
 }
 function lifeRow(c, v, tpls, cat, perDay, E){
@@ -15393,6 +15394,17 @@ window.USAGE = {
   render, summary, saveProfile, quick, kmWarning,
   pick(id){ setVid(id); render(); },
   toggleAll(on){ UI.showAll = !!on; render(); },
+  toWo(taskId, mode, iso, km){
+    try{ programVehicleId = curVid(); }catch(_){}
+    if(mode === 'task'){ prefillWorkOrderFromPlan(taskId, iso, km); return; }
+    const v = vehicles.find(x => x.id === programVehicleId), tpl = v ? getEffectiveMaintTemplates(v).find(t => t.id === taskId) : null, nm = tpl ? tpl.nama : taskId;
+    showPanel('workorder'); document.getElementById('workOrderVehicleSelect').value = programVehicleId;
+    document.getElementById('wo_judul').value = 'Inspection: ' + nm;
+    const d = document.getElementById('wo_deskripsi'); if(d) d.value = 'Inspeksi kondisi part: ' + nm + '. Catat temuan; bila perlu ganti/perbaiki, buat Task lanjutan.';
+    document.getElementById('wo_tanggal_target').value = iso || ''; document.getElementById('wo_km_target').value = km != null ? km : '';
+    pendingWoSumber = { jenis:'inspeksi', ref_id:null, label:'Usage & Interval: Inspection ' + nm }; pendingWoTaskKey = null;
+    document.getElementById('woFormCard').scrollIntoView({ behavior:'smooth', block:'start' });
+  },
   setTrip(n){ UI.trip = Number(n) || 0; render(); },
   onShow(){ render(); },
   lifeOf,
@@ -21673,7 +21685,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:67,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:68,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
