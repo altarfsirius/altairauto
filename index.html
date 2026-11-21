@@ -7909,6 +7909,8 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 64: Timeline Board di Plan Board: Gantt jadwal perawatan untuk 6 bulan, 1 tahun, dan 5 tahun. Tiap tugas satu baris, jatuh tempo berupa blok kecil berurutan yang hanya menampilkan tanggal (merah terlewat, kuning dalam 30 hari). Hanya tampilan; tidak menyimpan data.</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 63: Tabel part di Prediksi kini menampilkan Status komponen (Healthy, Monitor, Warning, Critical) berdasarkan reliabilitas R(t) tiap part, dan kualitas data (Verified, Estimated, Unknown) sesuai referensi reliabilitas komponen. Jam operasi dan siklus belum dilacak.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 62: Template Tugas &amp; Part Sendiri mengikuti referensi ACRP: pilihan Maintenance strategy (HT, OC, CM, RTF), Criticality (Safety-critical sampai No safety effect), dan Life data quality (Verified, Estimated, Unknown), tampil sebagai label di daftar. Penyimpanan di database memerlukan migration_rev57.sql (opsional; tanpa itu field disimpan di perangkat atau diabaikan dengan pesan).</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 61: Kirim ke Notion kini menyertakan umur nyata part (tanggal, km, alasan lepas) dan database Tugas &amp; Part Sendiri. Perlu deploy ulang fungsi notion-sync dan menambah kolom di Notion bila ingin dipakai (opsional).</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 60 = Versi 2.0. Rilis gabungan Rev 52 sampai 57: lonjakan odometer di ledger dan Prediksi, Kesehatan data dengan tanda ditinjau, tampilan offline dari salinan tersimpan, Quick Entry lebih cepat, template tersembunyi tersimpan di database, preset Mekanik dan undangan pengguna, Pull part life dari Notion (opsional), UI berbahasa Inggris. Tidak ada perubahan skema wajib; SQL Rev 53, 55, 56 opsional.</td></tr>
@@ -21657,7 +21659,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:62,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:64,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -25135,6 +25137,14 @@ function taskRows(v, effV, rate){
 }
 
 /* ---------- reliabilitas part ---------- */
+/* Rev 63: status komponen dan kualitas data (ACRP). Status memakai R(t) per part, bukan persentase umur universal. */
+function compStatus(R, R30, a80, a50){
+  if(R < 0.5 || (a50 && a50.over)) return 'critical';
+  if(R < 0.8 || (a80 && a80.over)) return 'warning';
+  if(R < 0.9 || R30 < 0.9) return 'monitor';
+  return 'healthy';
+}
+function dataQuality(hasRecord, fit){ if(!hasRecord) return 'unknown'; return fit && fit.n > 0 ? 'verified' : 'estimated'; }
 function relRows(v, effV, rate){
   var out = [], today = new Date(), kmNow = Number(effV.km_saat_ini), tpls = [], cat = g('PARTS_CATALOG') || [];
   try{ tpls = window.getEffectiveMaintTemplates(v) || []; }catch(_){}
@@ -25156,7 +25166,7 @@ function relRows(v, effV, rate){
       if(fit){ R = Math.exp(-Math.pow(age / fit.eta, fit.beta)); R30 = Math.exp(-Math.pow((age + dU30) / fit.eta, fit.beta)) / Math.max(1e-9, R); uX80 = fit.eta * Math.pow(-Math.log(0.8), 1 / fit.beta) / L; uX50 = fit.eta * Math.pow(-Math.log(0.5), 1 / fit.beta) / L; fitInfo = fit; }
       else { R = relAssumed(u, beta); R30 = relAssumed(u + du, beta) / Math.max(1e-9, R); uX80 = uAtR(0.8, beta); uX50 = uAtR(0.5, beta); }
       function at(uT){ var rem = (uT - u) * L; if(rem <= 0) return { over:true }; if(kmBased) return { km:kmNow + rem, date:addDays(today, rem / rate.mid), dLo:rem / rate.hi, dHi:rem / rate.lo }; return { km:kmNow + rate.mid * rem * 30.44, date:addDays(today, rem * 30.44) }; }
-      out.push({ nama:part.nama, tugas:tpl.nama, u:u, age:age, L:L, unit:unit, R:R, R30:R30, a80:at(uX80), a50:at(uX50), basis:basis, assumed:assumed, fit:fitInfo, taskId:tpl.id });
+      out.push({ status:compStatus(R, R30, at(uX80), at(uX50)), dq:dataQuality(!assumed, fit), nama:part.nama, tugas:tpl.nama, u:u, age:age, L:L, unit:unit, R:R, R30:R30, a80:at(uX80), a50:at(uX50), basis:basis, assumed:assumed, fit:fitInfo, taskId:tpl.id });
     }catch(_){}
   });
   out.sort(function(a, b){ return a.R30 - b.R30; }); return out;
@@ -25302,10 +25312,11 @@ function html(vid){
     return '<tr><td>' + esc(t.nama) + '</td><td>' + tgt + '</td><td>' + (t.trig === 'km' ? range(t.dateLo, t.dateHi) + '<br><span class="hint">tengah ' + fD(t.dateMid) + '</span>' : fD(t.dateMid)) + '</td><td>' + (t.trig === 'km' ? fN(t.km) + ' km' : fN(t.kmLo) + '–' + fN(t.kmHi) + ' km') + '</td><td>' + esc(t.basis) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="hint">Belum ada tugas yang bisa diprediksi (lengkapi KM dan tahun kendaraan).</p>';
   /* 3 reliabilitas */
   h += '<h3 class="pg-h">3. Reliabilitas part</h3><p class="hint">R(u) = 0,9<sup>u<sup>β</sup></sup>, u = umur ÷ interval. R adalah peluang part masih andal. "30 hari" = peluang tetap andal sepanjang 30 hari ke depan.</p>';
-  h += A.rel.length ? '<div class="table-scroll"><table class="reftable"><thead><tr><th>Part</th><th>Umur terpakai</th><th>R sekarang</th><th>R 30 hari</th><th>R turun &lt;80% pada</th><th>Dasar</th></tr></thead><tbody>' + A.rel.slice(0, 12).map(function(p){
+  h += A.rel.length ? '<div class="table-scroll"><table class="reftable"><thead><tr><th>Part</th><th>Status</th><th>Data</th><th>Umur terpakai</th><th>R sekarang</th><th>R 30 hari</th><th>R turun &lt;80% pada</th><th>Dasar</th></tr></thead><tbody>' + A.rel.slice(0, 12).map(function(p){
     var a = p.a80; var when = a ? (a.over ? '<span class="status-pill danger">sudah lewat</span>' : fD(a.date) + '<br><span class="hint">≈ ' + fN(a.km) + ' km</span>') : '–';
     var cls = p.R30 < 0.8 ? 'danger' : p.R30 < 0.9 ? '' : 'ok';
-    return '<tr><td>' + esc(p.nama) + '</td><td>' + fN(p.age, p.unit === 'bulan' ? 1 : 0) + ' / ' + fN(p.L) + ' ' + p.unit + ' (' + fN(p.u * 100) + '%)</td><td>' + fN(p.R * 100) + '%</td><td><span class="status-pill ' + cls + '">' + fN(p.R30 * 100) + '%</span></td><td>' + when + '</td><td class="hint">' + esc(p.basis) + (p.assumed ? '; umur diasumsikan (belum ada riwayat)' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="hint">Belum ada part terjadwal untuk model ini.</p>';
+    var ST = { healthy:['ok', 'Healthy'], monitor:['', 'Monitor'], warning:['warn', 'Warning'], critical:['danger', 'Critical'] }[p.status] || ['', '–'], DQ = { verified:['ok', 'Verified'], estimated:['', 'Estimated'], unknown:['muted', 'Unknown'] }[p.dq] || ['muted', 'Unknown'];
+    return '<tr><td>' + esc(p.nama) + '</td><td><span class="status-pill ' + ST[0] + '">' + ST[1] + '</span></td><td><span class="status-pill ' + DQ[0] + '">' + DQ[1] + '</span></td><td>' + fN(p.age, p.unit === 'bulan' ? 1 : 0) + ' / ' + fN(p.L) + ' ' + p.unit + ' (' + fN(p.u * 100) + '%)</td><td>' + fN(p.R * 100) + '%</td><td><span class="status-pill ' + cls + '">' + fN(p.R30 * 100) + '%</span></td><td>' + when + '</td><td class="hint">' + esc(p.basis) + (p.assumed ? '; umur diasumsikan (belum ada riwayat)' : '') + '</td></tr>'; }).join('') + '</tbody></table></div><p class="hint">Status memakai R(t) tiap part: Healthy (R ≥ 90%), Monitor (R &lt; 90% atau R 30 hari &lt; 90%), Warning (R &lt; 80%), Critical (R &lt; 50%). Data: Verified = ada penggantian terakhir dan umur nyata; Estimated = ada penggantian terakhir, umur dari rentang atau asumsi; Unknown = belum ada riwayat. Batas pengatur tiap part adalah satuannya (km atau bulan); jam operasi dan siklus belum dilacak.</p>' : '<p class="hint">Belum ada part terjadwal untuk model ini.</p>';
   /* 4 kelistrikan */
   h += '<h3 class="pg-h">4. Kelistrikan dan suhu: rentang wajar, tren, dan prediksi aki</h3>';
   if(A.gi && A.gi.items.length){ var LV = ['ok', '', 'danger'], LT = ['Normal', 'Perhatian', 'Cek'];
@@ -25334,7 +25345,7 @@ function html(vid){
     '<li><strong>Batasan</strong>: semua keluaran adalah estimasi dari data Anda sendiri; bukan sertifikasi kelaikan dan tidak menggantikan buku manual atau mekanik. Data sedikit membuat rentang lebar; aplikasi menuliskan dasar tiap angka.</li></ul></details>';
   return h;
 }
-var CSS = '.pg-h{margin:18px 0 6px;font-size:15px}.pg-lbl{margin:8px 0 2px;font-weight:600;font-size:13px}.pg-lbl.bad{color:#c0392b}.pg-lbl.warn{color:#b07412}.pg-chart{width:100%;max-width:640px;height:auto;display:block;margin:6px 0 10px}.pg-m{margin-top:16px}.pg-m summary{cursor:pointer;min-height:36px;display:flex;align-items:center}.pg-m li{margin-bottom:6px;font-size:13px}#progCard ul{padding-left:20px;margin:4px 0 8px}#progCard li{margin-bottom:3px}.pgh-row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px 0;border-top:1px solid var(--border);flex-wrap:wrap}.pgh-row:first-of-type{border-top:0}';
+var CSS = '#progCard .reftable .status-pill{font-size:11px;padding:2px 8px}.pg-h{margin:18px 0 6px;font-size:15px}.pg-lbl{margin:8px 0 2px;font-weight:600;font-size:13px}.pg-lbl.bad{color:#c0392b}.pg-lbl.warn{color:#b07412}.pg-chart{width:100%;max-width:640px;height:auto;display:block;margin:6px 0 10px}.pg-m{margin-top:16px}.pg-m summary{cursor:pointer;min-height:36px;display:flex;align-items:center}.pg-m li{margin-bottom:6px;font-size:13px}#progCard ul{padding-left:20px;margin:4px 0 8px}#progCard li{margin-bottom:3px}.pgh-row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px 0;border-top:1px solid var(--border);flex-wrap:wrap}.pgh-row:first-of-type{border-top:0}';
 function css(){ if($('#progStyle')) return; var s = document.createElement('style'); s.id = 'progStyle'; s.textContent = CSS; document.head.appendChild(s); }
 function vidNow(){ var vs = g('vehicles') || [], id = g('programVehicleId'); return vs.some(function(x){ return x.id === id; }) ? id : (vs[0] && vs[0].id); }
 function sig(){ return [vidNow(), (g('workOrders') || []).length, (g('inspectionSessions') || []).length, (g('inspectionItems') || []).length, (g('defectLogs') || []).length, (g('installedComponents') || []).length].join('|'); }
@@ -25660,6 +25671,83 @@ window.SSX_CREATE = function(sel, q){
 };
 window.CT = { load:load, render:render, onShow:onShow, tplFor:tplFor, lifeFor:lifeFor, fromRange:fromRange, openLife:openLife, items:function(){ return CT.items; }, _st:CT };
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 600); }); else setTimeout(boot, 600);
+})();
+
+</script>
+<script id="tlbScript">
+/* Altair Auto — Timeline Board (Rev 64)
+   Papan Gantt jadwal perawatan untuk 6 bulan, 1 tahun, dan 5 tahun. Tiap tugas satu baris; jatuh tempo berupa blok kecil
+   berurutan yang hanya menampilkan tanggal. Data dari jadwal yang sudah ada (forecastTask); tidak menyimpan apa pun. */
+(function(){
+'use strict';
+if(window.TLB) return;
+function g(n){ try{ return (new Function('return typeof ' + n + " !== 'undefined' ? " + n + ' : undefined'))(); }catch(_){ return undefined; } }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+var HZ = { '6m':{ label:'6 months', years:0.5, cols:6, unit:'m' }, '1y':{ label:'1 year', years:1, cols:12, unit:'m' }, '5y':{ label:'5 years', years:5, cols:5, unit:'y' } };
+var ST = { hz:'1y', vid:null };
+var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+function dm(d){ return d.getDate() + ' ' + MON[d.getMonth()]; }
+function dmy(d){ return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2); }
+function curVeh(){ var vs = g('vehicles') || []; var id = ST.vid || g('programVehicleId'); return vs.filter(function(v){ return v.id === id; })[0] || vs[0]; }
+function startOf(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+/* kolom: bulan (6m, 1y) mulai dari bulan berjalan; tahun (5y) mulai dari hari ini */
+function columns(hz, today){
+  var c = HZ[hz], out = [], i;
+  if(c.unit === 'm'){ var s = startOf(today); for(i = 0; i < c.cols; i++){ var a = new Date(s.getFullYear(), s.getMonth() + i, 1), b = new Date(s.getFullYear(), s.getMonth() + i + 1, 1); out.push({ a:a, b:b, label:MON[a.getMonth()] + (a.getMonth() === 0 || i === 0 ? ' ' + String(a.getFullYear()).slice(2) : '') }); } }
+  else { for(i = 0; i < c.cols; i++){ var a2 = new Date(today.getFullYear() + i, today.getMonth(), today.getDate()), b2 = new Date(today.getFullYear() + i + 1, today.getMonth(), today.getDate()); out.push({ a:a2, b:b2, label:'Year ' + (i + 1) }); } }
+  return out;
+}
+function build(v, hz){
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var cols = columns(hz, today), end = cols[cols.length - 1].b, effV = v; try{ effV = window.effectiveVehicle(v) || v; }catch(_){}
+  var tpls = []; try{ tpls = window.getEffectiveMaintTemplates(v) || []; }catch(_){}
+  var rows = [];
+  tpls.forEach(function(t){
+    try{
+      var ld = window.lastDoneForTask(v, t.id), f = window.forecastTask(t, effV, HZ[hz].years + 0.1, ld), occ = (f.occurrences || []).filter(function(o){ return o.date && o.date < end; });
+      if(!occ.length) return;
+      occ = occ.map(function(o){ var d = new Date(o.date); d.setHours(0, 0, 0, 0); return { d:d, km:o.km, over:d < today }; });
+      rows.push({ nama:t.nama, occ:occ, first:occ[0].d });
+    }catch(_){}
+  });
+  rows.sort(function(a, b){ return a.first - b.first || a.nama.localeCompare(b.nama); });
+  return { cols:cols, rows:rows, today:today };
+}
+var CSS = '#tlbCard .tlb-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}#tlbCard .tlb-seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}#tlbCard .tlb-seg button{border:0;background:transparent;padding:7px 14px;font:inherit;cursor:pointer;color:inherit}#tlbCard .tlb-seg button[aria-pressed="true"]{background:var(--accent,#0a5a74);color:#fff}' +
+ '#tlbCard .tlb-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}#tlbCard table{border-collapse:collapse;width:100%;min-width:640px}#tlbCard th,#tlbCard td{border-bottom:1px solid var(--border);padding:4px 6px;vertical-align:top;text-align:left;font-size:12px}#tlbCard thead th{position:sticky;top:0;background:var(--card,#fff);font-weight:600;white-space:nowrap}#tlbCard td.tlb-n{position:sticky;left:0;background:var(--card,#fff);min-width:130px;max-width:170px;font-weight:600;z-index:1}' +
+ '#tlbCard .tlb-c{display:flex;flex-wrap:wrap;gap:3px;min-width:54px}#tlbCard .tlb-d{display:inline-block;padding:1px 6px;border-radius:6px;border:1px solid var(--border);background:var(--bg-soft,#eef3f5);font:11px/16px ui-monospace,Menlo,monospace;white-space:nowrap}#tlbCard .tlb-d.over{background:#fde2e0;border-color:#e08b84;color:#8a1c14}#tlbCard .tlb-d.soon{background:#fff0d0;border-color:#e0b25a;color:#7a5200}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) #tlbCard .tlb-d.over{background:#4a1d19;color:#ffd4cf}:root:not([data-theme="light"]) #tlbCard .tlb-d.soon{background:#4a3710;color:#ffe3a6}}:root[data-theme="dark"] #tlbCard .tlb-d.over{background:#4a1d19;color:#ffd4cf}:root[data-theme="dark"] #tlbCard .tlb-d.soon{background:#4a3710;color:#ffe3a6}';
+function css(){ if(document.getElementById('tlbStyle')) return; var s = document.createElement('style'); s.id = 'tlbStyle'; s.textContent = CSS; document.head.appendChild(s); }
+function html(){
+  var vs = g('vehicles') || [], v = curVeh(); if(!v) return '<h2>Timeline Board</h2><p class="hint">Belum ada kendaraan.</p>';
+  var B = build(v, ST.hz), soonEnd = new Date(B.today.getTime() + 30 * 864e5), total = 0;
+  var h = '<h2>Timeline Board</h2><p class="hint">Gantt jadwal perawatan. Tiap blok = satu jatuh tempo (hanya tanggal). Merah = terlewat, kuning = dalam 30 hari. Jadwal dihitung dari riwayat terakhir dan laju pakai; periksa Work Order untuk yang pasti.</p><div class="tlb-bar"><div class="tlb-seg" role="group" aria-label="Horizon">' +
+    Object.keys(HZ).map(function(k){ return '<button type="button" data-tlb="hz" data-v="' + k + '" aria-pressed="' + (ST.hz === k) + '">' + HZ[k].label + '</button>'; }).join('') + '</div>' +
+    '<label class="hint" for="tlbVeh">Vehicle</label><select id="tlbVeh">' + vs.map(function(x){ return '<option value="' + esc(x.id) + '"' + (x.id === v.id ? ' selected' : '') + '>' + esc([x.merk, x.model].filter(Boolean).join(' ')) + '</option>'; }).join('') + '</select></div>';
+  if(!B.rows.length) return h + '<p class="hint">Tidak ada jatuh tempo dalam ' + HZ[ST.hz].label + ' (data KM atau riwayat belum cukup).</p>';
+  var five = ST.hz === '5y';
+  h += '<div class="tlb-wrap"><table><thead><tr><th>Task</th>' + B.cols.map(function(c){ return '<th>' + esc(c.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
+  B.rows.forEach(function(r){
+    h += '<tr><td class="tlb-n">' + esc(r.nama) + '</td>';
+    B.cols.forEach(function(c, i){
+      var ch = r.occ.filter(function(o){ var d = o.d; return (i === 0 && o.over ? true : false) || (d >= c.a && d < c.b); });
+      h += '<td><div class="tlb-c">' + ch.map(function(o){ total++; var cls = o.over ? ' over' : (o.d <= soonEnd ? ' soon' : ''); return '<span class="tlb-d' + cls + '"' + (o.km != null ? ' title="' + esc(Math.round(o.km).toLocaleString('id-ID') + ' km') + '"' : '') + '>' + esc(five ? dmy(o.d) : dm(o.d)) + '</span>'; }).join('') + '</div></td>';
+    });
+    h += '</tr>';
+  });
+  return h + '</tbody></table></div><p class="hint">' + B.rows.length + ' tasks, ' + total + ' due dates dalam ' + HZ[ST.hz].label + '. Blok merah ditampilkan di kolom pertama.</p>';
+}
+function render(){
+  var panel = document.getElementById('panel-planboard'); if(!panel) return; css();
+  var c = document.getElementById('tlbCard');
+  if(!c){ c = document.createElement('div'); c.id = 'tlbCard'; c.className = 'card'; panel.appendChild(c);
+    c.addEventListener('click', function(e){ var b = e.target.closest('[data-tlb="hz"]'); if(!b) return; ST.hz = b.getAttribute('data-v'); render(); });
+    c.addEventListener('change', function(e){ if(e.target && e.target.id === 'tlbVeh'){ ST.vid = e.target.value; render(); } }); }
+  try{ c.innerHTML = html(); }catch(err){ c.innerHTML = '<h2>Timeline Board</h2><p class="hint">Tidak dapat menyusun papan: ' + esc(err.message) + '</p>'; }
+}
+function onShow(name){ if(name === 'planboard') setTimeout(render, 150); }
+function boot(){ var o = window.showPanel; if(typeof o === 'function' && !o.__tlb){ var w = function(name){ var r = o.apply(this, arguments); try{ onShow(name); }catch(_){} return r; }; w.__tlb = 1; for(var k in o) try{ w[k] = o[k]; }catch(_){} window.showPanel = w; } try{ if(g('currentPanel') === 'planboard') render(); }catch(_){} }
+window.TLB = { render:render, build:build, onShow:onShow, _st:ST };
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 700); }); else setTimeout(boot, 700);
 })();
 
 </script>
