@@ -7909,6 +7909,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-21</td><td>Rev 54: Fase B Versi 2. Penyaring odometer di Prediksi memakai aturan lonjakan yang sama dengan ledger (naik lebih dari 1.000 km dan 1.500 km/hari). Sumbu grafik odometer memakai angka bulat, tidak lagi negatif atau terbalik, garis proyeksi dipotong di area grafik. Kesehatan data O1 kini mendeteksi lonjakan dan bacaan inspeksi, dan tiap temuan bisa Ditandai ditinjau (tersimpan di perangkat, dapat dibatalkan).</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 53: Dua infografis ditanam di Library > Konsep: bagian 6 Kamus Istilah Maintenance (19 istilah unik; MTTR muncul dua kali di infografis sumber) (dengan contoh di kendaraan) dan bagian 7 Biaya Tetap vs Variabel (definisi, contoh, tes cepat, kesalahan umum, titik impas) plus kalkulator biaya per km.</td></tr>\n            <tr><td class="mono">2026-11-19</td><td>Rev 52: Ledger odometer menolak lonjakan tidak wajar (naik lebih dari 1.500 km per hari dan lebih dari 1.000 km), jadi satu salah ketik terlalu besar (mis. 1.094.453) tidak lagi menjadi KM terakhir dan tidak membuat bacaan benar berikutnya dianggap salah. Entri yang diabaikan diberi label dan bisa diperbaiki di tabel riwayat.</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 51: iPhone potret memakai tampilan padat: skala 0,84 dikunci (tanpa zoom sama sekali), teks isi 14 px CSS (11,8 px tampil), catatan 12,5 px, kolom isian 16 px tampil, tombol dan tab 44 px tampil, tidak ada teks di bawah 10,5 px tampil. Layar landscape dan perangkat lain memakai skala 1 dikunci.</td></tr>
             <tr><td class="mono">2026-11-18</td><td>Rev 50: Plan Board mengikuti kendaraan yang dipilih di menu lain (pilihan manual di papan bertahan sampai kendaraan global diganti); tombol bulan satu baris di iPhone; Auto-create tidak lagi membuat Planned WO langsung: tampil pratinjau berisi kartu yang memenuhi syarat dengan kotak centang, dibuat hanya setelah dikonfirmasi.</td></tr>
@@ -21631,7 +21632,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:53,date:'2026-11-19'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:54,date:'2026-11-21'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -22108,16 +22109,20 @@ function sample(list, fn){ return list.slice(0, 5).map(fn); }
 function scanData(st){
   st = st || {}; var V = st.vehicles || g('vehicles') || [], W = st.workOrders || g('workOrders') || [], J = st.jobCards || g('jobCards') || [], C = st.installedComponents || g('installedComponents') || [];
   var now = st.now ? new Date(st.now) : new Date(), SV = st.svcpkg === undefined ? window.SVCPKG : st.svcpkg, vb = {}; V.forEach(function(v){ vb[v.id] = v; });
-  var out = [], add = function(kode, sev, judul, saran, items){ if(items.length) out.push({ kode:kode, sev:sev, judul:judul, saran:saran, n:items.length, contoh:items.slice(0, 5) }); };
+  var out = [], add = function(kode, sev, judul, saran, items){ if(items.length) out.push({ kode:kode, sev:sev, judul:judul, saran:saran, n:items.length, contoh:items.slice(0, 5), semua:items }); };
   /* kendaraan */
   add('K1', 'sedang', 'Kendaraan tanpa KM saat ini', 'Isi KM di data kendaraan; perhitungan jatuh tempo berbasis KM butuh angka awal.', V.filter(function(v){ return v.km_saat_ini == null || v.km_saat_ini === ''; }).map(function(v){ return { ref:vname(v) }; }));
   add('K2', 'rendah', 'Kendaraan tanpa tanggal KM awal (baseline)', 'Isi tanggal pembacaan KM awal supaya ledger odometer punya titik awal bertanggal.', V.filter(function(v){ return v.km_saat_ini != null && v.km_saat_ini !== '' && !v.tanggal_km_awal; }).map(function(v){ return { ref:vname(v) }; }));
   add('K3', 'sedang', 'Kendaraan berbahan bakar bensin/diesel/hybrid tanpa transmisi', 'Isi transmisi (manual/matic). Tanpa itu template khusus manual atau matic disembunyikan.', V.filter(function(v){ return (v.powertrain || 'bensin_diesel') !== 'listrik' && !v.transmisi; }).map(function(v){ return { ref:vname(v) }; }));
   /* odometer mundur (aturan sama dengan ledger Usage: pembacaan lebih kecil dari pembacaan bertanggal sebelumnya) */
-  var back = []; V.forEach(function(v){ var rd = []; if(v.km_saat_ini != null && v.km_saat_ini !== '' && (toD(v.tanggal_km_awal) || toD(v.created_at))) rd.push({ km:Number(v.km_saat_ini), d:toD(v.tanggal_km_awal) || toD(v.created_at), l:'registrasi' });
+  var back = [], IS = st.inspectionSessions || g('inspectionSessions') || []; V.forEach(function(v){ var rd = []; if(v.km_saat_ini != null && v.km_saat_ini !== '' && (toD(v.tanggal_km_awal) || toD(v.created_at))) rd.push({ km:Number(v.km_saat_ini), d:toD(v.tanggal_km_awal) || toD(v.created_at), l:'registrasi' });
     W.forEach(function(w){ if(w.kendaraan_id === v.id && w.status === 'selesai' && w.km_saat_selesai != null && toD(w.tanggal_selesai)) rd.push({ km:Number(w.km_saat_selesai), d:toD(w.tanggal_selesai), l:(w.nomor_wo || 'WO') }); });
-    rd.sort(function(a, b){ return (a.d - b.d) || (a.km - b.km); }); var mx = -Infinity; rd.forEach(function(r){ if(r.km < mx) back.push({ ref:vname(v) + ' · ' + r.l + ' (' + fkm(r.km) + ' km < ' + fkm(mx) + ')' }); else mx = r.km; }); });
-  add('O1', 'tinggi', 'Pembacaan KM lebih kecil dari pembacaan sebelumnya', 'Periksa angka di Work Order terkait; pembacaan ini diabaikan dalam hitungan Usage.', back);
+    IS.forEach(function(x){ if(x.kendaraan_id === v.id && x.km_saat_inspeksi != null && toD(x.tanggal)) rd.push({ km:Number(x.km_saat_inspeksi), d:toD(x.tanggal), l:'Inspeksi ' + (x.nomor_inspeksi || x.nomor_is || '') }); });
+    rd.sort(function(a, b){ return (a.d - b.d) || (a.km - b.km); }); var mx = -Infinity, last = null;
+    rd.forEach(function(r){ if(r.km < mx){ back.push({ ref:vname(v) + ' · ' + r.l + ' (' + fkm(r.km) + ' km < ' + fkm(mx) + ')' }); return; }
+      if(last && r.km - last.km > 1000 && (r.km - last.km) / Math.max(1, (r.d - last.d) / DAY) > 1500){ back.push({ ref:vname(v) + ' · ' + r.l + ' (lonjakan tidak wajar ' + fkm(r.km) + ' km dari ' + fkm(last.km) + ')' }); return; }
+      mx = r.km; last = r; }); });
+  add('O1', 'tinggi', 'Pembacaan KM tidak wajar (lebih kecil dari sebelumnya, atau melonjak)', 'Periksa angka di Work Order atau Inspeksi terkait; pembacaan ini diabaikan dalam hitungan Usage. Setelah dikoreksi atau memang benar, tekan Tandai ditinjau.', back);
   /* Work Order */
   var cnt = {}; J.forEach(function(j){ cnt[j.work_order_id] = (cnt[j.work_order_id] || 0) + 1; });
   var done = W.filter(function(w){ return w.status === 'selesai'; });
@@ -22164,6 +22169,13 @@ function integrationFlags(I){
 }
 /* umur rahasia: tanggal rotasi dicatat MANUAL di perangkat ini (aplikasi tidak bisa membaca rahasia server) */
 var LSK = 'altair.health.rot.';
+var ACK = 'altair.health.ack.v1';
+function ackMap(){ try{ return JSON.parse(localStorage.getItem(ACK) || '{}') || {}; }catch(_){ return {}; } }
+function ackKey(kode, ref){ return kode + '|' + ref; }
+function setAck(kode, ref, on){ try{ var m = ackMap(), k = ackKey(kode, ref); if(on) m[k] = new Date().toISOString().slice(0, 10); else delete m[k]; localStorage.setItem(ACK, JSON.stringify(m)); }catch(_){} render(); }
+function setAckIdx(kode, idx, on){ var i = SHOWN[kode + ':' + idx]; if(i != null) setAck(kode, i, on); }
+var SHOWN = {}, SHOWREV = false;
+function toggleRev(){ SHOWREV = !SHOWREV; render(); }
 function getRot(id){ try{ return localStorage.getItem(LSK + id) || ''; }catch(_){ return ''; } }
 function setRot(id, val){ try{ if(!/^\d{4}-\d{2}-\d{2}$/.test(val || '')){ localStorage.removeItem(LSK + id); } else localStorage.setItem(LSK + id, val); }catch(_){} render(); }
 function secretAge(id, now){ var s = getRot(id); if(!s) return { known:false }; var d = toD(s + 'T00:00:00'); if(!d) return { known:false }; var days = Math.floor(((now || new Date()) - d) / DAY); return { known:true, days:days, due:days >= ROTATE_DAYS, date:s }; }
@@ -22173,10 +22185,17 @@ function sevPill(s){ return '<span class="status-pill' + (s === 'tinggi' ? ' dan
 function render(){
   var root = document.getElementById('healthRoot'); if(!root) return;
   var iss = scanData(), order = { tinggi:0, sedang:1, rendah:2 }; iss.sort(function(a, b){ return order[a.sev] - order[b.sev]; });
-  var h = '<div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;"><h3 style="margin:0;">Kesehatan data</h3><span class="hint">' + (iss.length ? iss.length + ' hal perlu dibereskan' : 'tidak ada temuan') + '</span></div>';
+  var h = '<div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;"><h3 style="margin:0;">Kesehatan data</h3><span class="hint">' + (iss.filter(function(i){ return i.semua.some(function(c){ return !ackMap()[ackKey(i.kode, c.ref)]; }); }).length ? iss.filter(function(i){ return i.semua.some(function(c){ return !ackMap()[ackKey(i.kode, c.ref)]; }); }).length + ' hal perlu dibereskan' : 'tidak ada temuan baru') + '</span></div>';
   h += '<p class="hint" style="margin:6px 0 8px;">Hanya menandai; tidak ada data yang diubah otomatis. Contoh dibatasi 5 baris per temuan.</p>';
-  if(!iss.length) h += '<p style="margin:0;">Tidak ada temuan pada data yang sedang dimuat.</p>';
-  iss.forEach(function(i){ h += '<details style="margin:6px 0;"><summary>' + sevPill(i.sev) + ' <strong>' + esc(i.judul) + '</strong> · ' + i.n + '</summary><p class="hint" style="margin:6px 0;">' + esc(i.saran) + '</p><ul style="margin:0 0 0 18px;">' + i.contoh.map(function(c){ return '<li>' + esc(c.ref) + (c.wo ? ' <button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="HEALTH.openWO(\'' + String(c.wo).replace(/[^A-Za-z0-9_-]/g, '') + '\')">Buka</button>' : '') + '</li>'; }).join('') + (i.n > i.contoh.length ? '<li class="hint">…dan ' + (i.n - i.contoh.length) + ' lainnya</li>' : '') + '</ul></details>'; });
+  if(!iss.some(function(i){ return i.semua.some(function(c){ return !ackMap()[ackKey(i.kode, c.ref)]; }); })) h += '<p style="margin:0;">Tidak ada temuan baru pada data yang sedang dimuat.</p>';
+  var am = ackMap(), nAck = 0; SHOWN = {};
+  iss = iss.map(function(i){ var act = i.semua.filter(function(c){ return !am[ackKey(i.kode, c.ref)]; }), rev = i.semua.filter(function(c){ return am[ackKey(i.kode, c.ref)]; }); nAck += rev.length; return { kode:i.kode, sev:i.sev, judul:i.judul, saran:i.saran, act:act, rev:rev }; });
+  var open = iss.filter(function(i){ return i.act.length; });
+  iss.forEach(function(i){ if(!i.act.length && !(SHOWREV && i.rev.length)) return; var list = i.act.concat(SHOWREV ? i.rev : []), shown = list.slice(0, 8);
+    h += '<details style="margin:6px 0;"><summary>' + sevPill(i.sev) + ' <strong>' + esc(i.judul) + '</strong> · ' + i.act.length + (i.rev.length ? ' <span class="hint">(+' + i.rev.length + ' ditinjau)</span>' : '') + '</summary><p class="hint" style="margin:6px 0;">' + esc(i.saran) + '</p><ul style="margin:0 0 0 18px;">' +
+      shown.map(function(c, ix){ var isRev = !!am[ackKey(i.kode, c.ref)], key = i.kode + ':' + ix; SHOWN[key] = c.ref; return '<li' + (isRev ? ' style="opacity:.6;"' : '') + '>' + esc(c.ref) + (c.wo ? ' <button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="HEALTH.openWO(\'' + String(c.wo).replace(/[^A-Za-z0-9_-]/g, '') + '\')">Buka</button>' : '') + ' <button type="button" class="ghost" style="padding:2px 8px;font-size:12px;" onclick="HEALTH.setAckIdx(\'' + i.kode + '\',' + ix + ',' + (isRev ? 'false' : 'true') + ')">' + (isRev ? 'Batalkan ditinjau' : 'Tandai ditinjau') + '</button></li>'; }).join('') +
+      (list.length > shown.length ? '<li class="hint">…dan ' + (list.length - shown.length) + ' lainnya</li>' : '') + '</ul></details>'; });
+  if(nAck) h += '<p style="margin:8px 0 0;"><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="HEALTH.toggleRev()">' + (SHOWREV ? 'Sembunyikan' : 'Tampilkan') + ' yang sudah ditinjau (' + nAck + ')</button></p>';
   h += '</div>';
   /* integrasi */
   var I = ST.integ; h += '<div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;"><h3 style="margin:0;">Kesehatan integrasi</h3><button type="button" class="ghost" style="padding:4px 10px;font-size:12px;" onclick="HEALTH.refresh()"' + (ST.loading ? ' disabled' : '') + '>' + (ST.loading ? 'Memuat…' : 'Muat ulang') + '</button></div>';
@@ -22203,7 +22222,7 @@ async function refresh(){
   ST.loading = false; render();
 }
 function openWO(id){ try{ var w = (g('workOrders') || []).find(function(x){ return x.id === id; }); if(w && typeof jumpToWorkOrder === 'function') jumpToWorkOrder(w.kendaraan_id, id); }catch(_){} }
-window.HEALTH = { scanData:scanData, loadIntegration:loadIntegration, integrationFlags:integrationFlags, secretAge:secretAge, setRot:setRot, clip:clip, render:render, refresh:refresh, openWO:openWO, onShow:function(){ render(); refresh(); } };
+window.HEALTH = { scanData:scanData, loadIntegration:loadIntegration, integrationFlags:integrationFlags, secretAge:secretAge, setRot:setRot, clip:clip, render:render, refresh:refresh, openWO:openWO, setAckIdx:setAckIdx, toggleRev:toggleRev, onShow:function(){ render(); refresh(); } };
 })();
 
 </script>
@@ -25041,7 +25060,7 @@ function odoPoints(vid){
   var raw = []; (g('workOrders') || []).forEach(function(w){ if(w.kendaraan_id === vid && w.km_saat_selesai != null && (w.tanggal_selesai || w.tanggal_target)){ var t = new Date(w.tanggal_selesai || w.tanggal_target).getTime(), k = num(w.km_saat_selesai); if(isFinite(t) && k != null) raw.push({ t:t, k:k }); } });
   (g('inspectionSessions') || []).forEach(function(s){ if(s.kendaraan_id === vid && s.km_saat_inspeksi != null && s.tanggal){ var t = new Date(s.tanggal).getTime(), k = num(s.km_saat_inspeksi); if(isFinite(t) && k != null) raw.push({ t:t, k:k }); } });
   raw.sort(function(a, b){ return a.t - b.t || a.k - b.k; }); var out = [], dropped = 0;
-  raw.forEach(function(p){ var l = out[out.length - 1]; if(l && p.k < l.k){ dropped++; return; } if(l && p.t > l.t && (p.k - l.k) / ((p.t - l.t) / DAY) > 2000){ dropped++; return; } if(l && p.t === l.t){ l.k = Math.max(l.k, p.k); return; } out.push({ t:p.t, k:p.k }); });
+  raw.forEach(function(p){ var l = out[out.length - 1]; if(l && p.k < l.k){ dropped++; return; } if(l && p.k - l.k > 1000 && (p.k - l.k) / Math.max(1, (p.t - l.t) / DAY) > 1500){ dropped++; return; } if(l && p.t === l.t){ l.k = Math.max(l.k, p.k); return; } out.push({ t:p.t, k:p.k }); });
   return { pts:out, dropped:dropped };
 }
 function usage(v, effV){
@@ -25197,17 +25216,20 @@ function analyse(vid){
 var ST = { vid:null };
 var PILL = { kurang:['', 'Belum cukup data'], laik:['ok', 'Laik jalan'], syarat:['', 'Laik bersyarat'], tidak:['danger', 'Tidak laik'] };
 function pill(st){ var p = PILL[st]; return '<span class="status-pill ' + p[0] + '">' + p[1] + '</span>'; }
+function niceTicks(lo, hi, n){ var span = hi - lo; if(!(span > 0)) return [lo]; var raw = span / n, mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), f = raw / mag, step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * mag, out = [], t = Math.ceil(lo / step) * step; for(; t <= hi + step * 1e-9; t += step) out.push(Math.round(t / step) * step); return out.length ? out : [lo, hi]; }
 function chart(pts, rate, opts){
   var W = 560, H = 170, P = 34; var xs = pts.map(function(p){ return p.x; }), ys = pts.map(function(p){ return p.y; }); if(!xs.length) return '';
   var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs) + (opts.future || 0), ymin = Math.min.apply(null, ys.concat(opts.lines ? opts.lines.map(function(l){ return l.y; }) : [])), ymax = Math.max.apply(null, ys);
-  if(opts.line){ ymax = Math.max(ymax, opts.line.at(x1)); ymin = Math.min(ymin, opts.line.at(x0)); } var pad = (ymax - ymin) * 0.1 || 1; ymin -= pad; ymax += pad; if(x1 === x0) x1 = x0 + 1;
+  if(opts.band){ ymax = Math.max(ymax, opts.band.hi(x1)); ymin = Math.min(ymin, opts.band.lo(x1)); } else if(opts.line && !opts.clip){ ymax = Math.max(ymax, opts.line.at(x1)); ymin = Math.min(ymin, opts.line.at(x0)); } var pad = (ymax - ymin) * 0.1 || 1; ymin -= pad; ymax += pad; if(opts.nonneg && ymin < 0) ymin = 0; if(x1 === x0) x1 = x0 + 1;
   var X = function(x){ return P + (x - x0) / (x1 - x0) * (W - P - 8); }, Y = function(y){ return H - 22 - (y - ymin) / (ymax - ymin) * (H - 34); }, s = '<svg class="pg-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(opts.label) + '">';
   s += '<line x1="' + P + '" y1="' + (H - 22) + '" x2="' + (W - 8) + '" y2="' + (H - 22) + '" stroke="var(--border)"/><line x1="' + P + '" y1="8" x2="' + P + '" y2="' + (H - 22) + '" stroke="var(--border)"/>';
-  [ymin + pad, (ymin + ymax) / 2, ymax - pad].forEach(function(y){ s += '<text x="' + (P - 4) + '" y="' + (Y(y) + 4) + '" text-anchor="end" font-size="11" fill="var(--text-dim)">' + esc(opts.fy(y)) + '</text>'; });
+  niceTicks(ymin, ymax, 3).forEach(function(y){ s += '<text x="' + (P - 4) + '" y="' + (Y(y) + 4) + '" text-anchor="end" font-size="11" fill="var(--text-dim)">' + esc(opts.fy(y)) + '</text>'; });
   [x0, (x0 + x1) / 2, x1].forEach(function(x, i){ s += '<text x="' + X(x) + '" y="' + (H - 6) + '" text-anchor="' + (i === 0 ? 'start' : i === 2 ? 'end' : 'middle') + '" font-size="11" fill="var(--text-dim)">' + esc(new Date(x * DAY).toLocaleDateString('id-ID', { day:'2-digit', month:'short' })) + '</text>'; });
   (opts.lines || []).forEach(function(l){ if(l.y > ymin && l.y < ymax) s += '<line x1="' + P + '" y1="' + Y(l.y) + '" x2="' + (W - 8) + '" y2="' + Y(l.y) + '" stroke="' + l.c + '" stroke-dasharray="4 3"/><text x="' + (W - 10) + '" y="' + (Y(l.y) - 3) + '" text-anchor="end" font-size="11" fill="' + l.c + '">' + esc(l.t) + '</text>'; });
+  s += '<clipPath id="pgclip"><rect x="' + P + '" y="6" width="' + (W - P - 8) + '" height="' + (H - 28) + '"/></clipPath><g clip-path="url(#pgclip)">';
   if(opts.band) s += '<polygon fill="var(--accent)" opacity=".12" points="' + [X(opts.band.xa) + ',' + Y(opts.band.lo(opts.band.xa)), X(x1) + ',' + Y(opts.band.lo(x1)), X(x1) + ',' + Y(opts.band.hi(x1)), X(opts.band.xa) + ',' + Y(opts.band.hi(opts.band.xa))].join(' ') + '"/>';
   if(opts.line) s += '<line x1="' + X(x0) + '" y1="' + Y(opts.line.at(x0)) + '" x2="' + X(x1) + '" y2="' + Y(opts.line.at(x1)) + '" stroke="var(--accent)" stroke-width="2"/>';
+  s += '</g>';
   pts.forEach(function(p){ s += '<circle cx="' + X(p.x) + '" cy="' + Y(p.y) + '" r="3.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5"/>'; });
   return s + '</svg>';
 }
@@ -25226,7 +25248,7 @@ function html(vid){
   if(!f.no.length && !f.cond.length && !(f.kurang && f.kurang.length)) h += '<p class="hint">Tidak ada pelanggaran aturan kelaikan pada data saat ini.</p>';
   /* 2 prediksi */
   h += '<h3 class="pg-h">2. Prediksi tanggal dan KM perawatan</h3><p class="hint">Laju pakai: <strong>' + fN(r.mid, 1) + ' km/hari</strong> (rentang ' + fN(r.lo, 1) + '–' + fN(r.hi, 1) + '; ≈ ' + fN(r.mid * 365) + ' km/tahun). Sumber: ' + esc(r.src) + '.' + (r.dropped ? ' ' + r.dropped + ' titik odometer janggal diabaikan.' : '') + '</p>';
-  if(r.ts && r.pts.length >= 3){ var pts = r.pts.slice(-40).map(function(p){ return { x:p.t / DAY, y:p.k }; }), xa = pts[pts.length - 1].x; h += chart(pts, r, { label:'Odometer dan proyeksi 90 hari', future:90, fy:function(y){ return fN(y); }, line:{ at:function(x){ return r.ts.intercept + r.ts.slope * x; } }, band:{ xa:xa, lo:function(x){ var k = pts[pts.length - 1].y; return k + r.lo * (x - xa); }, hi:function(x){ var k = pts[pts.length - 1].y; return k + r.hi * (x - xa); } } }); }
+  if(r.ts && r.pts.length >= 3){ var pts = r.pts.slice(-40).map(function(p){ return { x:p.t / DAY, y:p.k }; }), xa = pts[pts.length - 1].x; h += chart(pts, r, { label:'Odometer dan proyeksi 90 hari', future:90, clip:true, nonneg:true, fy:function(y){ return fN(y); }, line:{ at:function(x){ return r.ts.intercept + r.ts.slope * x; } }, band:{ xa:xa, lo:function(x){ var k = pts[pts.length - 1].y; return k + r.lo * (x - xa); }, hi:function(x){ var k = pts[pts.length - 1].y; return k + r.hi * (x - xa); } } }); }
   var shown = A.tasks.filter(function(t){ return t.over || t.dMid != null; }).slice(0, 10);
   h += shown.length ? '<div class="table-scroll"><table class="reftable"><thead><tr><th>Tugas</th><th>Jatuh tempo</th><th>Prediksi tanggal</th><th>Prediksi KM</th><th>Dasar</th></tr></thead><tbody>' + shown.map(function(t){
     var tgt = t.trig === 'km' ? fN(t.tKm) + ' km' : fD(t.tDate);
