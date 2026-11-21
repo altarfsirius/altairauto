@@ -7909,6 +7909,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 56: Fase E Versi 2. Multi-pengguna: preset izin View only, View &amp; edit, None, dan Mekanik (bisa mengisi servis, inspeksi, kerusakan, part, pemakaian; tanpa biaya, appraisal, governance, dokumen), tombol Approve — Mekanik, dan teks undangan pengguna baru di Pengaturan. Notion: kartu Ambil umur part dari Notion di Tugas &amp; Part Sendiri (Cek, Pratinjau, Ambil; fungsi notion-pull-life dan migration_rev56.sql, opsional, khusus admin).</td></tr>
             <tr><td class="mono">2026-11-21</td><td>Rev 55: Fase D Versi 2. Papan kendaraan tetap tampil dari salinan tersimpan saat offline (sebelumnya tertimpa pesan Gagal memuat data). Quick Entry: jenis BBM dan isi tangki terisi dari catatan terakhir, ada keterangan KM terakhir dan harga per liter. Label utama berbahasa Indonesia (Beranda, Servis, Analitik, Pustaka, Pengaturan, Entri Baru, pencarian). Template baku yang disembunyikan tersimpan di database (migration_rev55.sql, opsional).</td></tr>\n            <tr><td class="mono">2026-11-21</td><td>Rev 54: Fase B Versi 2. Penyaring odometer di Prediksi memakai aturan lonjakan yang sama dengan ledger (naik lebih dari 1.000 km dan 1.500 km/hari). Sumbu grafik odometer memakai angka bulat, tidak lagi negatif atau terbalik, garis proyeksi dipotong di area grafik. Kesehatan data O1 kini mendeteksi lonjakan dan bacaan inspeksi, dan tiap temuan bisa Ditandai ditinjau (tersimpan di perangkat, dapat dibatalkan).</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 53: Dua infografis ditanam di Library > Konsep: bagian 6 Kamus Istilah Maintenance (19 istilah unik; MTTR muncul dua kali di infografis sumber) (dengan contoh di kendaraan) dan bagian 7 Biaya Tetap vs Variabel (definisi, contoh, tes cepat, kesalahan umum, titik impas) plus kalkulator biaya per km.</td></tr>\n            <tr><td class="mono">2026-11-19</td><td>Rev 52: Ledger odometer menolak lonjakan tidak wajar (naik lebih dari 1.500 km per hari dan lebih dari 1.000 km), jadi satu salah ketik terlalu besar (mis. 1.094.453) tidak lagi menjadi KM terakhir dan tidak membuat bacaan benar berikutnya dianggap salah. Entri yang diabaikan diberi label dan bisa diperbaiki di tabel riwayat.</td></tr>
             <tr><td class="mono">2026-11-19</td><td>Rev 51: iPhone potret memakai tampilan padat: skala 0,84 dikunci (tanpa zoom sama sekali), teks isi 14 px CSS (11,8 px tampil), catatan 12,5 px, kolom isian 16 px tampil, tombol dan tab 44 px tampil, tidak ada teks di bawah 10,5 px tampil. Layar landscape dan perangkat lain memakai skala 1 dikunci.</td></tr>
@@ -21082,8 +21083,11 @@ async function loadUsers(){
   if(r.error){ ST.usersMsg = { k:'err', t:tr(r.error) }; ST.users = []; } else { ST.users = r.data || []; ST.usersMsg = null; }
   chipUpdate(); renderAdmin();
 }
-const PRESETS = { none:'None', view:'View only', edit:'View & edit' };
-function presetFac(l){ const o = {}; allPanels().forEach(k => { o[k] = l; }); return o; }
+const PRESETS = { none:'None', view:'View only', edit:'View & edit', mekanik:'Mekanik' };
+/* Rev 56: preset Mekanik = edit pada menu pekerjaan (Work Order, Inspeksi, Kerusakan, Parts, Pemakaian, Event, Beban Listrik), lihat saja pada menu lain, tanpa akses Biaya, Appraisal, Governance, Dokumen */
+const MEK_EDIT = ['workorder', 'inspeksi', 'kerusakan', 'parts', 'partlib', 'usage', 'event', 'ela'], MEK_NONE = ['biaya', 'appraisal', 'governance', 'dokumen'];
+function presetFac(l){ const o = {}; allPanels().forEach(k => { o[k] = l === 'mekanik' ? (MEK_EDIT.includes(k) ? 'edit' : MEK_NONE.includes(k) ? 'none' : 'view') : l; }); return o; }
+function inviteText(){ const u = location.origin + location.pathname; return 'Halo, silakan pakai Altair Auto (perawatan kendaraan) di ' + u + '\n1) Buka tautan, pilih Create New Account, isi nama, email, dan kata sandi.\n2) Buka email konfirmasi dan tekan tautannya.\n3) Login. Akun akan berstatus menunggu sampai admin menyetujui.\n4) Setelah disetujui, buka ulang aplikasi.\nTips iPhone: buka di Safari, Bagikan, Tambah ke Layar Utama.'; }
 function adminHtml(){
   if(ST.legacy) return `<div class="card-head"><h2>Users &amp; Access</h2><span class="status-pill warn">Belum aktif</span></div>
     <p class="hint">Database ini belum punya tabel akun (<code>app_profile</code>). Selama belum dipasang, <b>semua akun yang berhasil login diperlakukan sebagai admin</b> (seperti sebelumnya). Untuk mengaktifkan peran admin dan fasilitas per user: (1) aktifkan "Confirm email" di Supabase Authentication, (2) jalankan SQL di bawah di SQL Editor, (3) daftar ulang akun admin (<code>ifauzi@outlook.com</code>) bila belum ada, lalu muat ulang aplikasi.</p>
@@ -21100,7 +21104,7 @@ function adminHtml(){
     return `<div class="ag-u" data-uid="${esc(u.user_id)}"><div class="ag-uh"><div><b>${esc(u.full_name || '(tanpa nama)')}</b><small>${esc(u.email)}</small></div>
       <div>${pill(u.role === 'admin' ? 'ok' : 'muted', u.role === 'admin' ? 'Admin' : 'User')} ${pill(u.status === 'active' ? 'ok' : (u.status === 'pending' ? 'warn' : 'err'), u.status === 'active' ? 'Aktif' : (u.status === 'pending' ? 'Menunggu' : 'Nonaktif'))}</div></div>
       ${ST.rowMsg[u.user_id] ? `<div class="msg show ${ST.rowMsg[u.user_id].k}" style="margin-top:8px">${esc(ST.rowMsg[u.user_id].t)}</div>` : ''}
-      ${u.status === 'pending' && !self ? `<div class="ag-act"><button type="button" class="primary" data-ag="approve" data-uid="${esc(u.user_id)}" data-lv="view">Approve — View only</button><button type="button" class="ghost" data-ag="approve" data-uid="${esc(u.user_id)}" data-lv="edit">Approve — Full edit</button></div>` : ''}
+      ${u.status === 'pending' && !self ? `<div class="ag-act"><button type="button" class="primary" data-ag="approve" data-uid="${esc(u.user_id)}" data-lv="view">Approve — View only</button><button type="button" class="ghost" data-ag="approve" data-uid="${esc(u.user_id)}" data-lv="mekanik">Approve — Mekanik</button><button type="button" class="ghost" data-ag="approve" data-uid="${esc(u.user_id)}" data-lv="edit">Approve — Full edit</button></div>` : ''}
       <details data-uid="${esc(u.user_id)}" ${open ? 'open' : ''}><summary style="margin-top:8px;cursor:pointer">Atur akses</summary>
         <div class="ag-fac" style="margin-top:8px"><label>Role ${sel('role', u.role, [['user', 'User'], ['admin', 'Admin']], self)}</label><label>Status ${sel('status', u.status, [['pending', 'Menunggu'], ['active', 'Aktif'], ['disabled', 'Nonaktif']], self)}</label></div>
         ${self ? '<p class="hint">Ini akun Anda; role dan status tidak dapat diubah dari sini.</p>' : ''}
@@ -21114,6 +21118,7 @@ function adminHtml(){
     ${ST.usersMsg ? `<div class="msg show ${ST.usersMsg.k}" style="margin-bottom:8px">${esc(ST.usersMsg.t)}</div>` : ''}
     <div class="row-actions"><button type="button" class="ghost" data-ag="refresh">Refresh</button></div>
     ${ST.users.length ? ST.users.map(row).join('') : '<p class="hint">Belum ada akun.</p>'}
+    <details style="margin-top:12px"><summary>Undang pengguna baru</summary><p class="hint">Kirim teks ini ke orang yang akan memakai aplikasi. Setelah mereka mendaftar dan konfirmasi email, akun muncul di atas dengan status Menunggu, lalu pilih peran: <b>View only</b> (keluarga yang hanya melihat), <b>Mekanik</b> (mengisi Work Order, inspeksi, kerusakan, part, pemakaian; tanpa Biaya, Appraisal, Governance, Dokumen), atau <b>View &amp; edit</b>. Pengaturan Settings tetap hanya untuk admin. Penulisan dibatasi juga oleh database bila RLS fasilitas sudah dijalankan.</p><pre id="agInvite" style="white-space:pre-wrap">${esc(inviteText())}</pre><button type="button" class="ghost" data-ag="copy" data-t="agInvite">Copy teks undangan</button></details>
     <details style="margin-top:12px"><summary>SQL pembatasan database per fasilitas (opsional)</summary><p class="hint">Menegakkan aturan di database: penulisan tabel dibatasi per menu, akun pending/nonaktif ditolak. Jalankan setelah backup dan setelah Anda memastikan admin dapat login.</p><pre id="agSql2">${esc(SQL_RLS)}</pre><button type="button" class="ghost" data-ag="copy" data-t="agSql2">Copy SQL</button></details>
     <details style="margin-top:8px"><summary>Rollback RLS (pulihkan akses anon)</summary><p class="hint">Gunakan bila pembatasan database terlalu ketat atau muncul <em>“new row violates row-level security policy”</em> dan Anda ingin kembali ke akses lama. Tidak menghapus data dan tidak menghapus akun.</p><pre id="agSql3">${esc(SQL_RLS_RB)}</pre><button type="button" class="ghost" data-ag="copy" data-t="agSql3">Copy SQL</button></details>`;
 }
@@ -21648,7 +21653,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:55,date:'2026-11-21'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'1.0',rev:56,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -25505,7 +25510,36 @@ function html(){
     h += '<h3 style="margin:16px 0 4px;font-size:15px">Template baku untuk ' + esc(cv.model || cv.merk || '') + ' (' + base.length + ')</h3><p class="hint">Template yang tidak Anda pakai bisa disembunyikan: hilang dari Program, pilihan Work Order, dan Prediksi untuk kendaraan ini. Riwayat tidak terhapus dan bisa ditampilkan lagi. ' + (CT.hmode === 'db' ? 'Pengaturan ini tersimpan di database dan sama di semua perangkat.' : 'Pengaturan ini tersimpan di perangkat ini saja; jalankan <code>migration_rev55.sql</code> agar ikut ke database.') + '</p>' +
       base.map(function(t){ var off = hid.indexOf(t.id) >= 0; return '<div class="ct-row"><span style="min-width:0">' + esc(t.nama) + (off ? ' <span class="ct-pill">disembunyikan</span>' : '') + '</span><button type="button" class="ghost" data-ct="' + (off ? 'show' : 'hide') + '" data-id="' + esc(t.id) + '">' + (off ? 'Tampilkan lagi' : 'Sembunyikan') + '</button></div>'; }).join('');
   }
+  h += notionHtml();
   return h;
+}
+/* ---------- Ambil umur part dari Notion (Rev 56, admin saja; fungsi notion-pull-life) ---------- */
+var NP = { id: '', busy: false, out: null, ok: false };
+try{ NP.id = localStorage.getItem('altair.notion.life.id') || ''; }catch(_){}
+function notionHtml(){
+  var h = '<h3 style="margin:16px 0 4px;font-size:15px">Ambil umur part dari Notion</h3><p class="hint">Opsional, khusus admin. Isi ID database Notion berisi Nama, Interval km, Umur min/max km (dan kolom sejenis), lalu <strong>Cek</strong>, <strong>Pratinjau</strong>, dan <strong>Ambil</strong>. Hasilnya masuk ke daftar di atas; entri yang sama tidak digandakan dan tidak ada yang dihapus. Perlu fungsi <code>notion-pull-life</code> terpasang dan <code>migration_rev56.sql</code>.</p>';
+  h += '<div class="field"><label for="np_id">ID database Notion</label><input id="np_id" type="text" autocomplete="off" value="' + esc(NP.id) + '" placeholder="32 karakter dari alamat database"></div>';
+  h += '<div class="row-actions"><button type="button" class="ghost" data-ct="np-check"' + (NP.busy ? ' disabled' : '') + '>Cek</button><button type="button" class="ghost" data-ct="np-prev"' + (NP.busy ? ' disabled' : '') + '>Pratinjau</button><button type="button" class="primary" data-ct="np-pull"' + (NP.busy ? ' disabled' : '') + '>Ambil</button></div>';
+  if(NP.out) h += '<div class="msg show ' + (NP.ok ? 'ok' : 'err') + '">' + esc(NP.out) + '</div>';
+  return h;
+}
+async function npRun(action){
+  var sb = g('sb'); var el = $('#np_id'); NP.id = el ? el.value.trim() : NP.id; try{ localStorage.setItem('altair.notion.life.id', NP.id); }catch(_){}
+  if(!sb || !sb.functions){ NP.ok = false; NP.out = 'Koneksi database belum siap.'; render(); return; }
+  NP.busy = true; NP.out = 'Memproses…'; NP.ok = true; render();
+  try{
+    var r = await sb.functions.invoke('notion-pull-life', { body: { action: action, notionId: NP.id } });
+    var d = r && r.data; if(r && r.error && !d) throw new Error(r.error.message || 'Fungsi belum terpasang');
+    if(!d) throw new Error('Tidak ada jawaban dari fungsi');
+    NP.ok = d.ok !== false;
+    if(d.problems && d.problems.length) NP.out = (d.error || 'Perlu perbaikan') + ': ' + d.problems.join('; ');
+    else if(!NP.ok) NP.out = d.error || 'Gagal';
+    else if(action === 'check') NP.out = 'Struktur sesuai (' + (d.title || 'database') + '). Kolom terbaca: ' + (d.found || []).join(', ') + '.';
+    else if(action === 'preview') NP.out = d.akan_diambil + ' entri akan diambil dari ' + d.halaman + ' halaman; ' + d.dilewati + ' dilewati' + ((d.skipped || []).length ? ' (' + d.skipped.slice(0, 5).map(function(x){ return (x.nama || '?') + ': ' + x.alasan; }).join('; ') + ')' : '') + '. Belum ada yang disimpan.';
+    else NP.out = d.diambil + ' entri diambil, ' + d.dilewati + ' dilewati.';
+    if(action === 'pull' && NP.ok){ await load(); refreshOthers(); }
+  }catch(e){ NP.ok = false; NP.out = 'Gagal: ' + e.message; }
+  NP.busy = false; render();
 }
 function syncForm(){
   var j = $('#ct_jenis'); if(!j) return; var rg = j.value === 'rentang', trig = $('#ct_trig').value;
@@ -25519,6 +25553,7 @@ function render(){
     c.addEventListener('submit', async function(ev){ ev.preventDefault(); await submit(); });
     c.addEventListener('click', async function(ev){ var b = ev.target.closest('[data-ct]'); if(!b) return; var a = b.getAttribute('data-ct'), id = b.getAttribute('data-id');
       if(a === 'edit'){ CT.editId = id; CT.delId = null; CT.msg = null; render(); c.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      else if(a === 'np-check' || a === 'np-prev' || a === 'np-pull'){ await npRun(a === 'np-check' ? 'check' : a === 'np-prev' ? 'preview' : 'pull'); }
       else if(a === 'cancel'){ CT.editId = null; CT.delId = null; render(); }
       else if(a === 'del'){ CT.delId = id; render(); }
       else if(a === 'hide' || a === 'show'){ var cv2 = curVeh(); if(cv2){ setHidden(cv2.id, id, a === 'hide'); render(); refreshOthers(); } }
