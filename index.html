@@ -185,6 +185,10 @@
   table.reftable th{text-align:left;color:var(--text-dim);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border);}
   table.reftable td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top;}
   table.reftable tr:last-child td{border-bottom:none;}
+  table.reftable.usg-due td:first-child{white-space:normal;overflow-wrap:anywhere;min-width:120px;max-width:240px;}
+  table.reftable.usg-due td[colspan]{max-width:none;}
+  table.reftable.usg-due td:last-child{white-space:normal;}
+  table.reftable.usg-due td:last-child button{display:block;margin:0 0 4px;width:100%;}
   table.reftable td:first-child{font-weight:600;white-space:nowrap;}
   #workOrderTable td:first-child{white-space:normal;word-break:break-word;overflow-wrap:anywhere;min-width:200px;max-width:440px;}
   #workOrderTable td:first-child .bsub{font-weight:400;}
@@ -7909,6 +7913,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 69: lebar kolom Component di tabel Jatuh Tempo dirapikan (nama dan catatan boleh turun baris) sehingga kolom Action tidak terpotong.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 68: tabel Jatuh Tempo (Usage &amp; Interval) mendapat kolom Action per part: <strong>+ Task</strong> membuka Work Order terisi dari jadwal part (terhubung task_key, menggeser Last Done saat selesai) dan <strong>Inspect</strong> membuka Work Order inspeksi tanpa mereset jadwal servis.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 67: Master Register untuk Suzuki All New Ertiga 2021 (399 item, scope ganda) dan U-Winfly D66A (205 part + 46 klasifikasi aktivitas). Item ber-interval kini menjadi template sungguhan: terhubung ke Job Card/Work Order (task_key), Parts, forecast &amp; prediksi, serta Work Type Problem Handling / Analysis / Repair. Nama baku dari daftar rujukan diterapkan pada tugas generik yang obyeknya sama.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 66: ADV150 Master Register. 545 item dari Table Master Part Replacement &amp; Maintenance ADV 150 ABS 2019 menjadi Task Template khusus ADV150 (Job Card), dengan scope Replacement / Part Care / Inspection / Monitoring / Problem Handling / Modification, plus kartu Master Register di Plan Board (riwayat, status jatuh tempo, pembacaan Volt off/on, Temperature, KM/L).</td></tr>
@@ -15288,7 +15293,7 @@ function dueCard(vid, E){
       <label style="display:flex;gap:6px;align-items:center;font-size:13px;">Rencana perjalanan <input type="number" min="0" step="50" value="${UI.trip}" style="width:90px;padding:5px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);" onchange="USAGE.setTrip(this.value)"> km</label>
     </div>
     ${trip > 0 && tripRows.length ? `<div class="msg show err" style="margin-bottom:8px;">Untuk perjalanan ${fk(trip)} km, ${tripRows.length} komponen akan jatuh tempo di tengah jalan: ${esc(tripRows.slice(0, 6).map(r => r.tpl.nama).join(', '))}${tripRows.length > 6 ? ', …' : ''}. Kerjakan sebelum berangkat.</div>` : ''}
-    <div class="table-scroll keep-scroll"><table class="reftable"><thead><tr><th>Component</th><th>Last Done</th><th>Interval</th><th>Due Odometer</th><th>Due Date</th><th>Trigger</th><th>Status</th><th>Action</th></tr></thead><tbody>${body}</tbody></table></div>
+    <div class="table-scroll keep-scroll"><table class="reftable usg-due"><thead><tr><th>Component</th><th>Last Done</th><th>Interval</th><th>Due Odometer</th><th>Due Date</th><th>Trigger</th><th>Status</th><th>Action</th></tr></thead><tbody>${body}</tbody></table></div>
     <div class="row-actions"><button class="ghost" onclick="showPanel('program')">Buka Program &rsaquo;</button><button class="ghost" onclick="showPanel('workorder')">Buat Work Order &rsaquo;</button></div></div>`;
 }
 function lifeRow(c, v, tpls, cat, perDay, E){
@@ -21685,7 +21690,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:68,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:69,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
