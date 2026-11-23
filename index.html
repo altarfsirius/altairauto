@@ -7913,6 +7913,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-22</td><td>Rev 72: HAMMP (program perawatan gaya pesawat) di Plan Board untuk Honda ADV150, Suzuki Ertiga, dan U-Winfly D66A: klasifikasi BD / A / C / D-Check, Modification, Investigation; kalender 1 tahun (21 Nov 2026 &ndash; 20 Nov 2027) dan matriks 5 tahun; daftar Task Card; klasifikasi tiap Task Template menjadi A / C / D / On condition dari interval terpendek; panel input rutin (KM, Volt off, Volt on, Temperature, Fuel KM/L). Klasifikasi internal, bukan nomenklatur pabrikan; tidak menyimpan data.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 71: tabel Jatuh Tempo (Usage &amp; Interval) menampilkan Part Number terpasang di bawah nama komponen; bila kosong tersedia kolom isian + tombol Set Part Number (membuat atau memperbarui catatan Installed Component yang terhubung ke tugas itu), dan tombol Change untuk mengubahnya.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 70: Installed Component Configuration kini menampilkan seluruh part dari master list kendaraan (ADV150, Ertiga, D66A) sebagai baris &ldquo;Not recorded&rdquo; di samping komponen yang sudah tercatat. Setiap part tanpa Part Number punya kolom isian + tombol Set Part Number (part master otomatis tercatat sebagai terpasang saat Part Number diisi, atau lewat Record as installed). Filter: All, Active, Replaced, Not recorded, plus pencarian.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 69: lebar kolom Component di tabel Jatuh Tempo dirapikan (nama dan catatan boleh turun baris) sehingga kolom Action tidak terpotong.</td></tr>
@@ -21754,7 +21755,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:71,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:72,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -26031,6 +26032,224 @@ function boot(){
   try{ if(g('currentPanel') === 'planboard') render(); }catch(_){}
 }
 window.ADVM = { data:MODELS.adv150.data, link:MODELS.adv150.link, groups:GN_ADV, models:MODELS, modelOf:modelOf, extra:extraFor, parts:parts, audit:audit, byId:byId, idOf:idOf, dueOf:dueOf, lastOf:lastOf, render:render, filtered:filtered, jenis:JENIS, syncCatalog:syncCatalog, _st:ST };
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 800); }); else setTimeout(boot, 800);
+})();
+
+</script>
+<script id="hmScript">
+/* Altair Auto — HAMMP (Rev 72)
+   Program perawatan gaya pesawat (BD / A / C / D-Check, Modification, Investigation) untuk Honda ADV150, Suzuki Ertiga, U-Winfly D66A.
+   Sumber: dokumen program yang diberikan pemilik. BD/A/C/D = klasifikasi INTERNAL, bukan nomenklatur resmi pabrikan; interval penggantian tetap
+   mengikuti buku pedoman dan kondisi komponen. Periode 21 Nov 2026 - 20 Nov 2027 (1 tahun) dan sampai 20 Nov 2031 (5 tahun).
+   Hanya tampilan + klasifikasi turunan: tidak menulis ke database. */
+(function(){
+'use strict';
+if(window.HAMMP) return;
+function g(n){ try{ return (new Function('return typeof ' + n + " !== 'undefined' ? " + n + ' : undefined'))(); }catch(_){ return undefined; } }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+var START = new Date(2026, 10, 21), END1 = new Date(2027, 10, 20), END5 = new Date(2031, 10, 20);
+var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+function dmy(d){ return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear(); }
+function L(s){ return s.split('\n').map(function(x){ return x.trim(); }).filter(Boolean).map(function(x){ var p = x.split('|'); return p.length > 1 ? { s:p[0], t:p[1] } : { s:'', t:p[0] }; }); }
+
+var CLS = {
+  BD:{ n:'BD-Check', full:'Basic / Daily Check', c:'#4b8f6a' }, A:{ n:'A-Check', full:'Light Maintenance Check', c:'#3b82c4' },
+  C:{ n:'C-Check', full:'Comprehensive Check', c:'#c28a2b' }, D:{ n:'D-Check', full:'Major Check', c:'#b5493f' },
+  MOD:{ n:'Modification', full:'Modification Control', c:'#7a5ab5' }, INV:{ n:'Investigation', full:'Incident / Defect Investigation', c:'#555f6b' }
+};
+var ORD = ['BD', 'A', 'C', 'D', 'MOD', 'INV'];
+
+var ERT = {
+  name:'Suzuki All New Ertiga GX Black 2021', basis:'Reliability-Based + Preventive + Condition-Based + Predictive',
+  interval:{ BD:'Sebelum dipakai / harian / mingguan', A:'Bulanan / 3 bulanan / berdasarkan KM', C:'6 bulanan / tahunan', D:'3–5 tahunan atau life limit dan kondisi', MOD:'Sesuai kebutuhan', INV:'Berdasarkan kejadian' },
+  note:'D-Check bukan berarti semua komponen diganti; penggantian berdasarkan temuan inspeksi, batas aus, umur, KM, dan rekomendasi pabrikan.',
+  baseline:'Baseline 05 Okt 2025 pada 107.635 km (terakhir tercatat 108.540 km). Perbarui odometer aktual sebelum menentukan jatuh tempo.',
+  months:{ A:'111111111111', C:'000001000001', D:'100000000001', MOD:'110000000000', INV:'101001001001', REL:'001001001001', TCO:'000001000001' },
+  lists:{
+    BD:L('Engine Oil|Level, kebocoran\nCoolant|Level, kebocoran\nBrake Fluid|Level, kebocoran\nATF|Kebocoran, abnormalitas\nBattery|Tegangan, terminal\nTire|Tekanan, tapak, kerusakan\nWheel|Kondisi visual\nBrake System|Rasa pedal, respons pengereman\nSteering|Free play, abnormalitas\nSuspension|Bunyi, kebocoran\nLighting|Headlamp, stop lamp, sein\nWiper|Operasi, kondisi karet\nWasher|Level cairan, semprotan\nHorn|Fungsi\nSeat Belt|Penguncian, retraksi\nDoor & Lock|Fungsi\nWindshield|Retak, visibilitas\nUnderbody|Kebocoran, kerusakan\nExhaust|Bunyi, kebocoran\nDashboard|Indikator peringatan'),
+    A:L('Engine|Engine oil inspection/replacement\nEngine|Oil filter inspection/replacement\nEngine|Air filter cleaning/inspection\nEngine|Intake system inspection\nEngine|Drive belt inspection\nEngine|Spark plug inspection\nFuel System|Fuel line inspection\nFuel System|Fuel filter assessment\nCooling|Coolant level inspection\nCooling|Radiator inspection\nCooling|Radiator hose inspection\nCooling|Cooling fan operation\nLubrication|Hinge lubrication\nLubrication|Door lock lubrication\nLubrication|Applicable moving joints lubrication\nBrake|Brake pad inspection\nBrake|Brake disc inspection\nBrake|Brake fluid inspection\nBrake|Brake hose inspection\nTire|Pressure and tread inspection\nTire|Tire rotation assessment\nWheel|Nut torque inspection\nSuspension|Shock absorber inspection\nSuspension|Bushing inspection\nSteering|Steering linkage inspection\nElectrical|Battery terminal cleaning\nElectrical|Battery voltage test\nElectrical|Charging system test\nAir Conditioning|Cabin filter inspection\nAir Conditioning|Cooling performance inspection\nTransmission|ATF leakage inspection\nTransmission|Shift quality assessment\nBody|Door, hood, tailgate inspection\nBody|Rust and corrosion inspection\nInterior|Cabin cleaning\nSafety|Warning equipment inspection'),
+    C:L('Engine|Comprehensive engine inspection\nEngine|Compression/leak-down test when indicated\nEngine|Engine mounting inspection\nEngine|Valve clearance assessment per manual\nEngine|Ignition system assessment\nFuel|Fuel delivery system assessment\nCooling|Cooling system pressure test\nCooling|Thermostat functional assessment\nCooling|Water pump inspection\nCooling|Radiator condition assessment\nTransmission|ATF condition assessment\nTransmission|Transmission mounting inspection\nTransmission|Shift performance assessment\nBrake|Complete brake system inspection\nBrake|Master cylinder assessment\nBrake|Caliper inspection\nBrake|Disc runout/thickness measurement\nBrake|Brake fluid condition assessment\nSuspension|Front suspension inspection\nSuspension|Rear suspension inspection\nSuspension|Ball joint inspection\nSuspension|Stabilizer link inspection\nSteering|Steering rack inspection\nSteering|Tie rod inspection\nWheel|Wheel bearing inspection\nElectrical|Alternator performance test\nElectrical|Starter motor test\nElectrical|Battery load test\nElectrical|Wiring harness inspection\nElectrical|Ground connection inspection\nHVAC|AC performance test\nHVAC|Evaporator/condenser assessment\nBody|Underbody corrosion inspection\nBody|Structural condition inspection\nExhaust|Exhaust system inspection\nSafety|Seat belt and restraint inspection\nDiagnostics|OBD scan\nReliability|Failure trend analysis\nReliability|Component life assessment\nDocumentation|Maintenance record audit'),
+    D:L('Engine|Major engine condition assessment\nEngine|Internal engine inspection if required\nEngine|Timing chain system assessment\nEngine|Oil pump assessment\nEngine|Water pump replacement if due\nCooling|Comprehensive cooling system restoration\nTransmission|Major transmission assessment\nTransmission|ATF replacement if due\nTransmission|Transmission mount replacement if required\nBrake|Master cylinder overhaul/replacement if required\nBrake|Caliper overhaul if required\nBrake|Brake hose replacement if due\nBrake|Brake fluid replacement if due\nSuspension|Shock absorber replacement if due\nSuspension|Bushings replacement if required\nSuspension|Ball joint replacement if required\nSteering|Steering rack overhaul if required\nSteering|Tie rod replacement if required\nWheel|Wheel bearing replacement if required\nElectrical|Alternator overhaul if required\nElectrical|Starter motor overhaul if required\nElectrical|Battery replacement if due\nHVAC|AC system major servicing if required\nFuel|Fuel pump assessment\nFuel|Fuel system cleaning if indicated\nExhaust|Exhaust system restoration if required\nBody|Corrosion treatment\nBody|Underbody protection assessment\nBody|Door seal replacement if required\nInterior|Seat mechanism restoration if required\nSafety|Complete safety system assessment\nVehicle|Comprehensive road test\nVehicle|Final maintenance release inspection'),
+    MOD:L('Engine|Engine performance improvement\nAir Intake|Air filter improvement\nCooling|Cooling system improvement\nLubrication|Approved lubricant optimization\nTransmission|ATF specification compliance\nBrake|Brake system improvement\nSuspension|Shock absorber upgrade if justified\nTire|Tire replacement planning\nElectrical|Battery monitoring\nElectrical|Charging system monitoring\nLighting|Lighting replacement/upgrade\nHVAC|Cabin filtration improvement\nBody|Anti-corrosion treatment\nBody|Paint protection\nInterior|Cabin protection\nMonitoring|OBD monitoring system\nDocumentation|Digital maintenance tracking'),
+    INV:L('Engine Overheating|Cooling system RCA\nEngine Noise|Mechanical inspection\nEngine Vibration|Engine mounting analysis\nOil Leakage|Leakage investigation\nCoolant Leakage|Cooling system investigation\nDifficult Starting|Starting system analysis\nBattery Discharge|Electrical RCA\nAlternator Failure|Charging system investigation\nTransmission Jerking|Transmission RCA\nTransmission Slipping|Transmission investigation\nBrake Pedal Deep Travel|Brake system RCA\nBrake Vibration|Disc and brake analysis\nBrake Noise|Brake inspection\nSteering Noise|Steering investigation\nSuspension Noise|Suspension investigation\nTire Uneven Wear|Tire wear analysis\nAC Not Cooling|HVAC investigation\nElectrical Malfunction|Electrical RCA\nWarning Lamp|OBD investigation\nFuel Consumption Increase|Fuel economy investigation\nWater Ingress|Body sealing investigation\nCorrosion|Corrosion assessment\nAccident|Incident investigation\nRecurring Failure|Reliability investigation')
+  },
+  focus:['Prioritas 1: verifikasi sistem pengereman (riwayat pedal terlalu dalam, pekerjaan cakram depan Okt 2025).', 'Verifikasi kondisi empat ban dan rencanakan penggantian berdasarkan usia dan hasil inspeksi.', 'Verifikasi kesehatan aki dan performa pengisian (aki terakhir diganti 19 Okt 2024).', 'Pastikan spesifikasi oli mesin dan ATF Shell sesuai persyaratan kendaraan, bukan sekadar merek.', 'Tetapkan odometer aktual terbaru sebagai dasar seluruh forecast.'],
+  five:[['BD-Check',[3,3,3,3,3]],['A-Check',[3,3,3,3,3]],['C-Check',[2,2,2,2,2]],['D-Check Assessment',[1,1,1,2,3]],['Engine Condition',[2,2,2,2,3]],['Transmission Condition',[2,2,2,2,3]],['Brake System',[2,2,2,2,3]],['Cooling System',[2,2,2,2,3]],['Suspension',[2,2,3,3,3]],['Steering',[2,2,2,3,3]],['Electrical',[2,2,2,2,3]],['HVAC',[2,2,2,2,3]],['Tire',[3,3,3,3,3]],['Body / Corrosion',[1,1,2,2,3]],['Modification',[1,1,1,1,1]],['Investigation',[3,3,3,3,3]],['Reliability Review',[3,3,3,3,3]],['TCO Report',[1,1,1,1,3]],['Lifecycle Review',[0,0,1,1,3]]],
+  focusY:['Establishment & baseline reliability', 'Preventive maintenance optimization', 'Mid-life component assessment', 'Component replacement & restoration', 'Five-year major maintenance & life cycle review']
+};
+var ADV = {
+  name:'Honda ADV 150 ABS 2019', basis:'Aircraft Maintenance Program + Reliability + Predictive Maintenance',
+  interval:{ BD:'Setiap penggunaan (harian / mingguan)', A:'Bulanan / berdasarkan KM', C:'6 bulanan / tahunan', D:'Program 5 tahunan', MOD:'Sesuai kebutuhan', INV:'Berdasarkan kejadian' },
+  note:'D-Check adalah program 5 tahunan, bukan kewajiban membongkar seluruh kendaraan; pembongkaran berdasarkan kebutuhan teknis, hasil inspeksi, dan manual. Interval tetap mengikuti Owner\'s/Service Manual Honda.',
+  baseline:'Aksesori terpasang (Modification Register): Duromoto X1 40W, Reako 5" 25W, Essager USB 45W, Dashcam 5W, Voltage Stabilizer ~2W, TPMS.',
+  months:{ A:'111111111111', C:'000001000001', D:'000000000000', MOD:'100100010001', INV:'000000000000', REL:'010010010001', TCO:'000010000001' },
+  extra:[['Engine Oil Service','101010101010'],['Final Gear Oil','100010001000'],['CVT Inspection','010010010010'],['Brake Inspection','100100100100'],['Cooling System','010001000100'],['Electrical Inspection','001000100010'],['Annual Review','000000000001']],
+  lists:{
+    BD:L('Engine Oil|Level dan kebocoran (harian)\nCoolant|Level reservoir (harian)\nBrake Fluid|Level reservoir (harian)\nFront Brake|Operasi rem (harian)\nRear Brake|Operasi rem (harian)\nABS|Indikator peringatan (harian)\nFront Tire|Tekanan dan kondisi (harian)\nRear Tire|Tekanan dan kondisi (harian)\nWheel|Inspeksi visual (harian)\nSteering|Gerak bebas (harian)\nFront Suspension|Kebocoran dan operasi (harian)\nRear Suspension|Kebocoran dan operasi (harian)\nHeadlight|Uji fungsi (harian)\nBrake Light|Uji fungsi (harian)\nTurn Signal|Uji fungsi (harian)\nHorn|Uji fungsi (harian)\nRear View Mirror|Kondisi dan penyetelan (harian)\nDrive Belt Cover|Visual (mingguan)\nBattery|Indikasi elektrikal (mingguan)\nElectrical Accessories|Fungsi (mingguan)\nBody Panel|Kerusakan dan kelonggaran (mingguan)\nFasteners|Kekenduran terlihat (mingguan)\nUnderbody|Kebocoran dan kerusakan (mingguan)\nVehicle Cleaning|Bersih bodi, lampu, area inspeksi (mingguan)'),
+    A:L('Engine Oil|Drain and replenish\nEngine Oil Strainer|Inspect / clean\nFinal Gear Oil|Drain and replenish\nAir Cleaner|Inspect / clean / replace\nSpark Plug|Inspect / clean / replace\nFuel System|Inspect leakage\nThrottle Grip|Inspect free play\nThrottle Body|Inspect / clean\nFuel Injector|Inspect / clean\nCooling System|Inspect coolant level dan leakage\nCoolant|Check condition / replace\nRadiator|Clean external fins\nRadiator Fan|Functional test\nBrake Pad|Inspect wear\nBrake Disc|Inspect thickness / scoring\nBrake Caliper|Clean / inspect\nBrake Fluid|Inspect condition\nBrake Hose|Inspect cracks / leakage\nFront Tire|Inspect wear / pressure\nRear Tire|Inspect wear / pressure\nWheel Bearing|Inspect play / noise\nSteering Bearing|Inspect play / movement\nFront Fork|Inspect leakage\nRear Shock Absorber|Inspect leakage / function\nDrive Belt|Inspect cracks / wear\nClutch|Inspect operation\nCVT Roller|Inspect wear\nCVT Housing|Clean / inspect\nBattery|Voltage / charging test\nCharging System|Voltage measurement\nStarter Motor|Functional test\nElectrical Wiring|Inspect connection\nLighting System|Functional test\nHorn|Functional test\nSide Stand Switch|Functional test\nEngine Mounting|Inspect condition\nExhaust System|Inspect leakage / mounting\nBody Fasteners|Tightness inspection\nCenter Stand|Clean / lubricate\nSide Stand|Clean / lubricate'),
+    C:L('Engine|Cylinder Head inspection\nEngine|Cylinder Block leakage / condition\nEngine|Piston performance / condition\nEngine|Valve Mechanism inspection / adjustment\nEngine|Camshaft wear inspection\nEngine|Crankshaft noise / vibration\nEngine|Engine Mounting detailed inspection\nFuel|Fuel Pump functional test\nFuel|Fuel Injector inspection / cleaning\nFuel|Fuel Filter / Strainer inspection\nCooling|Radiator detailed inspection\nCooling|Radiator Cap pressure / condition\nCooling|Thermostat functional assessment\nCooling|Coolant Hose crack / leakage\nCooling|Water Pump leakage / functional\nCVT|Drive Belt detailed wear\nCVT|Driven Pulley wear / operation\nCVT|Drive Pulley wear / operation\nCVT|Roller Weight wear measurement\nCVT|Clutch Shoe wear measurement\nCVT|Clutch Bell surface\nCVT|CVT Bearing noise / play\nTransmission|Final Gear noise / leakage\nBrake|Front Caliper detailed\nBrake|Rear Caliper detailed\nBrake|Front Disc thickness / run-out\nBrake|Rear Disc thickness / run-out\nBrake|Master Cylinder leakage / functional\nBrake|ABS Modulator diagnostic / functional\nBrake|ABS Sensor gap / condition\nBrake|ABS Tone Ring damage / contamination\nSuspension|Front Fork leakage / condition\nSuspension|Rear Shock damping / leakage\nSuspension|Swingarm structural\nSteering|Steering Bearing detailed\nWheel|Front Wheel run-out / bearing\nWheel|Rear Wheel run-out / bearing\nElectrical|Battery capacity / load test\nElectrical|Alternator charging performance\nElectrical|Regulator Rectifier voltage / temperature\nElectrical|Starter Motor current / functional\nElectrical|Main Wiring Harness detailed\nElectrical|Connectors corrosion / contact\nElectrical|Fuse Box inspection\nElectronic|ECU / ECM diagnostic scan\nElectronic|Sensors functional assessment\nElectronic|Instrument Panel functional\nSafety|Side Stand Switch functional\nSafety|Brake Switch functional\nSafety|Lighting System comprehensive\nStructure|Main Frame crack / corrosion\nStructure|Sub Frame structural\nBody|Fairing / Panel crack / fitting\nExhaust|Exhaust Pipe corrosion / leakage\nExhaust|Muffler structural\nAccessories|Auxiliary Lighting electrical / mounting\nAccessories|USB Charger electrical\nAccessories|Dashcam functional / wiring\nAccessories|TPMS sensor / accuracy\nAccessories|Voltage Stabilizer electrical'),
+    D:L('Engine|Complete engine assembly detailed assessment\nEngine|Cylinder Head disassembly / inspection if required\nEngine|Piston & Ring measurement / replacement if required\nEngine|Cylinder Block wear / dimensional\nEngine|Valve Assembly inspection / servicing\nEngine|Crankshaft condition\nEngine|Camshaft wear\nEngine|Oil Pump inspection\nEngine|Oil Passage cleaning / inspection\nCooling|Radiator Assembly detailed\nCooling|Water Pump inspection / replacement if required\nCooling|Thermostat inspection / replacement if required\nCVT|Complete CVT detailed inspection\nCVT|Drive Belt replacement per manual / condition\nCVT|Roller Weight inspection / replacement\nCVT|Pulley Assembly wear / dimensional\nCVT|Clutch Assembly inspection / replacement\nTransmission|Final Gear Assembly detailed\nBrake|Front Brake System complete assessment\nBrake|Rear Brake System complete assessment\nBrake|ABS System diagnostic / functional\nBrake|Hydraulic System hose / seal / fluid\nSuspension|Front Fork overhaul if required\nSuspension|Rear Shock overhaul / replacement assessment\nSteering|Steering Assembly detailed\nWheel|Front Wheel Assembly bearing / rim\nWheel|Rear Wheel Assembly bearing / rim\nElectrical|Main Harness detailed\nElectrical|Battery replacement assessment\nElectrical|Alternator performance\nElectrical|Starter Motor overhaul / replacement assessment\nElectronic|ECU / ECM diagnostic\nElectronic|Sensor Assembly functional\nStructure|Main Frame corrosion / crack\nStructure|Sub Frame structural\nBody|Complete Fairing repair / replacement assessment\nExhaust|Exhaust Assembly corrosion / structural\nAccessories|Auxiliary Electrical System complete inspection\nAccessories|Dashcam condition / functional\nAccessories|TPMS accuracy / battery'),
+    MOD:L('Safety|Brake, lighting, visibility\nElectrical|Wiring, power distribution\nPerformance|Engine / CVT performance\nReliability|Component durability\nComfort|Seat, ergonomics\nConvenience|USB, charging system\nMonitoring|TPMS, voltmeter\nProtection|Body, underbody protection\nTouring|Luggage / mounting\nCosmetic|Body appearance\nRegister|Duromoto X1 40W (terpasang)\nRegister|Reako 5" 25W (terpasang)\nRegister|Essager USB 45W (terpasang)\nRegister|Dashcam 5W (terpasang)\nRegister|Voltage Stabilizer ~2W (terpasang)\nRegister|TPMS (terpasang)'),
+    INV:L('Engine Incident|Engine overheating\nEngine Defect|Abnormal engine noise\nLubrication Failure|Oil leakage\nCooling Failure|Coolant leakage\nCVT Failure|Belt damage\nTransmission Failure|Abnormal gear noise\nBrake Incident|Brake effectiveness degradation\nABS Incident|ABS warning / malfunction\nTire Incident|Puncture / abnormal wear\nWheel Incident|Bearing failure\nSuspension Incident|Oil leakage\nSteering Incident|Steering instability\nElectrical Incident|Battery discharge\nCharging Failure|Abnormal charging voltage\nElectrical Fire Risk|Wiring overheating\nElectronic Failure|Sensor / ECU malfunction\nStructural Incident|Frame / mounting damage\nAccessory Failure|Auxiliary lighting failure\nRoad Incident|Collision / fall\nOperational Incident|Abnormal vibration / handling')
+  },
+  focus:['Interval, toleransi, dan batas penggantian mengikuti Owner\'s/Service Manual Honda.', 'Aksesori kelistrikan (lampu bantu, USB 45W, dashcam, stabilizer, TPMS) perlu dipantau beban dan tegangan aki.', 'Masukkan rutin KM, Volt off, Volt on, Temperature, dan Fuel KM/L pada Inspeksi.'],
+  five:[['BD-Check',[3,3,3,3,3]],['A-Check',[3,3,3,3,3]],['C-Check',[3,3,3,3,3]],['D-Check Preparation',[3,0,3,0,0]],['D-Check Major',[0,0,0,0,3]],['Engine Reliability',[3,3,3,3,3]],['CVT Reliability',[3,3,3,3,3]],['Brake & ABS Reliability',[3,3,3,3,3]],['Cooling System',[3,3,3,3,3]],['Electrical System',[3,3,3,3,3]],['Suspension System',[3,3,3,3,3]],['Tire Lifecycle',[3,3,3,3,3]],['Battery Lifecycle',[3,3,3,3,3]],['Modification',[3,3,3,3,3]],['Investigation',[3,3,3,3,3]],['Reliability Program',[3,3,3,3,3]],['Predictive Maintenance',[3,3,3,3,3]],['TCO Analysis',[3,3,3,3,3]],['Vehicle Restoration',[0,0,0,0,3]],['Five-Year Review',[0,0,0,0,3]]],
+  focusY:['Preparation D-Check, baseline reliability', 'Monitoring', 'Preparation D-Check, mid-life review', 'Monitoring dan penggantian komponen', 'D-Check Major, restorasi, review lima tahun']
+};
+var D66 = {
+  name:'U-Winfly D66A 2025', basis:'Time-Based + Usage-Based + Condition-Based',
+  interval:{ BD:'Sebelum operasi harian / jarak jauh / setelah perawatan atau insiden', A:'100 km / 1 bulan (mana lebih dulu)', C:'500 km (berulang)', D:'1.000 km / 1 tahun (mana lebih dulu)', MOD:'Sesuai kebutuhan', INV:'Berdasarkan kejadian' },
+  note:'D-Check pada D66A adalah adaptasi konsep major maintenance pesawat, bukan interval overhaul resmi pabrikan. Due ditentukan oleh batas yang tercapai lebih dulu: kalender, jam operasi, KM, siklus pengisian baterai, kondisi, atau kejadian.',
+  baseline:'Milestone KM: 0 baseline; 100–900 km A-Check (tiap 100); 500 km C-Check + lingkup A; 1.000 km D-Check + lingkup relevan.',
+  months:{ A:'111111111111', C:'001001010010', D:'000000000001', MOD:'110000010100', INV:'000000000000', REL:'001001001001', TCO:'000001000001' },
+  lists:{
+    BD:L('BD-D66A-001|Daily General Inspection\nBD-D66A-002|Daily Battery Inspection\nBD-D66A-003|Daily Brake Inspection\nBD-D66A-004|Daily Tyre Inspection'),
+    A:L('A-D66A-100|A-Check General Inspection\nA-D66A-101|Battery Inspection\nA-D66A-102|Electrical Inspection\nA-D66A-103|Mechanical Inspection\nA-D66A-104|Functional Test'),
+    C:L('C-D66A-500|C-Check Detailed Inspection\nC-D66A-501|Battery Capacity Assessment\nC-D66A-502|Motor Performance Assessment\nC-D66A-503|Controller Inspection\nC-D66A-504|Brake and Running Gear Inspection\nC-D66A-505|Reliability Assessment'),
+    D:L('D-D66A-1000|Major Maintenance Inspection\nD-D66A-1001|Complete Battery Assessment\nD-D66A-1002|Complete Electrical Assessment\nD-D66A-1003|Complete Mechanical Assessment\nD-D66A-1004|Complete Structural Assessment\nD-D66A-1005|Vehicle Lifecycle Assessment'),
+    MOD:L('MOD-D66A-001|Safety Modification\nMOD-D66A-002|Electrical Modification\nMOD-D66A-003|Battery Modification\nMOD-D66A-004|Mechanical Modification\nMOD-D66A-005|Performance Modification'),
+    INV:L('INV-D66A-001|Battery Incident Investigation\nINV-D66A-002|Electrical Incident Investigation\nINV-D66A-003|Mechanical Incident Investigation\nINV-D66A-004|Operational Incident Investigation\nINV-D66A-005|Root Cause Analysis')
+  },
+  focus:['Siklus pengisian baterai ikut menjadi pemicu jatuh tempo; catat KM, Volt off, Volt on, dan Temperature secara rutin.', 'C-Check dan D-Check memuat lingkup A yang relevan; tidak perlu mengulang pekerjaan identik.', 'Release to service: SERVICEABLE / UNSERVICEABLE dengan tanda tangan teknisi, inspektor, dan pengendali.'],
+  five:[['BD-Check',[4,4,4,4,4]],['A-Check',[1,1,1,1,1]],['C-Check',[1,1,1,1,1]],['D-Check',[1,1,1,1,1]],['Modification',[1,1,1,1,1]],['Incident Investigation',[5,5,5,5,5]],['Battery Reliability',[1,1,6,1,6]],['Motor Reliability',[1,1,6,1,6]],['Controller Reliability',[1,1,6,1,6]],['Electrical Reliability',[1,1,1,1,6]],['Mechanical Reliability',[1,1,6,1,6]],['Structural Assessment',[1,1,6,1,6]],['Lifecycle Assessment',[1,1,6,1,6]],['TCO Analysis',[1,1,1,1,6]],['Fleet / Vehicle Review',[1,1,6,1,6]]],
+  focusY:['Initial maintenance dan pembentukan reliability', 'Reliability improvement dan component lifecycle', 'Mid-life assessment dan major improvement', 'Component renewal dan optimasi reliability', 'Five-year major maintenance dan keputusan lifecycle'],
+  stones:[[0, 'Baseline / Configuration Inspection'], [100, 'A-Check'], [200, 'A-Check'], [300, 'A-Check'], [400, 'A-Check'], [500, 'C-Check + lingkup A'], [600, 'A-Check'], [700, 'A-Check'], [800, 'A-Check'], [900, 'A-Check'], [1000, 'D-Check + lingkup relevan']]
+};
+var DATA = { adv150:ADV, ertiga:ERT, d66a:D66 };
+var LEVEL = { 0:'-', 1:'X', 2:'XX', 3:'XXX', 4:'C', 5:'E', 6:'M' };
+var LEGEND = 'X = dilaksanakan, XX = lebih mendalam, XXX = evaluasi komprehensif, C = kontinu, E = berdasarkan kejadian, M = major assessment, - = tidak dijadwalkan';
+
+function modelOf(v){
+  try{ var m = window.ADVM && ADVM.modelOf ? ADVM.modelOf(v) : null; if(m) return typeof m === 'string' ? m : (m.id || m.key || null); }catch(_){}
+  var s = ((v && (v.merk || '')) + ' ' + (v && (v.model || ''))).toLowerCase();
+  if(/adv/.test(s) && /honda/.test(s)) return 'adv150'; if(/ertiga/.test(s)) return 'ertiga'; if(/d66|winfly/.test(s)) return 'd66a'; return null;
+}
+function monthWin(i){ var a = new Date(2026, 10 + i, 21), b = new Date(2026, 11 + i, 20); return { a:a, b:b, label:MON[a.getMonth()] + ' ' + String(a.getFullYear()).slice(2) }; }
+function yearWin(i){ return { a:new Date(2026 + i, 10, 21), b:new Date(2027 + i, 10, 20) }; }
+/* kalender 12 bulan: untuk tiap bulan, kelas yang terjadwal beserta penjelasan */
+function calendar(key){
+  var P = DATA[key]; if(!P) return null; var out = [], i, m = P.months;
+  for(i = 0; i < 12; i++){
+    var w = monthWin(i), on = ['BD'];
+    if(m.A[i] === '1') on.push('A'); if(m.C[i] === '1') on.push('C'); if(m.D[i] === '1') on.push('D'); if(m.MOD[i] === '1') on.push('MOD');
+    var ex = []; if(m.REL[i] === '1') ex.push('Reliability review'); if(m.TCO[i] === '1') ex.push('TCO review');
+    (P.extra || []).forEach(function(e){ if(e[1][i] === '1') ex.push(e[0]); });
+    if(key === 'ertiga' && (i === 11)) ex.push('Annual reliability report');
+    out.push({ i:i, a:w.a, b:w.b, label:w.label, on:on, ex:ex, inv:key === 'd66a' ? 'event' : (m.INV[i] === '1' ? 'A' : 'M') });
+  }
+  return out;
+}
+/* klasifikasi tugas: A bila due terpendek, C menengah, D panjang; tanpa interval = On condition */
+var LIM = { adv150:{ kind:'motor', A:[3, 4000], C:[12, 16000] }, ertiga:{ kind:'mobil', A:[3, 10000], C:[12, 40000] }, d66a:{ kind:'lainnya', A:[3, 500], C:[12, 2000] } };
+function kmOf(t, kind){ var iv = t && t.interval; if(iv == null) return null; if(typeof iv === 'number') return iv; var x = iv[kind]; if(x == null) { var k = Object.keys(iv); for(var i = 0; i < k.length; i++) if(iv[k[i]] != null){ x = iv[k[i]]; break; } } return x == null ? null : Number(x); }
+function classify(t, key){
+  var L2 = LIM[key] || LIM.ertiga, km = kmOf(t, L2.kind), mo = t && t.intervalBulan != null ? Number(t.intervalBulan) : null, rank = null;
+  function r(v, lim){ return v <= lim[0] ? 0 : (v <= lim[1] ? 1 : 2); }
+  if(mo != null && isFinite(mo) && mo > 0) rank = r(mo, [L2.A[0], L2.C[0]]);
+  if(km != null && isFinite(km) && km > 0){ var rk = r(km, [L2.A[1], L2.C[1]]); rank = rank == null ? rk : Math.min(rank, rk); }
+  return rank == null ? 'COND' : ['A', 'C', 'D'][rank];
+}
+function classRows(v, key){
+  var tpls = []; try{ tpls = window.getEffectiveMaintTemplates(v) || []; }catch(_){}
+  return tpls.map(function(t){ var c = classify(t, key), km = kmOf(t, (LIM[key] || LIM.ertiga).kind); return { id:t.id, nama:t.nama, cls:c, km:km, mo:t.intervalBulan != null ? Number(t.intervalBulan) : null, master:!!t.master }; });
+}
+/* input rutin: KM, Volt off, Volt on, Temperature, Fuel KM/L dari sesi inspeksi yang sudah ada */
+function routine(v){
+  var S = (g('inspectionSessions') || []).filter(function(s){ return s.kendaraan_id === v.id; });
+  function last(k){ var a = S.filter(function(s){ return s[k] != null && s[k] !== '' && isFinite(Number(s[k])); }); a.sort(function(x, y){ var dx = String(x.tanggal || x.created_at || '').slice(0, 10), dy = String(y.tanggal || y.created_at || '').slice(0, 10); return dx < dy ? 1 : dx > dy ? -1 : 0; }); return a[0] ? { v:Number(a[0][k]), d:String(a[0].tanggal || a[0].created_at || '').slice(0, 10) } : null; }
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  function age(x){ if(!x || !x.d) return null; var p = x.d.split('-'); return Math.round((today - new Date(+p[0], +p[1] - 1, +p[2])) / 864e5); }
+  var o = { km:v.km_saat_ini != null ? { v:Number(v.km_saat_ini), d:null } : null, voff:last('volt_engine_off'), von:last('volt_engine_on'), temp:last('temperature'), fuel:last('konsumsi_bbm_avg'), n:S.length };
+  ['voff', 'von', 'temp', 'fuel'].forEach(function(k){ o[k + 'Age'] = age(o[k]); });
+  return o;
+}
+var ST = { tab:'prog', vid:null, cls:'A', q:'', lim:60, fc:'all' };
+function curVeh(){ var vs = g('vehicles') || []; var id = ST.vid || g('programVehicleId'); return vs.filter(function(v){ return v.id === id; })[0] || vs[0]; }
+function chip(k){ var c = CLS[k]; return '<span class="hm-chip" style="--cc:' + c.c + '">' + esc(c.n) + '</span>'; }
+function tabs(){ return [['prog', 'Program'], ['y1', '1 Year'], ['y5', '5 Years'], ['tasks', 'Task Cards'], ['cls', 'Classification'], ['rt', 'Routine Inputs']]; }
+function vTitle(v){ return [v.merk, v.model, v.tahun].filter(Boolean).join(' '); }
+function secProg(P, key){
+  var h = '<p class="hint">' + esc(P.name) + ' &middot; ' + esc(P.basis) + '<br>Periode 1 tahun: ' + dmy(START) + ' &ndash; ' + dmy(END1) + '; 5 tahun sampai ' + dmy(END5) + '.</p><div class="hm-wrap"><table><thead><tr><th>Check</th><th>Interval perencanaan</th><th>Tugas</th></tr></thead><tbody>';
+  ORD.forEach(function(k){ h += '<tr><td>' + chip(k) + '<div class="hm-s">' + esc(CLS[k].full) + '</div></td><td>' + esc(P.interval[k]) + '</td><td class="hm-num">' + P.lists[k].length + '</td></tr>'; });
+  h += '</tbody></table></div><p class="hint">' + esc(P.note) + '</p><p class="hint">' + esc(P.baseline) + '</p>';
+  if(key === 'd66a') h += '<h3 class="hm-h">Mileage milestone</h3><div class="hm-stones">' + P.stones.map(function(s){ return '<span class="hm-st"><b>' + s[0].toLocaleString('id-ID') + ' km</b> ' + esc(s[1]) + '</span>'; }).join('') + '</div>';
+  h += '<h3 class="hm-h">Fokus dan kontrol</h3><ul class="hm-ul">' + P.focus.map(function(f){ return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>';
+  return h + '<p class="hint">Aturan: No Evidence, No Done. No Failure Data, No Reliability Prediction. Setiap pekerjaan memiliki tanggal, odometer, hasil PASS / FAIL / MONITOR, dan next due.</p>';
+}
+function sec1y(P, key){
+  var cal = calendar(key), today = new Date(); today.setHours(0, 0, 0, 0);
+  var h = '<p class="hint">Kalender program per periode (tanggal 21 hingga 20). Check aktual tetap mengikuti jatuh tempo KM dan kondisi; penggantian oli, filter, busi, cairan, dan komponen lain mengikuti due masing-masing, bukan otomatis tiap bulan.</p><div class="hm-wrap"><table><thead><tr><th>Periode</th><th>Check terjadwal</th><th>Fokus</th></tr></thead><tbody>';
+  cal.forEach(function(m){
+    var now = today >= m.a && today <= m.b;
+    h += '<tr' + (now ? ' class="hm-now"' : '') + '><td class="hm-nowrap">' + dmy(m.a) + '<div class="hm-s">s/d ' + dmy(m.b) + (now ? ' &middot; berjalan' : '') + '</div></td><td>' + m.on.map(chip).join(' ') + '</td><td>' + (m.ex.length ? m.ex.map(esc).join(', ') : '<span class="hm-s">&mdash;</span>') + (m.inv === 'A' ? '<div class="hm-s">Investigation: analisis</div>' : '') + '</td></tr>';
+  });
+  return h + '</tbody></table></div><p class="hint">Investigation selalu berbasis kejadian (' + (key === 'd66a' ? 'event-driven' : 'monitoring tiap bulan, analisis pada bulan review') + '). ' + (key === 'd66a' ? 'D-Check diproyeksikan di akhir horizon dan dimajukan bila 1.000 km tercapai lebih dulu.' : '') + '</p>';
+}
+function sec5y(P){
+  var h = '<p class="hint">' + esc(LEGEND) + '.</p><div class="hm-wrap"><table><thead><tr><th>Aktivitas</th>';
+  for(var i = 0; i < 5; i++){ var w = yearWin(i); h += '<th>Y' + (i + 1) + '<div class="hm-s">' + (w.a.getFullYear() % 100) + '/' + (w.b.getFullYear() % 100) + '</div></th>'; }
+  h += '</tr></thead><tbody>';
+  P.five.forEach(function(r){ h += '<tr><td>' + esc(r[0]) + '</td>' + r[1].map(function(x){ return '<td class="hm-lv hm-l' + x + '">' + LEVEL[x] + '</td>'; }).join('') + '</tr>'; });
+  h += '</tbody></table></div><h3 class="hm-h">Fokus tahunan</h3><ol class="hm-ul">' + P.focusY.map(function(f, i){ var w = yearWin(i); return '<li>Year ' + (i + 1) + ' (' + dmy(w.a) + ' &ndash; ' + dmy(w.b) + '): ' + esc(f) + '</li>'; }).join('') + '</ol>';
+  return h;
+}
+function secTasks(P){
+  var q = ST.q.toLowerCase(), list = P.lists[ST.cls].filter(function(r){ return !q || (r.s + ' ' + r.t).toLowerCase().indexOf(q) >= 0; });
+  var h = '<div class="hm-bar"><div class="hm-seg" role="group">' + ORD.map(function(k){ return '<button type="button" data-hm="cls" data-v="' + k + '" aria-pressed="' + (ST.cls === k) + '">' + esc(CLS[k].n) + ' ' + P.lists[k].length + '</button>'; }).join('') + '</div><input id="hmQ" type="search" placeholder="Cari tugas" value="' + esc(ST.q) + '" aria-label="Cari tugas"></div>';
+  h += '<div class="hm-wrap"><table><thead><tr><th>No</th><th>Sistem / ID</th><th>Tugas</th></tr></thead><tbody>' + list.map(function(r, i){ return '<tr><td class="hm-num">' + (i + 1) + '</td><td>' + esc(r.s) + '</td><td>' + esc(r.t) + '</td></tr>'; }).join('') + '</tbody></table></div><p class="hint">' + list.length + ' tugas ' + esc(CLS[ST.cls].n) + '. Daftar ini adalah lingkup program; jatuh tempo per part tetap dikelola lewat Task Template dan Usage.</p>';
+  return h;
+}
+function secCls(v, key){
+  var rows = classRows(v, key), cnt = { A:0, C:0, D:0, COND:0 };
+  rows.forEach(function(r){ cnt[r.cls]++; });
+  var f = ST.fc, q = ST.q.toLowerCase(), list = rows.filter(function(r){ return (f === 'all' || r.cls === f) && (!q || r.nama.toLowerCase().indexOf(q) >= 0); });
+  var lim = LIM[key], names = { A:'A-Check', C:'C-Check', D:'D-Check', COND:'On condition' };
+  var h = '<p class="hint">Setiap Task Template diberi kelas check dari interval terpendek (bulan atau KM): A sampai ' + lim.A[0] + ' bln / ' + lim.A[1].toLocaleString('id-ID') + ' km, C sampai ' + lim.C[0] + ' bln / ' + lim.C[1].toLocaleString('id-ID') + ' km, D lebih panjang; tanpa interval tetap = On condition. Klasifikasi internal (turunan), bukan nomenklatur pabrikan.</p>';
+  h += '<div class="hm-bar"><div class="hm-seg" role="group">' + [['all', 'All ' + rows.length], ['A', 'A ' + cnt.A], ['C', 'C ' + cnt.C], ['D', 'D ' + cnt.D], ['COND', 'Condition ' + cnt.COND]].map(function(x){ return '<button type="button" data-hm="fc" data-v="' + x[0] + '" aria-pressed="' + (f === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div><input id="hmQ" type="search" placeholder="Cari task" value="' + esc(ST.q) + '" aria-label="Cari task"></div>';
+  h += '<div class="hm-wrap"><table><thead><tr><th>Task</th><th>Interval</th><th>Kelas</th></tr></thead><tbody>' + list.slice(0, ST.lim).map(function(r){
+    var iv = [r.mo != null ? r.mo + ' bln' : null, r.km != null ? r.km.toLocaleString('id-ID') + ' km' : null].filter(Boolean).join(' / ') || '&mdash;';
+    return '<tr><td>' + esc(r.nama) + (r.master ? ' <span class="hm-s">master</span>' : '') + '</td><td class="hm-nowrap">' + iv + '</td><td>' + (r.cls === 'COND' ? '<span class="hm-chip" style="--cc:#777">' + names.COND + '</span>' : chip(r.cls)) + '</td></tr>';
+  }).join('') + '</tbody></table></div>';
+  if(list.length > ST.lim) h += '<button type="button" class="hm-more" data-hm="more">Tampilkan lebih banyak (' + (list.length - ST.lim) + ')</button>';
+  return h + '<p class="hint">' + list.length + ' task ditampilkan dari ' + rows.length + '.</p>';
+}
+function secRt(v){
+  var r = routine(v), rem = null; try{ rem = window.ELH && ELH.remindInfo ? ELH.remindInfo({ vehicleId:v.id }) : null; }catch(_){}
+  function cell(x, unit, ageKey){ if(!x) return '<td class="hm-s">belum ada</td><td>&mdash;</td>'; var a = r[ageKey]; return '<td><b>' + String(x.v).replace('.', ',') + '</b> ' + unit + '</td><td class="' + (a != null && a > 14 ? 'hm-old' : '') + '">' + (x.d || '') + (a != null ? ' &middot; ' + a + ' hari lalu' : '') + '</td>'; }
+  var h = '<p class="hint">Input rutin diambil dari Inspeksi (KM, Volt off, Volt on, Temperature, Fuel KM/L). Data lama (lebih dari 14 hari) ditandai; analisis tren dan batas ada di kartu Kelistrikan &amp; Suhu.</p><div class="hm-wrap"><table><thead><tr><th>Input</th><th>Terakhir</th><th>Tanggal</th></tr></thead><tbody>';
+  h += '<tr><td>KM (odometer)</td>' + (r.km ? '<td><b>' + r.km.v.toLocaleString('id-ID') + '</b> km</td><td class="hm-s">odometer kendaraan</td>' : '<td class="hm-s">belum ada</td><td>&mdash;</td>') + '</tr>';
+  h += '<tr><td>Volt engine off</td>' + cell(r.voff, 'V', 'voffAge') + '</tr><tr><td>Volt engine on</td>' + cell(r.von, 'V', 'vonAge') + '</tr><tr><td>Temperature</td>' + cell(r.temp, '&deg;C', 'tempAge') + '</tr><tr><td>Fuel consumption</td>' + cell(r.fuel, 'KM/L', 'fuelAge') + '</tr></tbody></table></div>';
+  h += '<p class="hint">' + r.n + ' sesi inspeksi tercatat untuk kendaraan ini.' + (rem ? (rem.last ? ' Pengukuran terakhir ' + esc(rem.last) + (rem.due ? ' &middot; <b>sudah waktunya input baru</b> (setiap ' + rem.every + ' hari).' : ' &middot; masih dalam jadwal.') : ' Belum ada pengukuran; lakukan BD-Check pertama.') : '') + '</p>';
+  return h;
+}
+var CSS = '#hmCard .hm-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}#hmCard .hm-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden}#hmCard .hm-seg button{border:0;background:transparent;padding:6px 10px;font:inherit;font-size:12px;color:inherit;cursor:pointer}#hmCard .hm-seg button[aria-pressed=true]{background:var(--accent,#2f6f8f);color:#fff}' +
+ '#hmCard .hm-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}#hmCard table{border-collapse:collapse;width:100%;min-width:480px}#hmCard th,#hmCard td{border-bottom:1px solid var(--border);padding:5px 8px;vertical-align:top;text-align:left;font-size:12.5px}#hmCard th{background:var(--bg-soft,#eef3f5)}#hmCard .hm-s{font-size:11px;opacity:.7}#hmCard .hm-num{text-align:right;white-space:nowrap}#hmCard .hm-nowrap{white-space:nowrap}' +
+ '#hmCard .hm-chip{display:inline-block;padding:1px 7px;margin:1px 2px 1px 0;border-radius:999px;border:1px solid var(--cc);color:var(--cc);font-size:11px;font-weight:600;white-space:nowrap}#hmCard .hm-now td{background:var(--bg-soft,#eef3f5)}#hmCard .hm-lv{text-align:center;font:12px ui-monospace,Menlo,monospace}#hmCard .hm-l0{opacity:.35}#hmCard .hm-l1,#hmCard .hm-l4{background:rgba(59,130,196,.12)}#hmCard .hm-l2,#hmCard .hm-l5{background:rgba(194,138,43,.18)}#hmCard .hm-l3,#hmCard .hm-l6{background:rgba(181,73,63,.2);font-weight:700}' +
+ '#hmCard .hm-h{margin:12px 0 4px;font-size:13px}#hmCard .hm-ul{margin:4px 0 4px 18px;padding:0;font-size:12.5px}#hmCard .hm-stones{display:flex;flex-wrap:wrap;gap:6px}#hmCard .hm-st{border:1px solid var(--border);border-radius:8px;padding:2px 8px;font-size:12px}#hmCard .hm-old{color:#b5493f;font-weight:600}#hmCard input[type=search]{flex:1;min-width:140px;max-width:280px}#hmCard .hm-more{margin-top:6px}#hmCard select{max-width:100%}';
+function css(){ if(document.getElementById('hmStyle')) return; var s = document.createElement('style'); s.id = 'hmStyle'; s.textContent = CSS; document.head.appendChild(s); }
+function html(){
+  var vs = g('vehicles') || [], v = curVeh(); if(!v) return '<h2>HAMMP</h2><p class="hint">Belum ada kendaraan.</p>';
+  var key = modelOf(v), P = key ? DATA[key] : null;
+  var h = '<h2>HAMMP &mdash; Maintenance Program</h2><div class="hm-bar"><label class="hint" for="hmVeh">Vehicle</label><select id="hmVeh">' + vs.map(function(x){ return '<option value="' + esc(x.id) + '"' + (x.id === v.id ? ' selected' : '') + '>' + esc(vTitle(x)) + '</option>'; }).join('') + '</select></div>';
+  if(!P) return h + '<p class="hint">Belum ada program HAMMP untuk kendaraan ini. Program tersedia untuk Honda ADV150, Suzuki Ertiga, dan U-Winfly D66A.</p>';
+  h += '<div class="hm-bar"><div class="hm-seg" role="tablist">' + tabs().map(function(t){ return '<button type="button" role="tab" data-hm="tab" data-v="' + t[0] + '" aria-pressed="' + (ST.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div></div>';
+  if(ST.tab === 'prog') h += secProg(P, key); else if(ST.tab === 'y1') h += sec1y(P, key); else if(ST.tab === 'y5') h += sec5y(P);
+  else if(ST.tab === 'tasks') h += secTasks(P); else if(ST.tab === 'cls') h += secCls(v, key); else h += secRt(v);
+  return h;
+}
+function render(){
+  var panel = document.getElementById('panel-planboard'); if(!panel) return; css();
+  var c = document.getElementById('hmCard');
+  if(!c){ c = document.createElement('div'); c.id = 'hmCard'; c.className = 'card'; panel.insertBefore(c, panel.firstChild);
+    c.addEventListener('click', function(e){ var b = e.target.closest('[data-hm]'); if(!b) return; var a = b.getAttribute('data-hm'), x = b.getAttribute('data-v');
+      if(a === 'tab'){ ST.tab = x; ST.q = ''; ST.lim = 60; } else if(a === 'cls'){ ST.cls = x; } else if(a === 'fc'){ ST.fc = x; ST.lim = 60; } else if(a === 'more'){ ST.lim += 120; } render(); });
+    c.addEventListener('change', function(e){ if(e.target && e.target.id === 'hmVeh'){ ST.vid = e.target.value; ST.lim = 60; render(); } });
+    c.addEventListener('input', function(e){ if(e.target && e.target.id === 'hmQ'){ ST.q = e.target.value; ST.lim = 60; var pos = e.target.selectionStart; render(); var q = document.getElementById('hmQ'); if(q){ q.focus(); try{ q.setSelectionRange(pos, pos); }catch(_){} } } }); }
+  try{ c.innerHTML = html(); }catch(err){ c.innerHTML = '<h2>HAMMP</h2><p class="hint">Tidak dapat menyusun program: ' + esc(err.message) + '</p>'; }
+}
+function onShow(name){ if(name === 'planboard') setTimeout(render, 120); }
+function boot(){ var o = window.showPanel; if(typeof o === 'function' && !o.__hm){ var w = function(name){ var r = o.apply(this, arguments); try{ onShow(name); }catch(_){} return r; }; w.__hm = 1; for(var k in o) try{ w[k] = o[k]; }catch(_){} window.showPanel = w; } else if(typeof o !== 'function'){ setTimeout(boot, 300); return; } try{ if(g('currentPanel') === 'planboard') render(); }catch(_){} }
+window.HAMMP = { render:render, data:DATA, calendar:calendar, classify:classify, classRows:classRows, routine:routine, modelOf:modelOf, onShow:onShow, _st:ST };
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 800); }); else setTimeout(boot, 800);
 })();
 
