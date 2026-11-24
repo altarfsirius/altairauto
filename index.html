@@ -7913,6 +7913,7 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-24</td><td>Rev 73: HAMMP menambah tab Modifications (daftar Job Card Modification per kendaraan dengan pemeriksaan bukti: Part Number, Hasil, Biaya, KM) dan Investigations (Investigation Report 14 bagian dari Problem Case, RCA, FEA, PICA, dan Defect; bagian kosong ditandai; defect terbuka tanpa investigasi didaftar). Hanya tampilan; tidak ada tabel baru dan tidak menulis data.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 72: HAMMP (program perawatan gaya pesawat) di Plan Board untuk Honda ADV150, Suzuki Ertiga, dan U-Winfly D66A: klasifikasi BD / A / C / D-Check, Modification, Investigation; kalender 1 tahun (21 Nov 2026 &ndash; 20 Nov 2027) dan matriks 5 tahun; daftar Task Card; klasifikasi tiap Task Template menjadi A / C / D / On condition dari interval terpendek; panel input rutin (KM, Volt off, Volt on, Temperature, Fuel KM/L). Klasifikasi internal, bukan nomenklatur pabrikan; tidak menyimpan data.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 71: tabel Jatuh Tempo (Usage &amp; Interval) menampilkan Part Number terpasang di bawah nama komponen; bila kosong tersedia kolom isian + tombol Set Part Number (membuat atau memperbarui catatan Installed Component yang terhubung ke tugas itu), dan tombol Change untuk mengubahnya.</td></tr>
             <tr><td class="mono">2026-11-22</td><td>Rev 70: Installed Component Configuration kini menampilkan seluruh part dari master list kendaraan (ADV150, Ertiga, D66A) sebagai baris &ldquo;Not recorded&rdquo; di samping komponen yang sudah tercatat. Setiap part tanpa Part Number punya kolom isian + tombol Set Part Number (part master otomatis tercatat sebagai terpasang saat Part Number diisi, atau lewat Record as installed). Filter: All, Active, Replaced, Not recorded, plus pencarian.</td></tr>
@@ -21755,7 +21756,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:72,date:'2026-11-22'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:73,date:'2026-11-24'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -26037,7 +26038,7 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 
 </script>
 <script id="hmScript">
-/* Altair Auto — HAMMP (Rev 72)
+/* Altair Auto — HAMMP (Rev 72-73)
    Program perawatan gaya pesawat (BD / A / C / D-Check, Modification, Investigation) untuk Honda ADV150, Suzuki Ertiga, U-Winfly D66A.
    Sumber: dokumen program yang diberikan pemilik. BD/A/C/D = klasifikasi INTERNAL, bukan nomenklatur resmi pabrikan; interval penggantian tetap
    mengikuti buku pedoman dan kondisi komponen. Periode 21 Nov 2026 - 20 Nov 2027 (1 tahun) dan sampai 20 Nov 2031 (5 tahun).
@@ -26166,7 +26167,7 @@ function routine(v){
 var ST = { tab:'prog', vid:null, cls:'A', q:'', lim:60, fc:'all' };
 function curVeh(){ var vs = g('vehicles') || []; var id = ST.vid || g('programVehicleId'); return vs.filter(function(v){ return v.id === id; })[0] || vs[0]; }
 function chip(k){ var c = CLS[k]; return '<span class="hm-chip" style="--cc:' + c.c + '">' + esc(c.n) + '</span>'; }
-function tabs(){ return [['prog', 'Program'], ['y1', '1 Year'], ['y5', '5 Years'], ['tasks', 'Task Cards'], ['cls', 'Classification'], ['rt', 'Routine Inputs']]; }
+function tabs(){ return [['prog', 'Program'], ['y1', '1 Year'], ['y5', '5 Years'], ['tasks', 'Task Cards'], ['cls', 'Classification'], ['mod', 'Modifications'], ['inv', 'Investigations'], ['rt', 'Routine Inputs']]; }
 function vTitle(v){ return [v.merk, v.model, v.tahun].filter(Boolean).join(' '); }
 function secProg(P, key){
   var h = '<p class="hint">' + esc(P.name) + ' &middot; ' + esc(P.basis) + '<br>Periode 1 tahun: ' + dmy(START) + ' &ndash; ' + dmy(END1) + '; 5 tahun sampai ' + dmy(END5) + '.</p><div class="hm-wrap"><table><thead><tr><th>Check</th><th>Interval perencanaan</th><th>Tugas</th></tr></thead><tbody>';
@@ -26222,10 +26223,66 @@ function secRt(v){
   h += '<p class="hint">' + r.n + ' sesi inspeksi tercatat untuk kendaraan ini.' + (rem ? (rem.last ? ' Pengukuran terakhir ' + esc(rem.last) + (rem.due ? ' &middot; <b>sudah waktunya input baru</b> (setiap ' + rem.every + ' hari).' : ' &middot; masih dalam jadwal.') : ' Belum ada pengukuran; lakukan BD-Check pertama.') : '') + '</p>';
   return h;
 }
+
+/* Rev 73: Modification Register dan Investigation Report, dibaca dari data yang sudah ada (Job Card Modification, Problem Case, RCA, FEA, PICA, Defect). Tidak menulis apa pun. */
+function vWO(v){ var W = g('workOrders') || []; var ids = {}; W.forEach(function(w){ if(w.kendaraan_id === v.id) ids[w.id] = w; }); return ids; }
+function modRows(v){
+  var ids = vWO(v), J = (g('jobCards') || []).filter(function(j){ return ids[j.work_order_id] && j.jenis_pekerjaan === 'modifikasi'; });
+  return J.map(function(j){
+    var w = ids[j.work_order_id], done = j.status === 'selesai' || j.status === 'completed';
+    var chk = { pn:!!(j.part_nomor), hasil:!!(j.hasil), biaya:(Number(j.biaya_part) || 0) + (Number(j.biaya_jasa) || 0) > 0, km:w.km_saat_selesai != null };
+    return { id:j.id, judul:j.judul || j.part_nama || 'Modification', part:j.part_nama || '', pn:j.part_nomor || '', status:j.status || '', tgl:String(j.tanggal_aksi || w.tanggal_selesai || j.created_at || '').slice(0, 10), done:done, chk:chk, score:Object.keys(chk).filter(function(k){ return chk[k]; }).length, hasil:j.hasil || '' };
+  }).sort(function(a, b){ return a.tgl < b.tgl ? 1 : -1; });
+}
+function secMod(v, key, P){
+  var rows = modRows(v), n = rows.length, doneN = rows.filter(function(r){ return r.done; }).length;
+  var h = '<p class="hint">Daftar Modification diambil dari Job Card berjenis Modification pada kendaraan ini. Kelengkapan diperiksa dari empat bukti: Part Number, Hasil/Functional test, Biaya, dan KM saat selesai. Dokumen penuh proses 14 langkah (Modification Request sampai Post-Modification Monitoring) belum dilacak di aplikasi.</p>';
+  h += '<p class="hint"><b>' + n + '</b> modification tercatat, <b>' + doneN + '</b> selesai.</p>';
+  if(n){
+    h += '<div class="hm-wrap"><table><thead><tr><th>Tanggal</th><th>Modification</th><th>Part / PN</th><th>Status</th><th>Bukti</th></tr></thead><tbody>' + rows.slice(0, 60).map(function(r){
+      return '<tr><td class="hm-nowrap">' + esc(r.tgl) + '</td><td>' + esc(r.judul) + '</td><td>' + esc(r.part) + (r.pn ? '<div class="hm-s">PN ' + esc(r.pn) + '</div>' : '<div class="hm-s hm-old">PN belum diisi</div>') + '</td><td>' + esc(r.status) + '</td><td>' + r.score + '/4' + (r.score < 4 ? '<div class="hm-s">kurang: ' + ['pn:Part Number', 'hasil:Hasil', 'biaya:Biaya', 'km:KM'].filter(function(x){ return !r.chk[x.split(':')[0]]; }).map(function(x){ return x.split(':')[1]; }).join(', ') + '</div>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  } else h += '<p class="hint">Belum ada Job Card Modification untuk kendaraan ini. Buat lewat Work Order dengan Work Type Modification.</p>';
+  var plist = P.lists.MOD; h += '<h3 class="hm-h">Lingkup program Modification (' + plist.length + ')</h3><ul class="hm-ul">' + plist.map(function(r){ return '<li>' + (r.s ? '<b>' + esc(r.s) + '</b>: ' : '') + esc(r.t) + '</li>'; }).join('') + '</ul>';
+  return h + '<p class="hint">Aturan: tidak boleh mengubah spesifikasi keselamatan, dimensi, pengereman, kelistrikan, atau emisi tanpa kesesuaian regulasi dan persetujuan teknis. No Approved Modification, No Implementation.</p>';
+}
+function invData(v){
+  var PC = (g('problemCases') || []).filter(function(p){ return p.kendaraan_id === v.id; }), R = g('rcaAnalyses') || [], F = g('feaItems') || [], X = g('picaItems') || [], D = g('defectLogs') || [];
+  return PC.map(function(p, i){
+    var rca = R.filter(function(r){ return r.problem_case_id === p.id; }), fea = F.filter(function(f){ return f.problem_case_id === p.id; }), pica = X.filter(function(x){ return x.problem_case_id === p.id; });
+    var def = D.filter(function(d){ return d.id === p.defect_log_id; })[0], r0 = rca[0] || {};
+    var whys = [r0.why1, r0.why2, r0.why3, r0.why4, r0.why5].filter(Boolean);
+    var kor = pica.filter(function(x){ return x.jenis === 'korektif'; }), pre = pica.filter(function(x){ return x.jenis === 'preventif'; });
+    var sec = [
+      ['1 What', r0.apa || p.deskripsi || ''], ['2 Where', r0.dimana || ''], ['3 When', r0.kapan || p.tanggal_dilaporkan || ''], ['4 Who', r0.siapa || p.dilaporkan_oleh || ''],
+      ['5 Why', whys.join(' > ')], ['6 How', r0.bagaimana || ''], ['7 Evidence', def && def.gejala ? 'Defect: ' + def.gejala : ''],
+      ['8 Failure mode', fea.map(function(f){ return f.identifikasi; }).join('; ')], ['9 Root cause', r0.akar_masalah || ''],
+      ['10 Corrective action', kor.map(function(x){ return x.tindakan; }).join('; ') || r0.tindakan_korektif || ''], ['11 Preventive action', pre.map(function(x){ return x.tindakan; }).join('; ')],
+      ['12 Effectiveness', pica.filter(function(x){ return x.status_verifikasi === 'efektif'; }).length ? pica.filter(function(x){ return x.status_verifikasi === 'efektif'; }).length + ' tindakan terverifikasi efektif' : ''],
+      ['13 Reliability update', ''], ['14 Closure', p.status === 'selesai' ? 'Selesai' : '']
+    ];
+    return { id:p.id, no:r0.nomor_rca || ('PC-' + String(i + 1).padStart(3, '0')), judul:p.judul, tgl:p.tanggal_dilaporkan, prio:p.prioritas, status:p.status, sec:sec, filled:sec.filter(function(x){ return x[1]; }).length };
+  });
+}
+function secInv(v, key, P){
+  var rows = invData(v), D = (g('defectLogs') || []).filter(function(d){ return d.kendaraan_id === v.id; }), linked = {}; (g('problemCases') || []).forEach(function(p){ if(p.defect_log_id) linked[p.defect_log_id] = 1; });
+  var loose = D.filter(function(d){ return !linked[d.id] && d.status !== 'selesai'; });
+  var open = rows.filter(function(r){ return r.status !== 'selesai'; }).length;
+  var h = '<p class="hint">Investigation Report disusun dari Problem Case, RCA, FEA, dan PICA yang sudah ada, dalam 14 bagian. Bagian yang belum terisi ditandai; Reliability update memerlukan catatan kegagalan (Rev 74).</p>';
+  h += '<p class="hint"><b>' + rows.length + '</b> investigasi, <b>' + open + '</b> terbuka; <b>' + loose.length + '</b> defect terbuka belum punya Problem Case.</p>';
+  h += rows.map(function(r){
+    return '<details class="hm-det"><summary><b>' + esc(r.no) + '</b> ' + esc(r.judul) + ' <span class="hm-s">' + esc(r.tgl || '') + ' &middot; ' + esc(r.status) + ' &middot; ' + esc(r.prio || '') + ' &middot; ' + r.filled + '/14 bagian</span></summary><div class="hm-wrap"><table><tbody>' +
+      r.sec.map(function(x){ return '<tr><td class="hm-nowrap">' + esc(x[0]) + '</td><td>' + (x[1] ? esc(x[1]) : '<span class="hm-old">belum diisi</span>') + '</td></tr>'; }).join('') + '</tbody></table></div></details>';
+  }).join('');
+  if(!rows.length) h += '<p class="hint">Belum ada Problem Case untuk kendaraan ini.</p>';
+  if(loose.length) h += '<h3 class="hm-h">Defect terbuka tanpa investigasi</h3><ul class="hm-ul">' + loose.slice(0, 20).map(function(d){ return '<li>' + esc(String(d.tanggal_ditemukan || '').slice(0, 10)) + ' &middot; ' + esc(d.gejala) + ' <span class="hm-s">(' + esc(d.tingkat_keparahan) + ')</span></li>'; }).join('') + '</ul>';
+  var plist = P.lists.INV; h += '<h3 class="hm-h">Lingkup program Investigation (' + plist.length + ')</h3><ul class="hm-ul">' + plist.map(function(r){ return '<li>' + (r.s ? '<b>' + esc(r.s) + '</b>: ' : '') + esc(r.t) + '</li>'; }).join('') + '</ul>';
+  return h + '<p class="hint">No Failure Data, No Reliability Prediction. Setiap failure memiliki defect report dan alasan teknis.</p>';
+}
 var CSS = '#hmCard .hm-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}#hmCard .hm-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden}#hmCard .hm-seg button{border:0;background:transparent;padding:6px 10px;font:inherit;font-size:12px;color:inherit;cursor:pointer}#hmCard .hm-seg button[aria-pressed=true]{background:var(--accent,#2f6f8f);color:#fff}' +
  '#hmCard .hm-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}#hmCard table{border-collapse:collapse;width:100%;min-width:480px}#hmCard th,#hmCard td{border-bottom:1px solid var(--border);padding:5px 8px;vertical-align:top;text-align:left;font-size:12.5px}#hmCard th{background:var(--bg-soft,#eef3f5)}#hmCard .hm-s{font-size:11px;opacity:.7}#hmCard .hm-num{text-align:right;white-space:nowrap}#hmCard .hm-nowrap{white-space:nowrap}' +
  '#hmCard .hm-chip{display:inline-block;padding:1px 7px;margin:1px 2px 1px 0;border-radius:999px;border:1px solid var(--cc);color:var(--cc);font-size:11px;font-weight:600;white-space:nowrap}#hmCard .hm-now td{background:var(--bg-soft,#eef3f5)}#hmCard .hm-lv{text-align:center;font:12px ui-monospace,Menlo,monospace}#hmCard .hm-l0{opacity:.35}#hmCard .hm-l1,#hmCard .hm-l4{background:rgba(59,130,196,.12)}#hmCard .hm-l2,#hmCard .hm-l5{background:rgba(194,138,43,.18)}#hmCard .hm-l3,#hmCard .hm-l6{background:rgba(181,73,63,.2);font-weight:700}' +
- '#hmCard .hm-h{margin:12px 0 4px;font-size:13px}#hmCard .hm-ul{margin:4px 0 4px 18px;padding:0;font-size:12.5px}#hmCard .hm-stones{display:flex;flex-wrap:wrap;gap:6px}#hmCard .hm-st{border:1px solid var(--border);border-radius:8px;padding:2px 8px;font-size:12px}#hmCard .hm-old{color:#b5493f;font-weight:600}#hmCard input[type=search]{flex:1;min-width:140px;max-width:280px}#hmCard .hm-more{margin-top:6px}#hmCard select{max-width:100%}';
+ '#hmCard .hm-h{margin:12px 0 4px;font-size:13px}#hmCard .hm-ul{margin:4px 0 4px 18px;padding:0;font-size:12.5px}#hmCard .hm-stones{display:flex;flex-wrap:wrap;gap:6px}#hmCard .hm-st{border:1px solid var(--border);border-radius:8px;padding:2px 8px;font-size:12px}#hmCard .hm-old{color:#b5493f;font-weight:600}#hmCard input[type=search]{flex:1;min-width:140px;max-width:280px}#hmCard .hm-more{margin-top:6px}#hmCard .hm-det{border:1px solid var(--border);border-radius:10px;margin:6px 0;padding:4px 8px}#hmCard .hm-det summary{cursor:pointer;font-size:13px}#hmCard select{max-width:100%}';
 function css(){ if(document.getElementById('hmStyle')) return; var s = document.createElement('style'); s.id = 'hmStyle'; s.textContent = CSS; document.head.appendChild(s); }
 function html(){
   var vs = g('vehicles') || [], v = curVeh(); if(!v) return '<h2>HAMMP</h2><p class="hint">Belum ada kendaraan.</p>';
@@ -26234,7 +26291,7 @@ function html(){
   if(!P) return h + '<p class="hint">Belum ada program HAMMP untuk kendaraan ini. Program tersedia untuk Honda ADV150, Suzuki Ertiga, dan U-Winfly D66A.</p>';
   h += '<div class="hm-bar"><div class="hm-seg" role="tablist">' + tabs().map(function(t){ return '<button type="button" role="tab" data-hm="tab" data-v="' + t[0] + '" aria-pressed="' + (ST.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div></div>';
   if(ST.tab === 'prog') h += secProg(P, key); else if(ST.tab === 'y1') h += sec1y(P, key); else if(ST.tab === 'y5') h += sec5y(P);
-  else if(ST.tab === 'tasks') h += secTasks(P); else if(ST.tab === 'cls') h += secCls(v, key); else h += secRt(v);
+  else if(ST.tab === 'mod') h += secMod(v, key, P); else if(ST.tab === 'inv') h += secInv(v, key, P); else if(ST.tab === 'tasks') h += secTasks(P); else if(ST.tab === 'cls') h += secCls(v, key); else h += secRt(v);
   return h;
 }
 function render(){
@@ -26249,7 +26306,7 @@ function render(){
 }
 function onShow(name){ if(name === 'planboard') setTimeout(render, 120); }
 function boot(){ var o = window.showPanel; if(typeof o === 'function' && !o.__hm){ var w = function(name){ var r = o.apply(this, arguments); try{ onShow(name); }catch(_){} return r; }; w.__hm = 1; for(var k in o) try{ w[k] = o[k]; }catch(_){} window.showPanel = w; } else if(typeof o !== 'function'){ setTimeout(boot, 300); return; } try{ if(g('currentPanel') === 'planboard') render(); }catch(_){} }
-window.HAMMP = { render:render, data:DATA, calendar:calendar, classify:classify, classRows:classRows, routine:routine, modelOf:modelOf, onShow:onShow, _st:ST };
+window.HAMMP = { modRows:modRows, invData:invData, render:render, data:DATA, calendar:calendar, classify:classify, classRows:classRows, routine:routine, modelOf:modelOf, onShow:onShow, _st:ST };
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 800); }); else setTimeout(boot, 800);
 })();
 
