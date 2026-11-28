@@ -7913,6 +7913,8 @@ Dimensi
             <tr><td class="mono">2026-10-28</td><td>Rev 10: layar iPhone tidak lagi memperbesar halaman sendiri saat mengetik (kolom isian berfont 16px di layar sentuh) dan kolom tanggal tidak melebihi lebar layar.</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 11: koneksi Tuntas / VEGA TEMPUS dipensiunkan (digantikan Polaris One); Task template Suzuki All New Ertiga bertambah 33 item dari buku servis Paket A&ndash;D dan tabel jadwal berkala 32 baris (bahasa Inggris, tanpa duplikat).</td></tr>
             <tr><td class="mono">2026-10-31</td><td>Rev 12: pilihan Work Type (jenis pekerjaan Task) dan kotak pencarian option box diubah ke bahasa Inggris (nilai data tidak berubah).</td></tr>
+            <tr><td class="mono">2026-11-28</td><td>Rev 78: Indeks Kesehatan Kendaraan (0–100, pengurang transparan, keyakinan data) dan deteksi umur part dini/berulang dari riwayat Work Order + Baseline, di Prediksi &amp; Kelaikan. Tampilan tidak berubah.</td></tr><tr><td class="mono">2026-11-28</td><td>Rev 77: Baselines: registri titik acuan per kendaraan (kartu Baselines di Plan Board, di bawah HAMMP) untuk perawatan terakhir, pengukuran kondisi, umur komponen, serta lead time dan biaya per km. Baseline perawatan dipakai mesin due date bila belum ada riwayat atau bila lebih baru; baseline pengukuran menggantikan median otomatis di Kesehatan Kelistrikan dan Suhu. Tidak pernah menimpa: versi lama ditandai diganti. Perlu menjalankan migration_rev77.sql sekali di Supabase. Tampilan lain tidak berubah.</td></tr>
+            <tr><td class="mono">2026-11-28</td><td>Rev 76: Mesin due date: untuk item berbasis KM yang juga punya batas bulan OEM, tanggal jatuh tempo kini memakai yang lebih cepat antara proyeksi KM dan batas bulan (dihitung dari tanggal pekerjaan terakhir), dan popup Ikhtisar menandai pemicunya (KM atau waktu). Ambang Segera untuk motor menjadi 1.000 km, sama dengan mobil, sesuai dokumen arahan. Item tanpa riwayat tetap berlabel asumsi.</td></tr>
             <tr><td class="mono">2026-11-25</td><td>Rev 75: Empat kotak angka di Ikhtisar (Terlambat, Minggu ini, Segera, Work Order aktif) bisa diketuk dan membuka daftar rinci berisi nama pekerjaan, kendaraan, KM jatuh tempo, tanggal jatuh tempo, dan status. Daftar Work Order bisa diketuk untuk membuka Work Order. Tutup dengan tombol, ketuk latar, atau Esc. Tampilan lain tidak berubah.</td></tr>
             <tr><td class="mono">2026-11-24</td><td>Rev 74: Grafik Prediksi (Insight): label sumbu odometer tidak lagi terpotong di sisi kiri (mis. 15.000 tampil utuh, bukan 5.000). Ruang label menyesuaikan lebar angka. Tampilan lain tidak berubah.</td></tr>
             <tr><td class="mono">2026-11-24</td><td>Rev 73: HAMMP menambah tab Modifications (daftar Job Card Modification per kendaraan dengan pemeriksaan bukti: Part Number, Hasil, Biaya, KM) dan Investigations (Investigation Report 14 bagian dari Problem Case, RCA, FEA, PICA, dan Defect; bagian kosong ditandai; defect terbuka tanpa investigasi didaftar). Hanya tampilan; tidak ada tabel baru dan tidak menulis data.</td></tr>
@@ -16437,7 +16439,7 @@ function guideHtml(){
 const guide = { render(){ const r = $('mguideRoot'); if(r) r.innerHTML = guideHtml(); }, onShow(){ guide.render(); }, hz(k, v){ HZ[k] = Math.max(1, Number(v) || HZ[k]); try{ localStorage.setItem('ac6_horizon', JSON.stringify(HZ)); }catch(e){} guide.render(); } };
 
 /* ---------- Backup / Restore ---------- */
-const TABLES = ['kendaraan', 'work_order', 'job_card', 'project', 'project_item', 'part_library', 'part_order_plan', 'installed_component', 'maint_task_custom', 'inspection_session', 'inspection_item', 'cost_budget_item', 'defect_log', 'electrical_capacity', 'electrical_load_item', 'engineering_spec', 'fea_item', 'fmea_risk', 'governance_document', 'integration_link', 'integration_log', 'kaizen_item', 'manual_reference', 'monitoring_parameter', 'oem_document', 'parts_catalog_ref', 'pdca_cycle', 'pica_item', 'problem_case', 'purchase_appraisal', 'purchase_appraisal_item', 'rca_analysis', 'spec_sheet_attachment', 'spec_sheet_item', 'technical_record', 'tool', 'touring_event', 'workshop_resource', 'plan_setting', 'plan_schedule', 'plan_audit'];
+const TABLES = ['kendaraan', 'work_order', 'job_card', 'project', 'project_item', 'part_library', 'part_order_plan', 'installed_component', 'maint_task_custom', 'inspection_session', 'inspection_item', 'cost_budget_item', 'defect_log', 'electrical_capacity', 'electrical_load_item', 'engineering_spec', 'fea_item', 'fmea_risk', 'governance_document', 'integration_link', 'integration_log', 'kaizen_item', 'manual_reference', 'monitoring_parameter', 'oem_document', 'parts_catalog_ref', 'pdca_cycle', 'pica_item', 'problem_case', 'purchase_appraisal', 'purchase_appraisal_item', 'rca_analysis', 'spec_sheet_attachment', 'spec_sheet_item', 'technical_record', 'tool', 'touring_event', 'workshop_resource', 'plan_setting', 'plan_schedule', 'plan_audit', 'baseline'];
 const BK = { last:null, msg:null, busy:false, pending:null, auth:null };
 async function sha256(txt){ try{ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt)); return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join(''); }catch(e){ return 'tidak tersedia'; } }
 async function collect(){
@@ -21758,7 +21760,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 addEventListener('orientationchange',function(){setTimeout(function(){window.__ipFloorOff();run();},500);});
 })();
 </script>
-<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:75,date:'2026-11-25'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
+<script id="verScript">window.ALTAIR_BUILD={version:'2.0',rev:78,date:'2026-11-28'};(function(){try{var b=window.ALTAIR_BUILD,e=document.getElementById('verBadge');if(!e)return;e.querySelector('.vb-ver').textContent='v'+b.version;e.querySelector('.vb-rev').textContent='Rev '+b.rev;var d=new Date(b.date+'T00:00:00'),t=isNaN(d)?b.date:d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});e.title='Altair Auto versi '+b.version+', revisi '+b.rev+' ('+t+')';}catch(_){}})();</script>
 <script>/* Rev 53: kalkulator biaya tetap vs variabel (Konsep > 7). Hanya hitung di layar, tidak menyimpan apa pun. */
 (function(){function n(v){return Number(String(v||'').replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
 function f(x,d){return Number(x).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d});}
@@ -22451,10 +22453,13 @@ function katOf(v){ try{ return catKeyOf(v) || 'lainnya'; }catch(_){ return 'lain
 function itemsFor(v, now){
   var out = [], T = []; try{ T = getEffectiveMaintTemplates(v) || []; }catch(_){ return out; } var kat = katOf(v), km = (typeof effectiveKmInfo === 'function' ? (effectiveKmInfo(v) || {}).km : null); if(km == null) km = Number(v.km_saat_ini);
   var effV = v; try{ if(typeof effectiveVehicle === 'function') effV = effectiveVehicle(v) || v; }catch(_){}
-  T.forEach(function(t){ var lv = levelOf(t, kat); if(!lv) return; var occ = null; try{ var ld = typeof lastDoneForTask === 'function' ? lastDoneForTask(v, t.id) : null; var r = forecastTask(t, effV, 1, ld); occ = r && r.occurrences && r.occurrences[0]; }catch(_){} if(!occ) return;
-    var d = toD(occ.date), soonKm = kat === 'motor' ? 500 : 1000, daysLeft = d ? Math.round((d - now) / DAY) : null, kmLeft = (occ.km != null && isFinite(km)) ? occ.km - km : null;
+  T.forEach(function(t){ var lv = levelOf(t, kat); if(!lv) return; var occ = null; try{ var ld = typeof lastDoneForTask === 'function' ? lastDoneForTask(v, t.id) : null; var r = forecastTask(t, effV, 1, ld); occ = r && r.occurrences && r.occurrences[0]; }catch(_){} if(!occ && t.trigger === 'km' && t.intervalBulan && ld && ld.date){ /* KM jatuh tempo di luar cakrawala 1 tahun, tetapi batas bulan OEM bisa tercapai lebih dulu */ var tb0 = new Date(ld.date); if(!isNaN(tb0)){ tb0.setMonth(tb0.getMonth() + Number(t.intervalBulan)); var ivk = t.interval ? (t.interval[kat] != null ? t.interval[kat] : t.interval.lainnya) : null; if(tb0.getTime() <= now.getTime() + 365 * DAY) occ = { km:(ld.km != null && ivk) ? ld.km + ivk : null, date:tb0, overdue:tb0.getTime() < now.getTime() }; } }
+    if(!occ) return;
+    var by = t.trigger === 'km' ? 'km' : 'waktu'; /* Rev 76: tanggal efektif = yang lebih cepat antara proyeksi KM dan batas bulan OEM (dari tanggal pekerjaan terakhir) */
+    if(t.trigger === 'km' && t.intervalBulan && ld && ld.date){ var tb = new Date(ld.date); if(!isNaN(tb)){ tb.setMonth(tb.getMonth() + Number(t.intervalBulan)); var od0 = toD(occ.date); if(tb.getTime() < now.getTime() || !od0 || tb.getTime() < od0.getTime()){ occ = { km:occ.km, date:tb, overdue:!!occ.overdue || tb.getTime() < now.getTime() }; by = 'waktu'; } } }
+    var d = toD(occ.date), soonKm = 1000, daysLeft = d ? Math.round((d - now) / DAY) : null, kmLeft = (occ.km != null && isFinite(km)) ? occ.km - km : null;
     var state = occ.overdue ? 'overdue' : ((daysLeft != null && daysLeft <= 30) || (kmLeft != null && kmLeft <= soonKm)) ? 'soon' : (daysLeft != null && daysLeft <= 90) ? 'upcoming' : 'later';
-    out.push({ vid:v.id, tpl:t, cat:catOf(t), level:lv, km:occ.km, date:d, daysLeft:daysLeft, kmLeft:kmLeft, overdue:!!occ.overdue, state:state, kat:kat }); });
+    out.push({ vid:v.id, tpl:t, cat:catOf(t), level:lv, km:occ.km, date:d, daysLeft:daysLeft, kmLeft:kmLeft, overdue:!!occ.overdue, state:state, kat:kat, by:by }); });
   return out;
 }
 var ORDER = { overdue:0, soon:1, upcoming:2, later:3 };
@@ -24188,6 +24193,8 @@ function evalSeries(vals, m, c, noPrev){
   var prior = vals.slice(0, n - 1).slice(-10).map(function(x){ return x.v; });
   if(prior.length >= c.min_n){ out.base = median(prior); var md = median(prior.map(function(x){ return Math.abs(x - out.base); })); out.spread = 1.4826 * md; var ps = prior.slice().sort(function(x, y){ return x - y; }); out.lo = ps[Math.floor((ps.length - 1) * 0.1)]; out.hi = ps[Math.ceil((ps.length - 1) * 0.9)]; } else out.kurang = true;
   var lv = 0, why = [], up = function(l, t){ if(l > lv) lv = l; why.push(t); };
+  /* Rev 77: baseline pemilik (Baselines) menggantikan median otomatis dan menambah batas bawah/atas */
+  var bl = c.bl && c.bl[m.kind]; if(bl){ out.base = bl.v; out.kurang = false; if(out.spread == null) out.spread = 0; out.bl = true; if(bl.lo != null && latest.v < bl.lo) up(1, fmt(latest.v, 2) + ' di bawah batas baseline ' + fmt(bl.lo, 2)); if(bl.hi != null && latest.v > bl.hi) up(1, fmt(latest.v, 2) + ' di atas batas baseline ' + fmt(bl.hi, 2)); }
   if(m.kind === 'temp'){
     if(c.temp_abs_check != null && latest.v >= c.temp_abs_check) up(2, 'suhu ' + fmt(latest.v) + ' °C ≥ batas Cek ' + fmt(c.temp_abs_check) + ' °C'); else if(c.temp_abs_warn != null && latest.v >= c.temp_abs_warn) up(1, 'suhu ' + fmt(latest.v) + ' °C ≥ batas Perhatian ' + fmt(c.temp_abs_warn) + ' °C');
   }
@@ -24300,6 +24307,7 @@ function rows(a, c){
 var CSS = '.elh-bd{display:block;max-width:100%;margin-bottom:2px}.elh-b{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid var(--border)}.elh-ok{background:var(--ok-bg);color:var(--ok-ink)}.elh-warn{background:var(--warn-bg);color:var(--warn-ink)}.elh-check{background:var(--danger-bg);color:var(--danger-ink)}.elh-n{font-size:12px;color:var(--text-dim);font-weight:400}.elh-sp{display:block}.elh-sum{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.elh-sum span{font-size:12.5px}.elh-note{font-size:12.5px;color:var(--text-dim);margin:8px 0}.elh-cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:8px}.elh-cfg label{font-size:12px;color:var(--text-dim);display:block}.elh-cfg input{width:100%;box-sizing:border-box}';
 function summaryFor(sessionsAll, v, allCfg){
   var pk = profKeyOf(v), c = cfgFor(pk, kelas(pk, v), allCfg), ss = sessionsAll.filter(function(s){ return s.kendaraan_id === v.id; }); c.skip_on = v.powertrain === 'listrik';
+  c.bl = {}; try{ if(window.BLN && BLN.measure) ['volt_off', 'volt_on', 'temp', 'fuel'].forEach(function(k){ var b = BLN.measure(v.id, k); if(b) c.bl[k] = b; }); }catch(_){}
   return { v:v, pk:pk, c:c, a:analyze(ss, c), n:ss.length };
 }
 function orderVeh(V){ return V.slice().sort(function(x, y){ var ix = ORDER.indexOf(profKeyOf(x)), iy = ORDER.indexOf(profKeyOf(y)); ix = ix < 0 ? 99 : ix; iy = iy < 0 ? 99 : iy; return ix - iy; }); }
@@ -24758,7 +24766,7 @@ function popRows(kind){
   var rows = [], title = '', note = '';
   var fromItem = function(i){ var d = i.date ? toD(i.date) : null, dl = (i.daysLeft != null ? i.daysLeft : (d ? Math.round((d.getTime() - now) / DAY) : null)), kl = i.kmLeft;
     var st = i.overdue ? ['Terlambat' + (dl != null ? ' ' + Math.abs(dl) + ' hari' : ''), 'bad'] : (dl != null ? [dl + ' hari lagi', i.state === 'soon' ? 'warn' : 'ok'] : ['', 'ok']);
-    return { t:d ? d.getTime() : 9e15, n:(i.tpl && i.tpl.nama) || 'Pekerjaan', v:vn[i.vid] || '', km:i.km != null ? 'KM ' + fkm(i.km) + (kl != null ? ' (' + (kl < 0 ? 'lewat ' + fkm(-kl) : fkm(kl) + ' lagi') + ' km)' : '') : 'KM –', due:'Jatuh tempo ' + dFmt(d), st:st }; };
+    return { t:d ? d.getTime() : 9e15, n:(i.tpl && i.tpl.nama) || 'Pekerjaan', v:vn[i.vid] || '', km:i.km != null ? 'KM ' + fkm(i.km) + (kl != null ? ' (' + (kl < 0 ? 'lewat ' + fkm(-kl) : fkm(kl) + ' lagi') + ' km)' : '') : 'KM –', due:'Jatuh tempo ' + dFmt(d), by:(i.by === 'waktu' ? 'Pemicu: waktu' : 'Pemicu: KM'), st:st }; };
   if(kind === 'od'){ title = 'Terlambat'; rows = it.filter(function(i){ return i.overdue; }).map(fromItem); note = 'Terlambat hanya terdeteksi bila ada riwayat perawatan atau KM acuan.'; }
   else if(kind === 'wk'){ title = 'Jatuh tempo minggu ini (7 hari)'; rows = it.filter(function(i){ return !i.overdue && i.date && (toD(i.date).getTime() - now) <= 7 * DAY; }).map(fromItem); note = 'Tanggal dan KM jatuh tempo masih Estimasi bila belum ada riwayat servis.'; }
   else if(kind === 'mo'){ title = 'Segera (30 hari ke depan)'; rows = it.filter(function(i){ return i.state === 'soon'; }).map(fromItem); note = 'Tanggal dan KM jatuh tempo masih Estimasi bila belum ada riwayat servis.'; }
@@ -24773,7 +24781,7 @@ function popOpen(kind, from){
   if(!document.getElementById('vwPopStyle')){ var st = document.createElement('style'); st.id = 'vwPopStyle'; st.textContent = CSS_P; document.head.appendChild(st); }
   var o = document.createElement('div'); o.id = 'vwPop'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', P.title);
   o.innerHTML = '<div class="vwp-box"><div class="vwp-h"><h3>' + esc(P.title) + ' (' + P.rows.length + ')</h3><button type="button" class="ghost" data-vwp-x="1" aria-label="Tutup">Tutup ×</button></div><div class="vwp-b">' +
-    (P.rows.length ? P.rows.map(function(r){ return '<div class="vwp-r"' + (P.wo && r.id ? ' data-vwp-wo="' + esc(r.id) + '" style="cursor:pointer"' : '') + '><div class="vwp-n">' + esc(r.n) + '</div><div class="vwp-m"><span>' + esc(r.v) + '</span><span>' + esc(r.km) + '</span><span>' + esc(r.due) + '</span>' + (r.st[0] ? '<span class="vwp-s vwp-' + r.st[1] + '">' + esc(r.st[0]) + '</span>' : '') + '</div></div>'; }).join('') : '<p class="vw-empty" style="padding:14px 0">Tidak ada item.</p>') +
+    (P.rows.length ? P.rows.map(function(r){ return '<div class="vwp-r"' + (P.wo && r.id ? ' data-vwp-wo="' + esc(r.id) + '" style="cursor:pointer"' : '') + '><div class="vwp-n">' + esc(r.n) + '</div><div class="vwp-m"><span>' + esc(r.v) + '</span><span>' + esc(r.km) + '</span><span>' + esc(r.due) + '</span>' + (r.by ? '<span>' + esc(r.by) + '</span>' : '') + (r.st[0] ? '<span class="vwp-s vwp-' + r.st[1] + '">' + esc(r.st[0]) + '</span>' : '') + '</div></div>'; }).join('') : '<p class="vw-empty" style="padding:14px 0">Tidak ada item.</p>') +
     '</div><div class="vwp-f">' + esc(P.note) + '</div></div>';
   document.body.appendChild(o); var x = o.querySelector('[data-vwp-x]'); if(x) x.focus();
 }
@@ -25404,6 +25412,37 @@ function analyse(vid){
   return { v:v, effV:effV, rate:rate, tasks:tasks, rel:rel, elec:elec, fuel:fuel, gi:gi, effi:effi, fit:fit, prompts:prompts };
 }
 
+/* ---------- Rev 78: Vehicle Health Index + umur part ---------- */
+function healthIndex(A){
+  var f = A.fit, parts = [], tot = 0;
+  function add(label, pts, why){ if(pts > 0){ parts.push({ label:label, pts:pts, why:why }); tot += pts; } }
+  add('Kelaikan (gerbang)', Math.min(60, f.no.length * 30), f.no.length + ' penyebab tidak laik');
+  add('Syarat kelaikan', Math.min(16, f.cond.length * 4), f.cond.length + ' syarat/tindakan terbuka');
+  var od = A.tasks.filter(function(t){ return t.over; }).length; add('Perawatan terlambat', Math.min(16, od * 4), od + ' tugas lewat jatuh tempo');
+  var cr = A.rel.filter(function(r){ return r.status === 'critical'; }).length, wr = A.rel.filter(function(r){ return r.status === 'warning'; }).length; add('Reliabilitas part', Math.min(16, cr * 6 + wr * 3), cr + ' critical, ' + wr + ' warning');
+  if(A.effi && A.effi.level > 0) add('Efisiensi BBM', A.effi.level === 2 ? 6 : 3, 'turun ' + fN(A.effi.pct, 0) + '% dari kebiasaan');
+  var hi = Math.max(0, Math.round(100 - tot)), nT = A.tasks.length, asm = A.tasks.filter(function(t){ return !t.ld; }).length, ageI = null;
+  try{ var ss = (g('inspectionSessions') || []).filter(function(s){ return s.kendaraan_id === A.v.id && s.tanggal; }).map(function(s){ return new Date(s.tanggal).getTime(); }); if(ss.length) ageI = (Date.now() - Math.max.apply(null, ss)) / DAY; }catch(_){}
+  var low = (A.rate.basis === 'asumsi' ? 1 : 0) + (nT && asm / nT > 0.5 ? 1 : 0) + (ageI == null || ageI > 30 ? 1 : 0), conf = low === 0 ? 'Tinggi' : low === 1 ? 'Sedang' : 'Rendah';
+  var why = []; if(A.rate.basis === 'asumsi') why.push('laju pakai masih asumsi'); if(nT && asm / nT > 0.5) why.push(asm + ' dari ' + nT + ' tugas belum punya riwayat'); if(ageI == null) why.push('belum ada inspeksi'); else if(ageI > 30) why.push('inspeksi terakhir ' + Math.round(ageI) + ' hari lalu');
+  return { hi:hi, band:hi >= 85 ? 'Prima' : hi >= 70 ? 'Perlu Perhatian' : 'Risiko Tinggi', cls:hi >= 85 ? 'ok' : hi >= 70 ? '' : 'danger', parts:parts, conf:conf, confWhy:why };
+}
+function partLife(v){
+  var out = [], tpls = []; try{ tpls = window.getEffectiveMaintTemplates(v) || []; }catch(_){}
+  var wos = (g('workOrders') || []).filter(function(w){ return w.kendaraan_id === v.id && w.status === 'selesai' && w.task_key && w.km_saat_selesai != null; });
+  tpls.forEach(function(tpl){
+    if(tpl.trigger !== 'km') return; var L = null; try{ L = Number(tpl.interval[window.catKeyOf(v)] ?? tpl.interval.lainnya); }catch(_){} if(!L) return;
+    var ks = wos.filter(function(w){ return w.task_key === tpl.id; }).map(function(w){ return Number(w.km_saat_selesai); }), src = 'Work Order';
+    try{ var b = window.BLN && window.BLN.active ? window.BLN.active(v.id, 'perawatan', tpl.id) : null; if(b && b.nilai_km != null){ var bk = Number(b.nilai_km); if(!ks.length || bk < Math.min.apply(null, ks)){ ks.push(bk); src = 'Baseline + Work Order'; } } }catch(_){}
+    ks = ks.filter(function(k, i, a){ return a.indexOf(k) === i; }).sort(function(a, b){ return a - b; }); if(ks.length < 2) return;
+    var ints = []; for(var i = 1; i < ks.length; i++) if(ks[i] - ks[i - 1] > 50) ints.push(ks[i] - ks[i - 1]); if(!ints.length) return;
+    var rat = ints.map(function(x){ return x / L; }), last = rat[rat.length - 1], prev = rat.length > 1 ? rat[rat.length - 2] : null, flag = null;
+    if(prev != null && last < 0.7 && prev < 0.7) flag = 'berulang'; else if(last < 0.8) flag = 'dini';
+    out.push({ nama:tpl.nama, n:ints.length, L:L, last:ints[ints.length - 1], ratio:last, med:median(ints), flag:flag, src:src });
+  });
+  out.sort(function(a, b){ return (b.flag ? 1 : 0) - (a.flag ? 1 : 0) || a.ratio - b.ratio; }); return out;
+}
+
 /* ---------- tampilan ---------- */
 var ST = { vid:null };
 var PILL = { kurang:['', 'Belum cukup data'], laik:['ok', 'Laik jalan'], syarat:['', 'Laik bersyarat'], tidak:['danger', 'Tidak laik'] };
@@ -25432,6 +25471,14 @@ function html(vid){
   var vs = g('vehicles') || [];
   /* ringkasan armada */
   h += '<div class="table-scroll"><table class="reftable"><thead><tr><th>Kendaraan</th><th>Kelaikan</th><th>Skor</th><th>Berlaku sampai (perkiraan)</th><th></th></tr></thead><tbody>' + vs.map(function(x){ var a = analyse(x.id); if(!a) return ''; return '<tr' + (x.id === vid ? ' style="background:var(--accent-soft)"' : '') + '><td><strong>' + esc([x.merk, x.model].filter(Boolean).join(' ')) + '</strong></td><td>' + pill(a.fit.st) + '</td><td>' + a.fit.score + '</td><td>' + (a.fit.until ? fD(a.fit.until) : '–') + '</td><td><button type="button" class="ghost" data-pg="' + esc(x.id) + '">Lihat</button></td></tr>'; }).join('') + '</tbody></table></div>';
+  /* Rev 78: indeks kesehatan + umur part */
+  try{ var HI = healthIndex(A), PL = partLife(v);
+    h += '<h3 class="pg-h">Indeks Kesehatan Kendaraan</h3><p><span class="status-pill ' + HI.cls + '">' + HI.band + '</span> <strong>' + HI.hi + '/100</strong> · keyakinan data: <strong>' + HI.conf + '</strong>' + (HI.confWhy.length ? ' <span class="hint">(' + esc(HI.confWhy.join('; ')) + ')</span>' : '') + '</p>';
+    h += HI.parts.length ? '<ul>' + HI.parts.map(function(p){ return '<li>' + esc(p.label) + ': <strong>−' + p.pts + '</strong> <span class="hint">(' + esc(p.why) + ')</span></li>'; }).join('') + '</ul>' : '<p class="hint">Tidak ada pengurang pada data saat ini.</p>';
+    h += '<p class="pg-lbl">Umur part dibanding interval baku</p>';
+    h += PL.length ? '<div class="table-scroll"><table class="reftable"><thead><tr><th>Part / tugas</th><th>Siklus</th><th>Umur terakhir</th><th>Interval baku</th><th>Rasio</th><th>Temuan</th></tr></thead><tbody>' + PL.slice(0, 10).map(function(p){ var T = p.flag === 'berulang' ? ['danger', 'Aus dini berulang'] : p.flag === 'dini' ? ['', 'Aus lebih dini'] : ['ok', 'Wajar']; return '<tr><td>' + esc(p.nama) + '<br><span class="hint">' + esc(p.src) + '</span></td><td>' + p.n + '</td><td>' + fN(p.last) + ' km</td><td>' + fN(p.L) + ' km</td><td>' + fN(p.ratio * 100) + '%</td><td><span class="status-pill ' + T[0] + '">' + T[1] + '</span></td></tr>'; }).join('') + '</tbody></table></div><p class="hint">Rasio = umur pakai siklus terakhir ÷ interval baku. Di bawah 80% ditandai dini; dua siklus beruntun di bawah 70% ditandai berulang (cek kualitas part, gaya berkendara, atau penyebab lain). Butuh ≥2 penggantian atau satu Baseline + satu penggantian.</p>' : '<p class="hint">Belum ada part dengan ≥2 siklus penggantian bertanggal KM. Isi Baseline perawatan atau selesaikan Work Order dengan KM.</p>';
+    h += '<details class="pg-m"><summary>Cara hitung indeks</summary><p class="hint">Mulai 100, dikurangi: penyebab tidak laik 30 tiap item (maks 60); syarat kelaikan 4 tiap item (maks 16); tugas terlambat 4 tiap item (maks 16); part critical 6 dan warning 3 (maks 16); efisiensi BBM 3 atau 6. Pita: Prima ≥85, Perlu Perhatian 70–84, Risiko Tinggi &lt;70. Setiap pengurang ditampilkan. Ini estimasi dari data Anda, bukan sertifikasi.</p></details>';
+  }catch(_e){}
   /* 1 kelaikan */
   h += '<h3 class="pg-h">1. Kelaikan ' + esc([v.merk, v.model].filter(Boolean).join(' ')) + '</h3><p>' + pill(f.st) + ' <strong>Skor ' + f.score + '/100</strong>' + (f.until ? ' · keputusan ini berlaku sampai perkiraan <strong>' + fD(f.until) + '</strong>, lalu perlu ditinjau ulang' : '') + '</p>';
   if(f.no.length) h += '<p class="pg-lbl bad">Penyebab tidak laik (gerbang)</p><ul>' + f.no.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
@@ -25505,7 +25552,7 @@ function home(){
 }
 function onShow(name){ try{ if(name === 'kpi') render(); if(name === 'home') home(); }catch(e){ if(window.console) console.error('[prog]', e); } }
 setInterval(function(){ var c = g('currentPanel'); if(c === 'kpi' || c === 'home') onShow(c); }, 2500);
-window.PROG = { analyse:analyse, html:html, render:render, home:home, onShow:onShow, stats:{ theilSen:theilSen, mannKendall:mannKendall, weibullFit:weibullFit, relAssumed:relAssumed, median:median, mad:mad } };
+window.PROG = { healthIndex:healthIndex, partLife:partLife, analyse:analyse, html:html, render:render, home:home, onShow:onShow, stats:{ theilSen:theilSen, mannKendall:mannKendall, weibullFit:weibullFit, relAssumed:relAssumed, median:median, mad:mad } };
 })();
 
 </script>
@@ -26348,6 +26395,190 @@ function onShow(name){ if(name === 'planboard') setTimeout(render, 120); }
 function boot(){ var o = window.showPanel; if(typeof o === 'function' && !o.__hm){ var w = function(name){ var r = o.apply(this, arguments); try{ onShow(name); }catch(_){} return r; }; w.__hm = 1; for(var k in o) try{ w[k] = o[k]; }catch(_){} window.showPanel = w; } else if(typeof o !== 'function'){ setTimeout(boot, 300); return; } try{ if(g('currentPanel') === 'planboard') render(); }catch(_){} }
 window.HAMMP = { modRows:modRows, invData:invData, render:render, data:DATA, calendar:calendar, classify:classify, classRows:classRows, routine:routine, modelOf:modelOf, onShow:onShow, _st:ST };
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 800); }); else setTimeout(boot, 800);
+})();
+
+</script>
+<script id="blnScript">
+/* Altair Auto — Baseline Register (Rev 77). Titik acuan per kendaraan yang diisi pemilik, bersumber jelas, tercatat versinya, dan tidak pernah ditimpa.
+   Jenis: perawatan (KM/tanggal terakhir dianggap dikerjakan -> dipakai mesin due date bila belum ada riwayat atau bila lebih baru),
+          pengukuran (nilai acuan + batas; menggantikan median otomatis pada Kesehatan Kelistrikan & Suhu),
+          komponen (titik nol umur pakai), lead (acuan lead time, lama WO, biaya per km; dibandingkan dengan data nyata).
+   Tabel: baseline (migration_rev77.sql). Tanpa tabel, modul memberi tahu dan tidak merusak apa pun. Baseline bukan data OEM; sumbernya selalu ditampilkan. */
+(function(){
+'use strict';
+if(window.BLN) return;
+var DAY = 86400000;
+var esc = function(s){ s = String(s == null ? '' : s); return (typeof escapeHtml === 'function') ? escapeHtml(s) : s.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+function g(name){ try{ return (new Function('return typeof ' + name + " !== 'undefined' ? " + name + ' : undefined'))(); }catch(_){ return undefined; } }
+function db(){ try{ return (typeof sb !== 'undefined') ? sb : null; }catch(_){ return null; } }
+function toD(x){ if(!x) return null; var d = new Date(String(x).length <= 10 ? x + 'T00:00:00' : x); return isNaN(d) ? null : d; }
+function fd(d){ return d ? d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) : '–'; }
+function fn(n, dgt){ return n == null || n === '' || isNaN(Number(n)) ? '–' : Number(n).toLocaleString('id-ID', { maximumFractionDigits: dgt == null ? 1 : dgt }); }
+function num(x){ if(x == null || String(x).trim() === '') return null; var n = Number(String(x).replace(',', '.')); return isFinite(n) ? n : null; }
+function vname(v){ return [v.merk, v.model, v.tahun].filter(Boolean).join(' ') || v.id; }
+var JENIS = { perawatan:'Perawatan terakhir', pengukuran:'Pengukuran kondisi', komponen:'Umur komponen', lead:'Lead time & biaya' };
+var SRC = { estimasi:'Estimasi', pengukuran_pemilik:'Pengukuran pemilik', struk:'Struk / nota', buku_servis:'Buku servis', oem:'Dokumen OEM' };
+var MEAS = { volt_off:['Tegangan mesin mati', 'V'], volt_on:['Tegangan mesin hidup', 'V'], temp:['Suhu mesin/komponen', '°C'], fuel:['Konsumsi BBM', 'km/L'], ban_depan:['Tekanan ban depan', 'PSI'], ban_belakang:['Tekanan ban belakang', 'PSI'], alur_ban:['Kedalaman alur ban', 'mm'] };
+var LEAD = { lead_part:['Lead time part', 'hari'], lead_wo:['Lama pengerjaan Work Order', 'hari'], biaya_km:['Biaya perawatan per km', 'Rp/km'] };
+var ST = { rows:[], loaded:false, loading:false, missing:false, err:'', vid:null, tab:'perawatan', msg:'', msgT:'', hist:false, bulk:false, busy:false };
+var ORIG = null;
+function rows(){ return ST.rows || []; }
+function active(vid, jenis, kunci){ var a = rows().filter(function(r){ return r.status === 'aktif' && r.kendaraan_id === vid && r.jenis === jenis && String(r.kunci) === String(kunci); }); a.sort(function(x, y){ return new Date(y.created_at || 0) - new Date(x.created_at || 0); }); return a[0] || null; }
+function msg(t, k){ ST.msg = t; ST.msgT = k || ''; }
+function isMissing(e){ var m = String((e && (e.message || e.code)) || ''); return /42P01|PGRST205|does not exist|schema cache/i.test(m) && /baseline|relation|table/i.test(m); }
+async function load(force){
+  var s = db(); if(!s){ ST.loaded = false; return; }
+  if(ST.loading){ if(force) ST.again = true; return; } if(ST.loaded && !force) return; ST.loading = true;
+  try{ var r = await s.from('baseline').select('*').order('created_at', { ascending:false }); if(r.error){ if(isMissing(r.error)){ ST.missing = true; ST.rows = []; } else ST.err = r.error.message || 'Gagal memuat'; } else { ST.rows = r.data || []; ST.missing = false; ST.err = ''; } ST.loaded = true; }
+  catch(e){ ST.err = e.message || 'Gagal memuat'; }
+  ST.loading = false; if(ST.again){ ST.again = false; return load(true); } render();
+}
+async function write(list, sup){
+  var s = db(); if(!s){ msg('Hubungkan database dulu.', 'err'); return false; }
+  if(ST.missing){ msg('Tabel baseline belum ada. Jalankan migration_rev77.sql di Supabase.', 'err'); return false; }
+  var r = await s.from('baseline').insert(list).select(); if(r.error){ msg('Gagal menyimpan: ' + (r.error.message || ''), 'err'); return false; }
+  var created = r.data || [];
+  for(var i = 0; i < (sup || []).length; i++){ var old = sup[i], nw = created[i] || created[0]; if(old && nw){ var u = await s.from('baseline').update({ status:'diganti', diganti_oleh:nw.id }).eq('id', old.id); if(u.error){ msg('Tersimpan, tetapi versi lama belum ditandai diganti: ' + (u.error.message || ''), 'err'); } } }
+  await load(true); return true;
+}
+function f(id){ var e = document.getElementById(id); return e ? e.value : ''; }
+function curVeh(){ var vs = g('vehicles') || []; return vs.filter(function(v){ return v.id === ST.vid; })[0] || vs[0] || null; }
+function tpls(v){ try{ return (g('getEffectiveMaintTemplates') || function(){ return []; })(v) || []; }catch(_){ return []; } }
+function dashItems(v){ try{ if(window.DASH && DASH.compute){ var C = DASH.compute(); return C.items.filter(function(i){ return i.vid === v.id; }); } }catch(_){} return []; }
+function hasHist(v, id){ try{ return !!(ORIG ? ORIG(v, id) : null); }catch(_){ return false; } }
+/* ---- hook mesin due date: baseline perawatan dipakai bila belum ada riwayat, atau bila lebih baru dari riwayat ---- */
+function hookDue(){
+  var o = window.lastDoneForTask; if(typeof o !== 'function' || o.__bln) return;
+  ORIG = o;
+  var w = function(v, taskId){ var r = o.apply(this, arguments); try{ var b = v && active(v.id, 'perawatan', taskId); if(b && (b.nilai_km != null || b.nilai_tanggal)){ var bd = toD(b.nilai_tanggal), rd = r && r.date ? new Date(r.date) : null; if(!r || (bd && rd && bd.getTime() > rd.getTime()) || (!rd && bd)) return { km:b.nilai_km != null ? Number(b.nilai_km) : null, date:bd, via:null, baseline:true }; } }catch(_){} return r; };
+  w.__bln = 1; window.lastDoneForTask = w;
+}
+/* ---- data nyata untuk perbandingan ---- */
+function latestMeas(v, key){
+  var map = { volt_off:'volt_engine_off', volt_on:'volt_engine_on', temp:'temperature', fuel:'konsumsi_bbm_avg' }, col = map[key]; if(!col) return null;
+  var S = (g('inspectionSessions') || []).filter(function(s){ return s.kendaraan_id === v.id && s[col] != null && s[col] !== ''; }).sort(function(a, b){ return new Date(b.tanggal || b.created_at) - new Date(a.tanggal || a.created_at); });
+  return S[0] ? { v:Number(S[0][col]), d:toD(S[0].tanggal) } : null;
+}
+function woLead(v){ var W = (g('workOrders') || []).filter(function(w){ return w.kendaraan_id === v.id && w.status === 'selesai' && w.task_key !== 'quick_bbm' && w.created_at && w.tanggal_selesai; }).map(function(w){ return (new Date(w.tanggal_selesai) - new Date(w.created_at)) / DAY; }).filter(function(x){ return x >= 0; }).sort(function(a, b){ return a - b; }); if(!W.length) return null; var m = W.length % 2 ? W[(W.length - 1) / 2] : (W[W.length / 2 - 1] + W[W.length / 2]) / 2; return { v:m, n:W.length }; }
+function costKm(v){
+  try{ var L = window.USAGE && USAGE._fn && USAGE._fn.ledger(v.id); var G = L && L.good ? L.good.filter(function(r){ return r.date; }) : []; if(G.length < 2) return null; var cut = Date.now() - 365 * DAY; var recent = G.filter(function(r){ return r.date.getTime() >= cut; }); if(recent.length < 2) recent = G;
+    var km = Math.max.apply(null, recent.map(function(r){ return r.km; })) - Math.min.apply(null, recent.map(function(r){ return r.km; })); if(!(km > 0)) return null; var t0 = Math.min.apply(null, recent.map(function(r){ return r.date.getTime(); }));
+    var cost = (g('workOrders') || []).filter(function(w){ return w.kendaraan_id === v.id && w.status === 'selesai' && w.task_key !== 'quick_bbm' && w.tanggal_selesai && new Date(w.tanggal_selesai).getTime() >= t0; }).reduce(function(a, w){ return a + (Number(w.biaya_part) || 0) + (Number(w.biaya_jasa) || 0); }, 0);
+    return { v:cost / km, km:km }; }catch(_){ return null; }
+}
+/* ---- tampilan ---- */
+var CSS = '#blnCard .bl-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}#blnCard .bl-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden}#blnCard .bl-seg button{border:0;background:transparent;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;color:inherit}#blnCard .bl-seg button[aria-pressed="true"]{background:var(--accent,#0a6280);color:#fff}#blnCard .bl-form{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));margin:8px 0;align-items:end}#blnCard .bl-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--text-dim)}#blnCard .bl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}#blnCard table{border-collapse:collapse;width:100%;min-width:520px}#blnCard th,#blnCard td{border-bottom:1px solid var(--border);padding:5px 8px;text-align:left;font-size:12.5px;vertical-align:top}#blnCard th{background:var(--bg-soft,#eef3f5)}#blnCard .bl-msg{padding:6px 10px;border-radius:8px;margin:6px 0;font-size:13px;background:var(--bg-soft,#eef3f5)}#blnCard .bl-err{background:#fbe9e7;color:#8a2a1f}#blnCard .bl-ok{background:#e6f4ea;color:#17613a}#blnCard .bl-tag{display:inline-block;padding:1px 7px;border-radius:999px;border:1px solid var(--border);font-size:11px;font-weight:600}';
+function css(){ if(document.getElementById('blnStyle')) return; var s = document.createElement('style'); s.id = 'blnStyle'; s.textContent = CSS; document.head.appendChild(s); }
+function srcSel(id, def){ return '<label>Sumber<select id="' + id + '">' + Object.keys(SRC).map(function(k){ return '<option value="' + k + '"' + (k === (def || 'estimasi') ? ' selected' : '') + '>' + esc(SRC[k]) + '</option>'; }).join('') + '</select></label>'; }
+function today(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function histRows(v, jenis){ var a = rows().filter(function(r){ return r.kendaraan_id === v.id && r.jenis === jenis && (ST.hist || r.status === 'aktif'); }); a.sort(function(x, y){ return new Date(y.created_at || 0) - new Date(x.created_at || 0); }); return a; }
+function statTag(r){ return r.status === 'aktif' ? '' : ' <span class="bl-tag">' + esc(r.status) + '</span>'; }
+function actionBtn(r){ return r.status === 'aktif' ? '<button type="button" class="ghost" data-bl="revoke" data-id="' + esc(r.id) + '">Cabut</button>' : ''; }
+function secPerawatan(v){
+  var T = tpls(v), noHist = 0, noBl = 0, items = dashItems(v), ids = {}; items.forEach(function(i){ ids[i.tpl.id] = i.tpl; });
+  var lack = Object.keys(ids).filter(function(id){ return !hasHist(v, id) && !active(v.id, 'perawatan', id); });
+  var h = '<p class="hint">Baseline perawatan = KM dan tanggal tugas itu <strong>dianggap terakhir dikerjakan</strong>. Dipakai mesin due date bila belum ada riwayat Work Order, atau bila lebih baru dari riwayat. Tanpa baseline, tugas tanpa riwayat dihitung dari KM saat ini dan diberi label asumsi.</p>';
+  h += '<p class="hint">' + items.length + ' tugas terjadwal; <strong>' + lack.length + '</strong> belum punya riwayat maupun baseline.</p>';
+  h += '<div class="bl-form"><label>Tugas<select id="bl_p_task">' + T.slice().sort(function(a, b){ return String(a.nama).localeCompare(String(b.nama)); }).map(function(t){ return '<option value="' + esc(t.id) + '">' + esc(t.nama) + (active(v.id, 'perawatan', t.id) ? ' ✓' : '') + '</option>'; }).join('') + '</select></label>' +
+    '<label>KM terakhir dikerjakan<input id="bl_p_km" type="number" min="0" inputmode="numeric"></label><label>Tanggal terakhir dikerjakan<input id="bl_p_tgl" type="date"></label>' + srcSel('bl_p_src') + '<label>Catatan<input id="bl_p_cat" placeholder="opsional"></label><button type="button" class="primary" data-bl="save-p">Simpan baseline</button></div>';
+  h += '<details' + (ST.bulk ? ' open' : '') + '><summary class="hint">Isi sekaligus untuk ' + lack.length + ' tugas tanpa riwayat</summary><div class="bl-form"><label>KM acuan<input id="bl_b_km" type="number" min="0" inputmode="numeric"></label><label>Tanggal acuan<input id="bl_b_tgl" type="date"></label>' + srcSel('bl_b_src') + '<button type="button" class="ghost" data-bl="bulk-p">' + (ST.bulk ? 'Tekan lagi untuk memastikan' : 'Isi sekaligus') + '</button></div><p class="hint">Hanya tugas yang belum punya riwayat dan belum punya baseline. Ini menyatakan semuanya dikerjakan pada KM dan tanggal itu; isi hanya bila memang benar (mis. servis besar). Bisa dicabut satu per satu.</p></details>';
+  var R = histRows(v, 'perawatan');
+  h += '<div class="bl-wrap"><table><thead><tr><th>Tugas</th><th>KM</th><th>Tanggal</th><th>Sumber</th><th>Catatan</th><th></th></tr></thead><tbody>' + (R.length ? R.map(function(r){ return '<tr><td>' + esc(r.label || r.kunci) + statTag(r) + '</td><td>' + fn(r.nilai_km, 0) + '</td><td>' + fd(toD(r.nilai_tanggal)) + '</td><td>' + esc(SRC[r.sumber] || r.sumber) + '</td><td>' + esc(r.catatan || '') + '</td><td>' + actionBtn(r) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="hint">Belum ada baseline perawatan.</td></tr>') + '</tbody></table></div>';
+  return h;
+}
+function secPengukuran(v){
+  var h = '<p class="hint">Nilai acuan dan batas wajar per pengukuran. Untuk tegangan, suhu, dan km/L, baseline yang aktif menggantikan median otomatis pada Kesehatan Kelistrikan &amp; Suhu.</p>';
+  h += '<div class="bl-form"><label>Parameter<select id="bl_m_key">' + Object.keys(MEAS).map(function(k){ return '<option value="' + k + '">' + esc(MEAS[k][0]) + ' (' + esc(MEAS[k][1]) + ')</option>'; }).join('') + '</select></label><label>Nilai acuan<input id="bl_m_val" inputmode="decimal"></label><label>Batas bawah<input id="bl_m_lo" inputmode="decimal" placeholder="opsional"></label><label>Batas atas<input id="bl_m_hi" inputmode="decimal" placeholder="opsional"></label><label>Tanggal<input id="bl_m_tgl" type="date" value="' + today() + '"></label>' + srcSel('bl_m_src', 'pengukuran_pemilik') + '<label>Catatan<input id="bl_m_cat" placeholder="opsional"></label><button type="button" class="primary" data-bl="save-m">Simpan baseline</button></div>';
+  var R = histRows(v, 'pengukuran');
+  h += '<div class="bl-wrap"><table><thead><tr><th>Parameter</th><th>Acuan</th><th>Batas</th><th>Terakhir diukur</th><th>Selisih</th><th>Tanggal</th><th>Sumber</th><th></th></tr></thead><tbody>' + (R.length ? R.map(function(r){ var m = MEAS[r.kunci] || [r.label || r.kunci, r.satuan || ''], lm = r.status === 'aktif' ? latestMeas(v, r.kunci) : null, dl = lm && r.nilai_angka != null ? lm.v - Number(r.nilai_angka) : null;
+    return '<tr><td>' + esc(m[0]) + statTag(r) + '</td><td>' + fn(r.nilai_angka, 2) + ' ' + esc(m[1]) + '</td><td>' + (r.batas_bawah != null || r.batas_atas != null ? fn(r.batas_bawah, 2) + ' – ' + fn(r.batas_atas, 2) : '–') + '</td><td>' + (lm ? fn(lm.v, 2) + ' ' + esc(m[1]) + ' (' + fd(lm.d) + ')' : '–') + '</td><td>' + (dl == null ? '–' : (dl > 0 ? '+' : '') + fn(dl, 2) + (r.batas_bawah != null && lm.v < Number(r.batas_bawah) ? ' <span class="bl-tag">di bawah batas</span>' : '') + (r.batas_atas != null && lm.v > Number(r.batas_atas) ? ' <span class="bl-tag">di atas batas</span>' : '')) + '</td><td>' + fd(toD(r.nilai_tanggal)) + '</td><td>' + esc(SRC[r.sumber] || r.sumber) + '</td><td>' + actionBtn(r) + '</td></tr>'; }).join('') : '<tr><td colspan="8" class="hint">Belum ada baseline pengukuran.</td></tr>') + '</tbody></table></div>';
+  return h;
+}
+function secKomponen(v){
+  var C = (g('installedComponents') || []).filter(function(c){ return c.kendaraan_id === v.id; });
+  var h = '<p class="hint">Titik nol umur pakai komponen bila tanggal atau KM pemasangan di data komponen belum akurat (mis. dipasang sebelum Anda memiliki kendaraan). Umur dihitung dari baseline ini.</p>';
+  h += '<div class="bl-form"><label>Komponen<select id="bl_c_key">' + (C.length ? C.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.nama_komponen) + (c.merk ? ' · ' + esc(c.merk) : '') + '</option>'; }).join('') : '<option value="">(belum ada komponen terpasang)</option>') + '</select></label><label>KM saat dipasang / overhaul<input id="bl_c_km" type="number" min="0" inputmode="numeric"></label><label>Tanggal dipasang / overhaul<input id="bl_c_tgl" type="date"></label>' + srcSel('bl_c_src') + '<label>Catatan<input id="bl_c_cat" placeholder="opsional"></label><button type="button" class="primary" data-bl="save-c">Simpan baseline</button></div>';
+  var R = histRows(v, 'komponen'), cur = null; try{ cur = (g('effectiveKmInfo') || function(){ return {}; })(v).km; }catch(_){}
+  h += '<div class="bl-wrap"><table><thead><tr><th>Komponen</th><th>KM titik nol</th><th>Tanggal titik nol</th><th>Umur sekarang</th><th>Sumber</th><th></th></tr></thead><tbody>' + (R.length ? R.map(function(r){ var age = r.nilai_km != null && cur != null ? cur - Number(r.nilai_km) : null, d0 = toD(r.nilai_tanggal), mo = d0 ? (Date.now() - d0.getTime()) / (DAY * 30.44) : null;
+    return '<tr><td>' + esc(r.label || r.kunci) + statTag(r) + '</td><td>' + fn(r.nilai_km, 0) + '</td><td>' + fd(d0) + '</td><td>' + (age != null ? fn(age, 0) + ' km' : '–') + (mo != null ? (age != null ? ' · ' : '') + fn(mo, 1) + ' bulan' : '') + '</td><td>' + esc(SRC[r.sumber] || r.sumber) + '</td><td>' + actionBtn(r) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="hint">Belum ada baseline komponen.</td></tr>') + '</tbody></table></div>';
+  return h;
+}
+function secLead(v){
+  var wl = woLead(v), ck = costKm(v);
+  var h = '<p class="hint">Acuan lama pengadaan part, lama pengerjaan Work Order (dari dibuat sampai selesai), dan biaya perawatan per km, tanpa BBM. Dibandingkan dengan data nyata bila tersedia; kolom data nyata adalah Estimasi dari catatan yang ada.</p>';
+  h += '<div class="bl-form"><label>Parameter<select id="bl_l_key">' + Object.keys(LEAD).map(function(k){ return '<option value="' + k + '">' + esc(LEAD[k][0]) + ' (' + esc(LEAD[k][1]) + ')</option>'; }).join('') + '</select></label><label>Nilai acuan<input id="bl_l_val" inputmode="decimal"></label><label>Batas atas<input id="bl_l_hi" inputmode="decimal" placeholder="opsional"></label>' + srcSel('bl_l_src') + '<label>Catatan<input id="bl_l_cat" placeholder="opsional"></label><button type="button" class="primary" data-bl="save-l">Simpan baseline</button></div>';
+  var R = histRows(v, 'lead');
+  h += '<div class="bl-wrap"><table><thead><tr><th>Parameter</th><th>Acuan</th><th>Batas atas</th><th>Data nyata (Estimasi)</th><th>Selisih</th><th>Sumber</th><th></th></tr></thead><tbody>' + (R.length ? R.map(function(r){ var m = LEAD[r.kunci] || [r.label || r.kunci, r.satuan || ''], real = r.status !== 'aktif' ? null : (r.kunci === 'lead_wo' ? wl : r.kunci === 'biaya_km' ? ck : null), dl = real && r.nilai_angka != null ? real.v - Number(r.nilai_angka) : null;
+    return '<tr><td>' + esc(m[0]) + statTag(r) + '</td><td>' + fn(r.nilai_angka, 1) + ' ' + esc(m[1]) + '</td><td>' + fn(r.batas_atas, 1) + '</td><td>' + (real ? fn(real.v, 1) + ' ' + esc(m[1]) + (real.n ? ' (n=' + real.n + ')' : '') : (r.kunci === 'lead_part' ? 'belum ada sumber data' : '–')) + '</td><td>' + (dl == null ? '–' : (dl > 0 ? '+' : '') + fn(dl, 1) + (r.batas_atas != null && real.v > Number(r.batas_atas) ? ' <span class="bl-tag">melewati batas</span>' : '')) + '</td><td>' + esc(SRC[r.sumber] || r.sumber) + '</td><td>' + actionBtn(r) + '</td></tr>'; }).join('') : '<tr><td colspan="7" class="hint">Belum ada baseline lead time atau biaya.</td></tr>') + '</tbody></table></div>';
+  return h;
+}
+function html(){
+  var vs = g('vehicles') || [], v = curVeh(); if(!v) return '<h2>Baselines</h2><p class="hint">Belum ada kendaraan.</p>'; ST.vid = v.id;
+  var h = '<h2>Baselines</h2><p class="hint">Titik acuan yang Anda tetapkan untuk perawatan, pengukuran, komponen, lead time, dan biaya. Tidak pernah ditimpa: baseline baru menandai yang lama sebagai diganti. Baseline bukan data OEM; sumbernya selalu ditampilkan.</p>';
+  if(!db()) return h + '<p class="hint">Hubungkan database di Settings untuk memakai Baselines.</p>';
+  if(ST.missing) return h + '<p class="bl-msg bl-err">Tabel baseline belum ada. Jalankan <code>migration_rev77.sql</code> di Supabase SQL Editor (aman diulang), lalu muat ulang aplikasi.</p>';
+  if(ST.err) h += '<p class="bl-msg bl-err">' + esc(ST.err) + '</p>';
+  h += '<div class="bl-bar"><label class="hint" for="blVeh">Vehicle</label><select id="blVeh">' + vs.map(function(x){ return '<option value="' + esc(x.id) + '"' + (x.id === v.id ? ' selected' : '') + '>' + esc(vname(x)) + '</option>'; }).join('') + '</select><div class="bl-seg" role="tablist">' + Object.keys(JENIS).map(function(k){ return '<button type="button" role="tab" data-bl="tab" data-v="' + k + '" aria-pressed="' + (ST.tab === k) + '">' + esc(JENIS[k]) + '</button>'; }).join('') + '</div><label class="hint"><input type="checkbox" id="blHist"' + (ST.hist ? ' checked' : '') + '> Tampilkan riwayat versi</label></div>';
+  if(ST.msg) h += '<p class="bl-msg ' + (ST.msgT === 'err' ? 'bl-err' : ST.msgT === 'ok' ? 'bl-ok' : '') + '">' + esc(ST.msg) + '</p>';
+  h += ST.tab === 'pengukuran' ? secPengukuran(v) : ST.tab === 'komponen' ? secKomponen(v) : ST.tab === 'lead' ? secLead(v) : secPerawatan(v);
+  return h;
+}
+function render(){
+  var panel = document.getElementById('panel-planboard'); if(!panel) return; css();
+  var c = document.getElementById('blnCard');
+  if(!c){ c = document.createElement('div'); c.id = 'blnCard'; c.className = 'card'; var hm = document.getElementById('hmCard'); if(hm && hm.parentNode === panel) panel.insertBefore(c, hm.nextSibling); else panel.insertBefore(c, panel.firstChild);
+    c.addEventListener('click', function(e){ var b = e.target.closest('[data-bl]'); if(!b) return; act(b.getAttribute('data-bl'), b); });
+    c.addEventListener('change', function(e){ var t = e.target; if(t && t.id === 'blVeh'){ ST.vid = t.value; ST.msg = ''; render(); } else if(t && t.id === 'blHist'){ ST.hist = !!t.checked; render(); } }); }
+  if(!ST.loaded && !ST.loading && db()) load(false);
+  try{ var keep = {}; ['bl_p_task', 'bl_p_km', 'bl_p_tgl', 'bl_p_cat', 'bl_b_km', 'bl_b_tgl'].forEach(function(id){ var e = document.getElementById(id); if(e) keep[id] = e.value; }); c.innerHTML = html(); Object.keys(keep).forEach(function(id){ var e = document.getElementById(id); if(e && keep[id] !== '') e.value = keep[id]; }); }
+  catch(err){ c.innerHTML = '<h2>Baselines</h2><p class="hint">Tidak dapat menyusun daftar: ' + esc(err.message) + '</p>'; }
+}
+function canWrite(){ try{ if(window.AG && AG.canWrite) return !!AG.canWrite('program'); }catch(_){} return true; }
+async function act(a, b){
+  if(a === 'tab'){ ST.tab = b.getAttribute('data-v'); ST.msg = ''; ST.bulk = false; render(); return; }
+  if(!canWrite() && a !== 'tab'){ msg('Akun ini tidak punya izin menulis di Program atau Plan Board.', 'err'); render(); return; }
+  var v = curVeh(); if(!v) return; if(ST.busy) return; ST.busy = true;
+  try{
+    if(a === 'save-p'){
+      var id = f('bl_p_task'), km = num(f('bl_p_km')), tg = f('bl_p_tgl'); if(!id){ msg('Pilih tugas.', 'err'); }
+      else if(km == null && !tg){ msg('Isi KM atau tanggal terakhir dikerjakan.', 'err'); }
+      else if(km != null && km < 0){ msg('KM tidak boleh negatif.', 'err'); }
+      else { var t = tpls(v).filter(function(x){ return x.id === id; })[0], old = active(v.id, 'perawatan', id);
+        if(await write([{ kendaraan_id:v.id, jenis:'perawatan', kunci:id, label:t ? t.nama : id, nilai_km:km, nilai_tanggal:tg || null, sumber:f('bl_p_src') || 'estimasi', catatan:f('bl_p_cat') || null }], old ? [old] : [])) msg('Baseline tersimpan' + (old ? ' (versi lama ditandai diganti).' : '.'), 'ok'); }
+    } else if(a === 'bulk-p'){
+      var bk = num(f('bl_b_km')), bt = f('bl_b_tgl'); var ids = {}; dashItems(v).forEach(function(i){ ids[i.tpl.id] = i.tpl; });
+      var lack = Object.keys(ids).filter(function(id){ return !hasHist(v, id) && !active(v.id, 'perawatan', id); });
+      if(bk == null || !bt){ msg('Isi KM acuan dan tanggal acuan.', 'err'); ST.bulk = false; }
+      else if(!lack.length){ msg('Tidak ada tugas yang perlu diisi.', 'ok'); ST.bulk = false; }
+      else if(!ST.bulk){ ST.bulk = true; msg('Akan membuat ' + lack.length + ' baseline pada KM ' + fn(bk, 0) + ' dan ' + bt + '. Tekan tombol sekali lagi untuk memastikan.', ''); }
+      else { ST.bulk = false; var list = lack.map(function(id){ return { kendaraan_id:v.id, jenis:'perawatan', kunci:id, label:ids[id].nama, nilai_km:bk, nilai_tanggal:bt, sumber:f('bl_b_src') || 'estimasi', catatan:'Isi sekaligus' }; });
+        if(await write(list, [])) msg(list.length + ' baseline dibuat.', 'ok'); }
+    } else if(a === 'save-m'){
+      var key = f('bl_m_key'), val = num(f('bl_m_val')), lo = num(f('bl_m_lo')), hi = num(f('bl_m_hi'));
+      if(val == null){ msg('Isi nilai acuan.', 'err'); } else if(lo != null && hi != null && lo > hi){ msg('Batas bawah tidak boleh lebih besar dari batas atas.', 'err'); }
+      else { var o2 = active(v.id, 'pengukuran', key); if(await write([{ kendaraan_id:v.id, jenis:'pengukuran', kunci:key, label:MEAS[key][0], nilai_angka:val, batas_bawah:lo, batas_atas:hi, satuan:MEAS[key][1], nilai_tanggal:f('bl_m_tgl') || null, sumber:f('bl_m_src') || 'pengukuran_pemilik', catatan:f('bl_m_cat') || null }], o2 ? [o2] : [])) msg('Baseline tersimpan.', 'ok'); }
+    } else if(a === 'save-c'){
+      var ck = f('bl_c_key'), kc = num(f('bl_c_km')), tc = f('bl_c_tgl'); var comp = (g('installedComponents') || []).filter(function(c){ return c.id === ck; })[0];
+      if(!ck || !comp){ msg('Pilih komponen.', 'err'); } else if(kc == null && !tc){ msg('Isi KM atau tanggal titik nol.', 'err'); }
+      else { var o3 = active(v.id, 'komponen', ck); if(await write([{ kendaraan_id:v.id, jenis:'komponen', kunci:ck, label:comp.nama_komponen, nilai_km:kc, nilai_tanggal:tc || null, sumber:f('bl_c_src') || 'estimasi', catatan:f('bl_c_cat') || null }], o3 ? [o3] : [])) msg('Baseline tersimpan.', 'ok'); }
+    } else if(a === 'save-l'){
+      var lk = f('bl_l_key'), lv = num(f('bl_l_val')), lh = num(f('bl_l_hi'));
+      if(lv == null){ msg('Isi nilai acuan.', 'err'); } else if(lv < 0){ msg('Nilai tidak boleh negatif.', 'err'); }
+      else { var o4 = active(v.id, 'lead', lk); if(await write([{ kendaraan_id:v.id, jenis:'lead', kunci:lk, label:LEAD[lk][0], nilai_angka:lv, batas_atas:lh, satuan:LEAD[lk][1], sumber:f('bl_l_src') || 'estimasi', catatan:f('bl_l_cat') || null }], o4 ? [o4] : [])) msg('Baseline tersimpan.', 'ok'); }
+    } else if(a === 'revoke'){
+      var rid = b.getAttribute('data-id'), s = db(); if(s){ var u = await s.from('baseline').update({ status:'dicabut' }).eq('id', rid); if(u.error) msg('Gagal mencabut: ' + (u.error.message || ''), 'err'); else { msg('Baseline dicabut. Riwayat tetap tersimpan.', 'ok'); await load(true); } }
+    }
+  }catch(e){ msg('Terjadi kesalahan: ' + (e.message || e), 'err'); }
+  ST.busy = false; render();
+}
+function onShow(name){ if(name === 'planboard') setTimeout(function(){ render(); }, 200); }
+function boot(){
+  hookDue();
+  var o = window.showPanel; if(typeof o === 'function' && !o.__bln){ var w = function(name){ var r = o.apply(this, arguments); try{ onShow(name); }catch(_){} return r; }; w.__bln = 1; for(var k in o) try{ w[k] = o[k]; }catch(_){} window.showPanel = w; }
+}
+window.BLN = { active:active, rows:rows, load:load, render:render, onShow:onShow, hook:hookDue, _st:ST,
+  measure:function(vid, kind){ var r = active(vid, 'pengukuran', kind); return r && r.nilai_angka != null ? { v:Number(r.nilai_angka), lo:r.batas_bawah != null ? Number(r.batas_bawah) : null, hi:r.batas_atas != null ? Number(r.batas_atas) : null } : null; } };
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 900); }); else setTimeout(boot, 900);
 })();
 
 </script>
